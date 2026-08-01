@@ -1,7 +1,12 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {},
+  turbopack: {
+    // Point Turbopack to this workspace root to suppress lockfile warnings
+    // when a parent directory also has a package-lock.json
+    root: __dirname,
+  },
 };
 
 export default nextConfig;
