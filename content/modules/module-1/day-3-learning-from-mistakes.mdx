@@ -1,0 +1,396 @@
+---
+title: "Learning from Mistakes"
+slug: "module-1/day-3-learning-from-mistakes"
+description: "Discover how GPT learns through prediction, loss calculation, backpropagation, and parameter updates."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "16 min"
+estimatedStudyTime: "40 min"
+tags:
+  - Prediction
+  - Logits
+  - Softmax
+  - Loss
+  - Backpropagation
+  - Gradient Descent
+learningObjectives:
+  - Understand how GPT makes its first prediction.
+  - Learn what logits are.
+  - Understand why Softmax is needed.
+  - Learn how Loss measures mistakes.
+  - Understand Backpropagation and Gradient Descent at a high level.
+  - See how parameters slowly become knowledge.
+prerequisites:
+  - topic: "From Text to Numbers"
+    slug: "module-1/day-2-from-text-to-numbers"
+previous:
+  title: "From Text to Numbers"
+  slug: "module-1/day-2-from-text-to-numbers"
+next:
+  title: "Inside the GPT Architecture"
+  slug: "module-1/day-4-inside-the-gpt-architecture"
+---
+
+> *"GPT doesn't learn because someone teaches it the answers. It learns because it repeatedly realizes it was wrong."*
+
+---
+
+## The Problem
+
+So far, we have:
+
+1. A cleaned dataset
+2. Token IDs
+3. A neural network
+4. Billions of random parameters
+
+Everything is finally ready.
+
+Now comes the most important moment.
+
+The model must answer its very first question.
+
+Suppose the training sentence is:
+
+```text
+The sky is ____
+```
+
+The correct next word is `blue`.
+
+But remember — the model has never learned English.
+
+What do you think it predicts?
+
+Probably something completely wrong.
+
+And that's exactly where learning begins.
+
+---
+
+## Intuition
+
+Imagine asking a first-grade student:
+
+> 8 × 7 = ?
+
+The student answers: `42`
+
+Wrong.
+
+You immediately tell them:
+
+> The correct answer is 56.
+
+Next time, their chances improve.
+
+Learning happens because:
+
+```text
+Prediction
+↓
+Mistake
+↓
+Correction
+↓
+Better Prediction
+```
+
+GPT follows exactly the same philosophy.
+
+---
+
+## The Prediction Pipeline
+
+```text
+Input Tokens
+↓
+Neural Network
+↓
+Prediction Scores
+↓
+Probabilities
+↓
+Predicted Word
+```
+
+Every training example follows this pipeline.
+
+---
+
+## Step 1 — Prediction
+
+The token IDs enter the neural network.
+
+Inside the network, billions of mathematical operations happen.
+
+Eventually, the model produces one score for every word in its vocabulary.
+
+Imagine the vocabulary contains only five words:
+
+```text
+blue      → 8.1
+green     → 6.2
+dog       → 0.5
+apple     → 1.8
+computer  → 3.9
+```
+
+These raw scores are called **Logits**.
+
+The neural network computes the raw prediction scores (logits) using:
+
+<MathBlock title="Linear Transformation">
+  $$z = Wx + b$$
+</MathBlock>
+
+where **x** is the input representation, **W** is the learnable weight matrix, **b** is the bias, and **z** is the output logits.
+
+> We'll study this computation in detail when we learn about transformer layers. For now, just remember that this equation produces the logits.
+
+At this stage they are **not probabilities**. They are simply scores representing how much the model currently prefers each possible next token.
+
+---
+
+## Logits
+
+Think of logits as contestants in a competition.
+
+A higher score means more likely to win.
+
+But the scores themselves don't tell us actual probabilities.
+
+For that, we need another step.
+
+---
+
+## Step 2 — Softmax
+
+Softmax converts logits into probabilities.
+
+Example:
+
+```text
+blue      → 0.78
+green     → 0.14
+computer  → 0.05
+apple     → 0.02
+dog       → 0.01
+```
+
+Now everything makes sense. The probabilities add up to `1.0` (100%).
+
+The model can now confidently choose the most probable next token.
+
+Softmax converts the logits into probabilities using:
+
+<MathBlock title="Softmax Function">
+  $$P(i) = \frac{e^{z_i}}{\sum_{j} e^{z_j}}$$
+</MathBlock>
+
+where **zᵢ** is the logit of token *i* and **P(i)** is the probability assigned to token *i*.
+
+> This ensures that every probability lies between **0 and 1**, and together they sum to **1**.
+
+---
+
+## Step 3 — Compare with the Correct Answer
+
+Suppose the correct answer was `blue`.
+
+If the model predicts `computer`, it made a mistake.
+
+But how bad was that mistake?
+
+We need a way to measure it.
+
+---
+
+## Step 4 — Loss
+
+Loss is simply a number that tells us: **How wrong was the prediction?**
+
+```text
+Small Loss  →  Good prediction
+Large Loss  →  Poor prediction
+```
+
+Think of loss like exam marks:
+
+```text
+100%  →  Excellent
+35%   →  Needs improvement
+```
+
+The model uses loss as feedback after every prediction.
+
+A commonly used loss function for language models is **Cross Entropy Loss**:
+
+<MathBlock title="Cross Entropy Loss">
+  $$L = -\log(P(\text{correct token}))$$
+</MathBlock>
+
+where **L** is the loss and **P(correct token)** is the probability assigned to the correct next token.
+
+> A lower loss means the model predicted the correct answer with higher confidence.
+
+---
+
+## Step 5 — Backpropagation
+
+Now comes the clever part.
+
+The model asks itself:
+
+> Which parameters caused this mistake?
+
+Backpropagation traces the error backwards through the network.
+
+It discovers:
+
+- which connections contributed most
+- which parameters should change
+- how much they should change
+
+It does **not** rebuild the network. It simply calculates how each parameter should be adjusted.
+
+---
+
+## Step 6 — Gradient Descent
+
+Backpropagation tells us which parameters should change.
+
+Gradient Descent performs the update.
+
+Imagine standing on a mountain. Your goal is to reach the valley.
+
+Every step you take moves you downhill. Eventually, you reach the lowest point.
+
+Training works similarly. The model keeps adjusting parameters to reduce the loss.
+
+Gradient Descent updates the parameters using:
+
+<MathBlock title="Gradient Descent Update">
+  $$w_{\text{new}} = w_{\text{old}} - \eta \nabla L$$
+</MathBlock>
+
+where **w** is the model parameter, **η** is the learning rate, and **∇L** is the gradient of the loss.
+
+> This equation simply tells the model how to adjust its parameters to reduce future mistakes.
+
+---
+
+## Complete Training Cycle
+
+```text
+Input Sentence
+↓
+Tokenization
+↓
+Neural Network
+↓
+Logits
+↓
+Softmax
+↓
+Prediction
+↓
+Loss
+↓
+Backpropagation
+↓
+Gradient Descent
+↓
+Updated Parameters
+↓
+Repeat
+```
+
+This entire cycle happens billions of times.
+
+---
+
+## Why Training Takes So Long
+
+One prediction doesn't teach much. Neither do a thousand.
+
+GPT repeats this process on enormous amounts of text — sometimes billions of examples, trillions of tokens, weeks or months of continuous computation.
+
+Each prediction improves the parameters just a tiny amount.
+
+Knowledge emerges from these tiny improvements accumulating over time.
+
+---
+
+## Worked Example
+
+Imagine learning basketball.
+
+First shot: Miss. Coach corrects you.
+
+Second shot: Closer. Coach corrects you again.
+
+Hundreds of practice sessions later, your shooting becomes natural.
+
+You didn't become skilled after one correction.
+
+You improved through thousands of small adjustments.
+
+GPT learns exactly the same way.
+
+---
+
+## Common Misconceptions
+
+**GPT memorizes every sentence.**
+
+No. It learns statistical patterns, not exact copies.
+
+**Loss is the mistake itself.**
+
+No. Loss is only a measurement of how large the mistake was.
+
+**Backpropagation changes the architecture.**
+
+No. The architecture stays the same. Only the parameters change.
+
+**One prediction teaches the model.**
+
+No. Learning requires billions of prediction–correction cycles.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why are logits not probabilities?
+- Why do we need Softmax?
+- Why measure loss before updating parameters?
+- Why update billions of parameters instead of rewriting the model?
+
+These questions lead directly into understanding where knowledge is actually stored.
+
+---
+
+## Key Takeaways
+
+- GPT learns by making predictions.
+- Raw prediction scores are called logits.
+- Softmax converts logits into probabilities.
+- Loss measures how wrong the prediction was.
+- Backpropagation finds which parameters caused the mistake.
+- Gradient Descent updates those parameters.
+- Repeating this cycle billions of times creates intelligence.
+
+---
+
+## What's Next?
+
+We've now seen **how** GPT learns.
+
+But one big mystery remains.
+
+When training finishes, **where is all that knowledge actually stored?**
+
+Is it inside the dataset? Inside the code? Inside the neural network? Or somewhere else?
+
+In the next lesson, we'll open up the GPT architecture itself and discover exactly where intelligence lives inside a language model.
