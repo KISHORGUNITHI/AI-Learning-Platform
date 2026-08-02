@@ -312,6 +312,19 @@
       }
     ]
   },
+      {
+        "number": 17,
+        "title": "Why One Attention Head Isn't Enough",
+        "slug": "module-2/day-17-why-one-attention-head-isnt-enough",
+        "description": "Understand why Transformers use multiple attention heads instead of relying on a single Self-Attention mechanism.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Multi Head Attention", "Self Attention", "Attention Heads", "Transformer"]
+      }
+    ]
+  },
   {
     "number": 3,
     "title": "LLM Internals",
@@ -595,3 +608,4 @@
     ]
   }
 ]
+
