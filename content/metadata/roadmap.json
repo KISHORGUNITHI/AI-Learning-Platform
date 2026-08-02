@@ -221,6 +221,17 @@
         "estimatedReadingTime": "15 min",
         "estimatedStudyTime": "35 min",
         "tags": ["Embeddings", "Positional Embeddings", "Transformer Input", "Input Representation"]
+      },
+      {
+        "number": 9,
+        "title": "Why Self-Attention Was Invented",
+        "slug": "module-2/day-9-why-self-attention-was-invented",
+        "description": "Discover why embeddings alone cannot understand context and why researchers invented the Self-Attention mechanism.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Self Attention", "Context", "Embeddings", "Transformers", "NLP"]
       }
     ]
   },
