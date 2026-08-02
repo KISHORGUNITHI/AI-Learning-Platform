@@ -1,0 +1,183 @@
+---
+title: "Inside Multi-Head Attention"
+slug: "module-2/day-18-inside-multi-head-attention"
+description: "Explore the internal architecture of Multi-Head Attention, understand how embeddings are divided across multiple heads, and learn why this design remains computationally efficient."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Multi Head Attention
+  - Parallel Computing
+  - Attention Heads
+  - Tensor Shapes
+  - Transformer
+learningObjectives:
+  - Understand how one embedding is processed by multiple attention heads.
+  - Learn why embeddings are split across different heads.
+  - Visualize the complete Multi-Head Attention architecture.
+  - Understand why Multi-Head Attention does not drastically increase computation.
+  - Prepare for concatenation and output projection.
+prerequisites:
+  - topic: "Why One Attention Head Isn't Enough"
+    slug: "module-2/day-17-why-one-attention-head-isnt-enough"
+previous:
+  title: "Why One Attention Head Isn't Enough"
+  slug: "module-2/day-17-why-one-attention-head-isnt-enough"
+---
+
+> *"Instead of asking one attention mechanism to learn everything, Transformers let multiple attention heads learn different relationships simultaneously."*
+
+---
+
+## Quick Recap
+
+We know why one head isn't enough. Now the question is:
+
+> **How does GPT actually run multiple attention heads at the same time?**
+
+---
+
+## The Problem
+
+With 768-dim embeddings and 12 heads, wouldn't computation become 12× larger?
+
+<Comparison
+  title="Wrong Intuition vs Actual Architecture"
+  left={{
+    label: "❌ Wrong Intuition",
+    points: [
+      "12 heads × 768 dims each",
+      "Total = 9,216 features",
+      "12× more computation",
+      "12× more parameters",
+    ]
+  }}
+  right={{
+    label: "✅ Actual Architecture",
+    points: [
+      "768 dims split across 12 heads",
+      "Each head: 64 dims (768 ÷ 12)",
+      "Total features unchanged: 768",
+      "Computation stays manageable",
+    ]
+  }}
+/>
+
+---
+
+## Intuition
+
+Imagine a team of 12 engineers. Instead of asking one to solve everything, divide the work — each specialist handles one area simultaneously. Same total work, but done in parallel by experts.
+
+---
+
+## Visual Activity — Complete Multi-Head Architecture
+
+<MultiHeadArchitecture />
+
+---
+
+## Understanding the Tensor Shapes
+
+<TokenMapping
+  title="Dimension Flow Through Multi-Head Attention"
+  fromLabel="Stage"
+  toLabel="Shape"
+  items={[
+    { from: "Input Embeddings",            to: "3 × 768" },
+    { from: "Q per head  (× 12 heads)",    to: "3 × 64  each" },
+    { from: "K per head  (× 12 heads)",    to: "3 × 64  each" },
+    { from: "V per head  (× 12 heads)",    to: "3 × 64  each" },
+    { from: "Head output (× 12 heads)",    to: "3 × 64  each" },
+    { from: "Concatenated",                to: "3 × 768" },
+  ]}
+/>
+
+---
+
+## Mathematics
+
+<MathBlock title="Head Dimension Formula">
+  $$d_{\text{head}} = \frac{d_{\text{model}}}{h} = \frac{768}{12} = 64$$
+</MathBlock>
+
+Each head independently computes scaled dot-product attention on its 64-dim subspace:
+
+<MathBlock title="Per-Head Self-Attention">
+  $$\text{head}_i = \text{Attention}(XW_Q^i,\; XW_K^i,\; XW_V^i) \quad \text{output: } (3 \times 64)$$
+</MathBlock>
+
+---
+
+## Common Misconceptions
+
+<Comparison
+  title="Three Key Misconceptions"
+  left={{
+    label: "❌ Misconceptions",
+    points: [
+      "Every head gets different input tokens",
+      "GPT duplicates the embedding 12 times",
+      "Multi-Head Attention is 12× slower",
+    ]
+  }}
+  right={{
+    label: "✅ Reality",
+    points: [
+      "Every head gets the same (3×768) input — only WQ/WK/WV differ",
+      "768 dims are divided, not duplicated — total unchanged",
+      "Each head processes smaller vectors in parallel — stays efficient",
+    ]
+  }}
+/>
+
+---
+
+## Visual Activity — Parallel vs Sequential Execution
+
+Press **▶ Run** to see all 12 heads execute simultaneously, then switch to Sequential to see why parallel matters.
+
+<ParallelHeadsVisualizer />
+
+---
+
+## Engineering Insight
+
+Modern GPUs execute thousands of matrix multiplications in parallel. Multi-Head Attention is specifically designed to exploit this — each head's computation is independent, so all 12 run at the same time on different GPU cores.
+
+---
+
+## Key Takeaways
+
+- Every attention head receives the same input embeddings.
+- Each head owns its own WQ, WK, WV matrices.
+- The embedding dimension is **divided** across heads, not duplicated.
+- Each head performs independent Self-Attention on 64 dims.
+- All heads execute in parallel — computation stays manageable.
+- 12 × 64 = 768: total feature dimension unchanged.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why doesn't Multi-Head Attention multiply the embedding dimension?
+- Why does every head receive the same input?
+- Why does each head need different projection matrices?
+- How does GPT combine the outputs from all attention heads?
+
+---
+
+## What's Next?
+
+GPT now has 12 head outputs, each `(3 × 64)`. The Transformer expects one output — not twelve.
+
+In the next lesson, we'll explore the final stage:
+
+```text
+Head outputs (12 × 3 × 64)
+↓  Concatenate
+(3 × 768)
+↓  Output Projection WO
+Final Multi-Head Attention Output  (3 × 768)
+```

@@ -320,6 +320,17 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Multi Head Attention", "Self Attention", "Attention Heads", "Transformer"]
+      },
+      {
+        "number": 18,
+        "title": "Inside Multi-Head Attention",
+        "slug": "module-2/day-18-inside-multi-head-attention",
+        "description": "Explore the internal architecture of Multi-Head Attention, understand how embeddings are divided across multiple heads, and learn why this design remains computationally efficient.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Multi Head Attention", "Parallel Computing", "Attention Heads", "Tensor Shapes", "Transformer"]
       }
     ]
   },

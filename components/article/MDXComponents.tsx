@@ -33,6 +33,8 @@ import SoftmaxSaturation from '@/components/ui/SoftmaxSaturation';
 import SoftmaxVisualizer from '@/components/ui/SoftmaxVisualizer';
 import WeightedSumVisualizer from '@/components/ui/WeightedSumVisualizer';
 import SelfAttentionWalkthrough from '@/components/ui/SelfAttentionWalkthrough';
+import MultiHeadArchitecture from '@/components/ui/MultiHeadArchitecture';
+import ParallelHeadsVisualizer from '@/components/ui/ParallelHeadsVisualizer';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -55,6 +57,8 @@ export {
   SoftmaxVisualizer,
   WeightedSumVisualizer,
   SelfAttentionWalkthrough,
+  MultiHeadArchitecture,
+  ParallelHeadsVisualizer,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -273,4 +277,6 @@ export const mdxComponents = {
   SoftmaxVisualizer,
   WeightedSumVisualizer,
   SelfAttentionWalkthrough,
+  MultiHeadArchitecture,
+  ParallelHeadsVisualizer,
 };
