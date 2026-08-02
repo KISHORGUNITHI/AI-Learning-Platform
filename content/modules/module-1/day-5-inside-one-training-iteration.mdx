@@ -1,0 +1,274 @@
+---
+title: "Inside One Training Iteration"
+slug: "module-1/day-5-inside-one-training-iteration"
+description: "Follow a single input as it flows through the neural network and understand what every layer actually does during a forward pass."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "18 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Forward Pass
+  - Neural Network
+  - Weights
+  - Bias
+  - Activation
+learningObjectives:
+  - Understand what a forward pass really is.
+  - Follow data through multiple neural network layers.
+  - Learn why every layer performs mathematical transformations.
+  - Understand the role of weights, bias, and activation functions.
+  - Build intuition before learning the mathematics.
+prerequisites:
+  - topic: "Inside the GPT Architecture"
+    slug: "module-1/day-4-inside-the-gpt-architecture"
+previous:
+  title:"Inside the GPT Architecture"
+  slug:"module-1/day-4-inside-the gpt-architecture"
+next:
+  title: "From Scores to Predictions"
+  slug: "module-1/day-6-from-scores-to-predictions"
+---
+
+> *"Training isn't magic. Every prediction is simply the result of thousands of mathematical transformations happening layer by layer."*
+---
+
+## The Problem
+
+We've already learned that GPT learns by making predictions.
+
+But one big question still remains.
+
+Suppose the model receives an input:
+
+```text
+The sky is
+```
+
+How does this sentence eventually become a prediction like `blue`?
+
+What actually happens **inside** the model?
+
+Does it immediately know the answer?
+
+Or does the input travel through many computational steps first?
+
+---
+
+## Intuition
+
+Think of a car manufacturing factory.
+
+Raw materials enter one side. Each station performs one small job.
+
+<FlowDiagram title="Factory Assembly Line" steps={[
+  "Raw Materials",
+  "Cut",
+  "Shape",
+  "Paint",
+  "Assemble",
+  "Finished Car"
+]} />
+
+No single station builds the entire car. Every station contributes a little.
+
+A neural network works exactly the same way.
+
+Each layer performs one small mathematical transformation. Together, those transformations create intelligence.
+
+---
+
+## The Forward Pass
+
+A **forward pass** is simply one journey through the network.
+
+The input enters, flows through every layer, and the model produces prediction scores.
+
+Nothing is learned yet — the model is only computing an answer.
+
+<FlowDiagram title="One Forward Pass" steps={[
+  "Input",
+  "Layer 1",
+  "Layer 2",
+  "Layer 3",
+  "...",
+  "Output Scores"
+]} />
+
+---
+
+## What Happens Inside One Layer?
+
+Every neural network layer performs three basic operations.
+
+<FlowDiagram title="Inside One Layer" steps={[
+  "Input",
+  "Multiply by Weights",
+  "Add Bias",
+  "Activation Function",
+  "Output"
+]} />
+
+Every layer repeats this same pattern.
+
+---
+
+## Step 1 — Multiply by Weights
+
+Weights determine how important each input is.
+
+Imagine the layer receives `Input = 8` with `Weight = 4`:
+
+<MathBlock title="Weight Multiplication">
+  $$y = xW$$
+</MathBlock>
+
+where **x** is the input and **W** is the weight matrix. Example: `8 × 4 = 32`.
+
+The weight controls how strongly the input influences the output.
+
+---
+
+## Step 2 — Add Bias
+
+Next, the layer adds another learnable value called the **bias**.
+
+<MathBlock title="Linear Transformation">
+  $$y = xW + b$$
+</MathBlock>
+
+where **b** is the bias. Example: `32 + 5 = 37`.
+
+Bias gives the neuron additional flexibility. Without bias, every decision would be overly restricted.
+
+---
+
+## Step 3 — Activation Function
+
+At this point, the computation is still only a straight mathematical transformation.
+
+To learn complex patterns, the network needs **non-linearity**. That's the job of the activation function.
+
+Instead of passing values unchanged, the activation decides how much information should continue.
+
+GPT mainly uses **GELU**, while many traditional neural networks use **ReLU**.
+
+<MathBlock title="ReLU Activation">
+  $$\text{ReLU}(x) = \max(0, x)$$
+</MathBlock>
+
+Don't worry about the details yet. For now, remember only its purpose:
+
+> It allows neural networks to learn complex relationships instead of only straight-line patterns.
+
+---
+
+## Complete Layer Pipeline
+
+<FlowDiagram title="Complete Layer Pipeline" steps={[
+  "Input",
+  "Multiply by Weights",
+  "Add Bias",
+  "Activation",
+  "Output",
+  "Next Layer"
+]} />
+
+This process repeats hundreds of times across the model.
+
+---
+
+## Why So Many Layers?
+
+One layer cannot understand language.
+
+Instead, each layer gradually refines the representation.
+
+Think of it like editing a photograph. The first filter adjusts brightness, the second sharpens details, the third improves colors. Each filter contributes a little. Together, they create the final image.
+
+Similarly, each neural network layer improves the internal representation before passing it forward.
+
+---
+
+## Mathematics
+
+The complete mathematical operation of one layer is written as:
+
+<MathBlock title="Full Layer Operation">
+  $$y = f(xW + b)$$
+</MathBlock>
+
+where **x** is the input, **W** is the weights, **b** is the bias, and **f()** is the activation function.
+
+You don't need to memorize this formula yet. We'll revisit it many times throughout the roadmap.
+
+---
+
+## Worked Example
+
+Imagine evaluating a job application.
+
+<FlowDiagram title="Multi-Layer Decision" steps={[
+  "Person A checks education",
+  "Person B checks experience",
+  "Person C checks projects",
+  "Person D makes final decision"
+]} />
+
+Each person contributes only part of the decision.
+
+Likewise, each neural network layer contributes only part of the final prediction.
+
+---
+
+## Common Misconceptions
+
+**One layer understands the sentence.**
+
+No. Understanding emerges from many layers working together.
+
+**Weights never change.**
+
+Wrong. Weights are updated during training.
+
+**Bias is optional.**
+
+Bias is also a learnable parameter and plays an important role in improving flexibility.
+
+**The forward pass teaches the model.**
+
+No. The forward pass only computes predictions. Learning happens later during backpropagation.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why multiply instead of simply adding?
+- Why do we need bias?
+- Why can't a network use only multiplication?
+- Why do activation functions introduce non-linearity?
+- Why are many layers better than one?
+
+---
+
+## Key Takeaways
+
+- A forward pass is one complete journey through the network.
+- Every layer performs the same sequence of computations.
+- Weights control importance.
+- Bias increases flexibility.
+- Activation functions introduce non-linearity.
+- Many simple layers together produce intelligent behavior.
+
+---
+
+## What's Next?
+
+The network has now finished its forward pass.
+
+But something interesting happens next.
+
+The model still hasn't predicted a word. Instead, it produces **scores** for every word in its vocabulary.
+
+These scores are called **Logits**.
+
+In the next lesson, we'll discover how logits become probabilities and eventually turn into actual word predictions.
