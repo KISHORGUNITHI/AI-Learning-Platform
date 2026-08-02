@@ -1,0 +1,206 @@
+---
+title: "The Final Input Representation"
+slug: "module-2/day-8-the-final-input-representation"
+description: "Understand how token embeddings and positional information are combined to create the final representation that enters the first Transformer block."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "15 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Embeddings
+  - Positional Embeddings
+  - Transformer Input
+  - Input Representation
+learningObjectives:
+  - Understand what the Transformer actually receives as input.
+  - Learn how token embeddings and positional information are combined.
+  - Build a complete mental model of the Transformer's input representation.
+  - Prepare for Self-Attention.
+prerequisites:
+  - topic: "Sinusoidal Positional Encoding"
+    slug: "module-2/day-7-sinusoidal-positional-encoding"
+  - topic: "Learned Positional Embeddings"
+    slug: "module-2/day-6-learned-positional-embeddings"
+previous:
+  title: "Sinusoidal Positional Encoding"
+  slug: "module-2/day-7-sinusoidal-positional-encoding"
+---
+
+> *"Before the Transformer can think, every token must carry two pieces of information — what it is and where it is."*
+
+---
+
+## Quick Recap
+
+Over the last few lessons we discovered two important ideas.
+
+<Comparison
+  title="Two Pieces of Information Every Token Needs"
+  left={{
+    label: "Token Embeddings",
+    points: [
+      "Answers: What is this word?",
+      "Comes from the Token Embedding Matrix",
+      "Represents semantic meaning",
+      "Learned during training",
+    ]
+  }}
+  right={{
+    label: "Positional Information",
+    points: [
+      "Answers: Where is this word?",
+      "Comes from the Positional Embedding Matrix",
+      "Represents location in the sentence",
+      "Learned or mathematically computed",
+    ]
+  }}
+/>
+
+But GPT still needs **one final representation** before entering the Transformer.
+
+---
+
+## The Problem
+
+Suppose the sentence is `I Love AI`.
+
+GPT already has token embeddings (meaning) and positional embeddings (position).
+
+Should it choose one? Ignore the other? Or combine both?
+
+---
+
+## Intuition
+
+Imagine sending a package.
+
+The package needs both the **item inside** and the **delivery address**. Having only one isn't enough.
+
+Similarly, every token entering the Transformer needs **meaning** and **position** — together.
+
+---
+
+## Deep Explanation
+
+Every token has two vectors — one from the **Token Embedding Matrix** and one from the **Positional Embedding Matrix**.
+
+GPT combines them using one simple operation: **element-wise addition**.
+
+<FlowDiagram title="Combining Token + Position" steps={[
+  "Token Embedding  [T₀, T₁, T₂ ...]",
+  "+ Positional Embedding  [P₀, P₁, P₂ ...]",
+  "Element-wise Addition",
+  "Final Input Representation  [T₀+P₀, T₁+P₁, T₂+P₂ ...]"
+]} />
+
+The result — the **Final Input Representation** — is what enters the first Transformer block.
+
+> Addition preserves both meaning and position while keeping the embedding dimension unchanged.
+
+---
+
+## Why Addition Instead of Concatenation?
+
+<Comparison
+  title="Addition vs Concatenation"
+  left={{
+    label: "Addition ✓ (Used by Transformers)",
+    points: [
+      "768 + 768 = 768 dimensions",
+      "Embedding size stays the same",
+      "No extra computation cost",
+      "Architecture remains unchanged",
+    ]
+  }}
+  right={{
+    label: "Concatenation ✗ (Not used)",
+    points: [
+      "768 + 768 = 1536 dimensions",
+      "Doubles the embedding size",
+      "Significantly increases computation",
+      "Would require redesigning all layers",
+    ]
+  }}
+/>
+
+---
+
+## Complete Input Pipeline
+
+<FlowDiagram title="Everything Before the Transformer" steps={[
+  "Input Text",
+  "Tokenizer",
+  "Token IDs",
+  "Token Embedding Lookup → Token Embeddings",
+  "Position IDs → Positional Embeddings",
+  "Element-wise Addition",
+  "✦ Final Input Representation ✦",
+  "Transformer Block 1"
+]} />
+
+The **Final Input Representation** is the last stage before Self-Attention begins.
+
+---
+
+## Worked Example
+
+Sentence: `The cat sleeps`
+
+For the token `cat`:
+
+<TokenMapping
+  title="Building the Final Vector for 'cat'"
+  fromLabel="Source"
+  toLabel="Vector"
+  items={[
+    { from: "Token Embedding",    to: "[0.81, -0.22, 0.63, ...]  ← meaning"   },
+    { from: "Positional Embedding", to: "[0.14, 0.90, -0.11, ...]  ← position (1)" },
+    { from: "Addition",           to: "[0.95,  0.68,  0.52, ...]  ← final"    },
+  ]}
+/>
+
+The Transformer never processes raw text, Token IDs, or either embedding alone. It always processes the **combined representation**.
+
+---
+
+## Key Takeaways
+
+- Every token has both meaning (token embedding) and position (positional embedding).
+- GPT combines them using element-wise addition.
+- The embedding dimension remains unchanged after addition.
+- The resulting vector is called the Final Input Representation.
+- This combined vector is the actual input to the first Transformer block.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why does GPT add vectors instead of concatenating them?
+- Why must meaning and position be combined before Self-Attention?
+- What exactly enters the first Transformer block?
+
+---
+
+## Module Milestone
+
+You now understand everything that happens **before the first Transformer block**.
+
+- How text becomes Token IDs.
+- How Token IDs become Embedding Vectors.
+- Why positional information is required.
+- How GPT injects positional information.
+- What the Transformer actually receives as input.
+
+The black box is finally ready to open.
+
+---
+
+## What's Next?
+
+Everything is now prepared. The Transformer has received its input.
+
+Now comes the revolutionary idea that changed modern AI forever.
+
+> **Self-Attention**
+
+In the next lesson, we'll discover how every token begins communicating with every other token to understand context.
