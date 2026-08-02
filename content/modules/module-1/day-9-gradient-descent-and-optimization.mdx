@@ -1,0 +1,250 @@
+---
+title: "Gradient Descent & Optimization"
+slug: "module-1/day-9-gradient-descent-and-optimization"
+description: "Learn how GPT updates its parameters after backpropagation and why optimization algorithms like Gradient Descent and Adam are essential for learning."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "18 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Gradient Descent
+  - Optimization
+  - Adam
+  - Learning Rate
+learningObjectives:
+  - Understand the role of Gradient Descent.
+  - Learn why gradients alone are not enough.
+  - Understand the Learning Rate.
+  - See how parameters are updated.
+  - Get an introduction to the Adam Optimizer.
+prerequisites:
+  - topic: "Learning Through Backpropagation"
+    slug: "module-1/day-8-backpropagation"
+previous:
+  title: "Learning Through Backpropagation"
+  slug: "module-1/day-8-backpropagation"
+next:
+  title: "One Complete GPT Training Walkthrough"
+  slug: "module-1/day-10-complete-gpt-training-walkthrough"
+---
+
+> *"Backpropagation tells the model what to change. Gradient Descent actually performs the change."*
+
+---
+
+## The Problem
+
+At the end of Backpropagation, every parameter now has a gradient.
+
+The model knows:
+
+- which parameters contributed to the mistake
+- how much they contributed
+- which direction they should move
+
+But nothing has actually changed yet.
+
+The parameters are still exactly the same.
+
+Someone still needs to perform the update.
+
+---
+
+## Intuition
+
+Imagine a teacher correcting an exam.
+
+The teacher marks every mistake. The student now knows where the mistakes are and what needs improvement.
+
+But unless the student actually studies and corrects those mistakes, nothing changes.
+
+<Comparison
+  title="Backpropagation vs Gradient Descent"
+  left={{ label: "Backpropagation", points: ["Identifies the mistakes", "Calculates how much each parameter contributed", "Produces gradients — the correction instructions"] }}
+  right={{ label: "Gradient Descent", points: ["Receives the gradients", "Applies the corrections to every parameter", "Moves the model toward better predictions"] }}
+/>
+
+---
+
+## What is Gradient Descent?
+
+Gradient Descent is an optimization algorithm with one job:
+
+<FlowDiagram title="Gradient Descent Cycle" steps={[
+  "Take gradients from Backpropagation",
+  "Update the parameters",
+  "Reduce the loss",
+  "Repeat"
+]} />
+
+This process gradually improves the model over millions or billions of training steps.
+
+---
+
+## Optimization Pipeline
+
+<FlowDiagram title="Full Optimization Pipeline" steps={[
+  "Prediction",
+  "Loss",
+  "Backpropagation",
+  "Gradients",
+  "Gradient Descent",
+  "Updated Parameters"
+]} />
+
+---
+
+## Mathematics
+
+Gradient Descent updates every parameter using:
+
+<MathBlock title="Gradient Descent Update Rule">
+  $$W_{\text{new}} = W_{\text{old}} - \eta \nabla L$$
+</MathBlock>
+
+where **W** is the parameter, **η** is the learning rate, and **∇L** is the gradient.
+
+The equation simply means: move the parameter in the direction that reduces the loss.
+
+---
+
+## Learning Rate
+
+The **Learning Rate** decides how large each update should be.
+
+Think of walking downhill toward the lowest point.
+
+<TokenMapping
+  title="Learning Rate Effects"
+  fromLabel="Learning Rate"
+  toLabel="Result"
+  items={[
+    { from: "Too small", to: "Very slow learning"     },
+    { from: "Too large", to: "Overshoots, unstable"   },
+    { from: "Balanced",  to: "Fast and stable learning" },
+  ]}
+/>
+
+The best learning rate balances speed and stability.
+
+---
+
+## Why Not Update Everything at Once?
+
+Suppose the gradient suggests changing a parameter by a huge amount.
+
+Would that always be a good idea? No.
+
+A large update could destroy what the model has already learned.
+
+Small, gradual improvements usually lead to better training. That's why optimization happens step by step.
+
+---
+
+## Adam Optimizer
+
+In practice, modern LLMs rarely use plain Gradient Descent.
+
+Instead, they use an improved optimizer called **Adam** (Adaptive Moment Estimation).
+
+Adam keeps track of previous gradients and automatically adjusts the size of updates for each parameter.
+
+<Comparison
+  title="Gradient Descent vs Adam"
+  left={{ label: "Plain Gradient Descent", points: ["Same learning rate for all parameters", "Can be slow to converge", "Sensitive to learning rate choice"] }}
+  right={{ label: "Adam Optimizer", points: ["Adaptive learning rate per parameter", "Faster and more stable training", "Used by GPT, BERT, and most modern LLMs"] }}
+/>
+
+Almost every modern Transformer model — including GPT — is trained using Adam or its variant **AdamW**.
+
+> Adam is an improved version of Gradient Descent that makes learning more efficient.
+
+---
+
+## Complete Training Cycle
+
+<FlowDiagram title="End-to-End Training Step" steps={[
+  "Forward Pass",
+  "Logits",
+  "Softmax",
+  "Cross Entropy Loss",
+  "Backpropagation",
+  "Gradients",
+  "Gradient Descent / Adam",
+  "Updated Parameters",
+  "Next Training Example"
+]} />
+
+---
+
+## Worked Example
+
+Suppose a weight currently has the value `0.80`.
+
+Backpropagation computes its gradient. Gradient Descent slightly adjusts the value.
+
+<TokenMapping
+  title="Parameter Updates Over Time"
+  fromLabel="Step"
+  toLabel="Weight Value"
+  items={[
+    { from: "Initial",  to: "0.80" },
+    { from: "Step 1",   to: "0.79" },
+    { from: "Step 2",   to: "0.78" },
+    { from: "Step 3",   to: "0.77" },
+    { from: "...",      to: "..."   },
+    { from: "Converged", to: "0.43" },
+  ]}
+/>
+
+Each update is tiny. After billions of updates, the model gradually learns useful patterns.
+
+---
+
+## Common Misconceptions
+
+**Backpropagation updates the parameters.**
+
+No. Backpropagation computes gradients. The optimizer updates the parameters.
+
+**Bigger learning rates are always better.**
+
+No. Very large learning rates often make training unstable.
+
+**One optimization step trains the model.**
+
+No. Training requires millions or billions of optimization steps.
+
+**Adam changes the architecture.**
+
+No. Adam only changes parameter values.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why can't Backpropagation update the parameters directly?
+- Why do we need a Learning Rate?
+- Why doesn't the model take huge steps?
+- Why is Adam preferred over simple Gradient Descent?
+- When does training finally stop?
+
+---
+
+## Key Takeaways
+
+- Backpropagation computes gradients.
+- Gradient Descent updates the parameters.
+- Learning Rate controls the size of each update.
+- Training improves through millions of small optimization steps.
+- Adam is the optimizer used by most modern LLMs.
+
+---
+
+## What's Next?
+
+You've now learned every major component involved in GPT training.
+
+But we've studied them separately.
+
+In the next lesson, we'll connect everything together and follow **one complete training example** — from raw text all the way to updated parameters — giving you an end-to-end understanding of how an LLM is trained.
