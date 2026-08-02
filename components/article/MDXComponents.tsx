@@ -30,6 +30,7 @@ import MathBlock from '@/components/ui/MathBlock';
 import FunctionPlot from '@/components/ui/FunctionPlot';
 import ScalingVisualizer from '@/components/ui/ScalingVisualizer';
 import SoftmaxSaturation from '@/components/ui/SoftmaxSaturation';
+import SoftmaxVisualizer from '@/components/ui/SoftmaxVisualizer';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -49,6 +50,7 @@ export {
   FunctionPlot,
   ScalingVisualizer,
   SoftmaxSaturation,
+  SoftmaxVisualizer,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -264,4 +266,5 @@ export const mdxComponents = {
   FunctionPlot,
   ScalingVisualizer,
   SoftmaxSaturation,
+  SoftmaxVisualizer,
 };

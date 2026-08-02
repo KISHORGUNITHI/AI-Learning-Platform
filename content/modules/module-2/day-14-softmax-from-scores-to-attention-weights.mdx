@@ -1,0 +1,418 @@
+---
+title: "Softmax: From Scores to Attention Weights"
+slug: "module-2/day-14-softmax-from-scores-to-attention-weights"
+description: "Learn how Softmax converts scaled Attention Scores into probability distributions, creating the Attention Weight Matrix used by Self-Attention."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Self Attention
+  - Softmax
+  - Attention Weights
+  - Probability
+learningObjectives:
+  - Understand why raw Attention Scores cannot be used directly.
+  - Learn how Softmax converts scores into probabilities.
+  - Understand why every row becomes a probability distribution.
+  - Learn why every row sums to 1.
+  - Understand the Attention Weight Matrix.
+prerequisites:
+  - topic: "Dot Product Attention & Attention Scores"
+    slug: "module-2/day-12-dot-product-attention-and-attention-scores"
+  - topic: "Why Do We Divide by √d?"
+    slug: "module-2/day-13-why-do-we-divide-by-root-d"
+previous:
+  title: "Why Do We Divide by √d?"
+  slug: "module-2/day-13-why-do-we-divide-by-root-d"
+---
+
+> *"Attention Scores tell us who is important. Softmax decides exactly how important."*
+
+---
+
+## Quick Recap
+
+<FlowDiagram title="Where We Are" steps={[
+  "Q × Kᵀ",
+  "÷ √dₖ",
+  "Scaled Attention Scores  e.g. [3.46, 2.96, 2.67]",
+  "Still not probabilities — one more step needed"
+]} />
+
+These scores are numerically stable. But one important problem still remains.
+
+---
+
+## The Problem
+
+The scores `3.46`, `2.96`, `2.67` tell GPT which token is more relevant — but not **how much attention** to give each token.
+
+<Comparison
+  title="Raw Scores vs Probabilities"
+  left={{
+    label: "Raw Scores (cannot use directly)",
+    points: [
+      "Not probabilities",
+      "Do not sum to 1",
+      "No clear interpretation of magnitude",
+      "Cannot weight Value vectors proportionally",
+    ]
+  }}
+  right={{
+    label: "Probabilities (what GPT needs)",
+    points: [
+      "Each value between 0 and 1",
+      "All values sum to exactly 1",
+      "Directly usable as attention weights",
+      "Each token gets a precise share of attention",
+    ]
+  }}
+/>
+
+---
+
+## Intuition
+
+Imagine three friends contributing to a group project.
+
+<TokenMapping
+  title="From Scores to Percentages"
+  fromLabel="Raw Score"
+  toLabel="As Percentage"
+  items={[
+    { from: "Alice  →  90", to: "50%" },
+    { from: "Bob    →  60", to: "33%" },
+    { from: "Charlie → 30", to: "17%" },
+  ]}
+/>
+
+The percentages tell us exactly how to distribute 100% of the final credit. They sum to 100%.
+
+Softmax performs exactly this conversion — from arbitrary scores to a probability distribution.
+
+---
+
+## How Softmax Works — Two Steps
+
+### Step 1 — Apply the Exponential Function
+
+<TokenMapping
+  title="Step 1: Exponentiation"
+  fromLabel="Scaled Score"
+  toLabel="e^score"
+  items={[
+    { from: "3.46", to: "e³·⁴⁶ = 31.82" },
+    { from: "2.96", to: "e²·⁹⁶ = 19.30" },
+    { from: "2.67", to: "e²·⁶⁷ = 14.44" },
+  ]}
+/>
+
+Exponentiation guarantees every value becomes **positive**.
+
+### Step 2 — Normalize
+
+Divide every exponential by the sum of all exponentials.
+
+<TokenMapping
+  title="Step 2: Normalization (sum = 65.56)"
+  fromLabel="Exponential"
+  toLabel="Probability"
+  items={[
+    { from: "31.82 / 65.56", to: "0.47" },
+    { from: "19.30 / 65.56", to: "0.29" },
+    { from: "14.44 / 65.56", to: "0.24" },
+  ]}
+/>
+
+Result: `0.47 + 0.29 + 0.24 = 1.00` ✓
+
+---
+
+## Visual Activity — From Scores to Attention Weights
+
+Step through the three stages of the Softmax transformation below.
+
+<SoftmaxVisualizer />
+
+---
+
+## Mathematics
+
+<MathBlock title="Softmax Function">
+  $$\text{Softmax}(x_i) = \frac{e^{x_i}}{\sum_{j} e^{x_j}}$$
+</MathBlock>
+
+Applied to one row of the Attention Score Matrix, Softmax converts raw scores into a probability distribution that sums to 1.
+
+---
+
+## The Attention Weight Matrix
+
+Softmax is applied **row by row** across the entire Attention Score Matrix.
+
+For the sentence `I  Love  AI` (3 tokens):
+
+<DiagramContainer caption="Softmax applied row by row — each row becomes a probability distribution summing to 1">
+  <svg viewBox="0 0 340 200" width="100%" style={{ maxWidth: '340px' }} aria-hidden="true">
+    {/* Column headers */}
+    {['I', 'Love', 'AI'].map((label, ci) => (
+      <text key={label} x={130 + ci * 70} y={28}
+        textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-success)">{label}</text>
+    ))}
+    <text x="50" y="16" textAnchor="middle" fontSize="9" fill="var(--color-text-tertiary)">Queries ↓</text>
+    <text x="200" y="16" textAnchor="middle" fontSize="9" fill="var(--color-success)">Keys →</text>
+
+    {[
+      { label: 'I',    weights: [0.47, 0.29, 0.24] },
+      { label: 'Love', weights: [0.20, 0.48, 0.32] },
+      { label: 'AI',   weights: [0.11, 0.39, 0.50] },
+    ].map((row, ri) => (
+      <g key={row.label}>
+        <text x="50" y={78 + ri * 52}
+          textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-accent)">{row.label}</text>
+        {row.weights.map((w, ci) => {
+          const isMax = w === Math.max(...row.weights);
+          return (
+            <g key={ci}>
+              <rect x={95 + ci * 70} y={58 + ri * 52}
+                width={56} height={36} rx="6"
+                fill={`rgba(79,140,255,${0.06 + w * 0.4})`}
+                stroke={isMax ? 'var(--color-accent)' : 'var(--color-border)'}
+                strokeWidth={isMax ? 2 : 1}
+              />
+              <text x={123 + ci * 70} y={81 + ri * 52}
+                textAnchor="middle" fontSize="12"
+                fontWeight={isMax ? '700' : '400'}
+                fill={isMax ? 'var(--color-accent)' : 'var(--color-text-secondary)'}>
+                {w}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+    ))}
+
+    {/* Row sum annotation */}
+    {[0, 1, 2].map(ri => (
+      <text key={ri} x="320" y={78 + ri * 52}
+        textAnchor="middle" fontSize="10" fill="var(--color-success)">= 1</text>
+    ))}
+  </svg>
+</DiagramContainer>
+
+Each row sums to exactly 1. Each cell represents how much attention one token should pay to another.
+
+---
+
+## Why Probabilities Enable Learning
+
+With probabilities, GPT can now compute a **weighted average** of the Value vectors. This is the actual output of Self-Attention.
+
+<Comparison
+  title="Scores vs Weights — What Changes"
+  left={{
+    label: "With Raw Scores",
+    points: [
+      "Cannot compute a weighted average",
+      "Scores might be 3.46, 2.96, 2.67",
+      "How much of each Value should we use?",
+      "Unclear and inconsistent",
+    ]
+  }}
+  right={{
+    label: "With Attention Weights",
+    points: [
+      "Weighted average is straightforward",
+      "Weights are 0.47, 0.29, 0.24",
+      "47% of this Value, 29% of that Value...",
+      "Precise and consistent",
+    ]
+  }}
+/>
+
+---
+
+## Complete Scaled Dot-Product Attention
+
+<MathBlock title="Full Attention Formula">
+  $$\text{Attention}(Q, K, V) = \text{Softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+</MathBlock>
+
+This single equation captures the entire computation covered across Days 11–14:
+1. `QKᵀ` — compare every Query with every Key
+2. `÷ √dₖ` — scale for numerical stability
+3. `Softmax(...)` — convert to probabilities
+4. `× V` — use weights to compute a weighted average of Values
+
+---
+
+## Engineering Insight
+
+The Attention Weight Matrix has shape `n × n` — same as the Attention Score Matrix.
+
+<TokenMapping
+  title="Shape Summary"
+  fromLabel="Matrix"
+  toLabel="Shape"
+  items={[
+    { from: "Attention Scores",  to: "n × n  (raw)" },
+    { from: "Scaled Scores",     to: "n × n  (÷ √d)" },
+    { from: "Attention Weights", to: "n × n  (Softmax applied)" },
+    { from: "Each row",          to: "sums to 1.0" },
+  ]}
+/>
+
+---
+
+## Key Takeaways
+
+- Raw Attention Scores cannot be used directly — they are not probabilities.
+- Softmax applies exponentiation then normalization to each row.
+- Every row becomes a valid probability distribution summing to 1.
+- The result is the **Attention Weight Matrix**.
+- These weights determine how much each token attends to every other token.
+- The complete attention formula is `Softmax(QKᵀ / √dₖ) V`.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why can't GPT use raw scores to weight the Values?
+- Why does Softmax use exponentiation?
+- Why must every row sum to 1?
+- What does a high attention weight mean in practice?
+
+---
+
+## What's Next?
+
+We now have the **Attention Weight Matrix** — a complete probability distribution telling GPT how much attention each token should pay to every other token.
+
+The final step of Self-Attention is to use these weights to compute the actual output:
+
+> **Weighted Average of the Value Vectors**
+
+In the next lesson, we'll multiply the Attention Weight Matrix by the Value Matrix and see how GPT produces context-aware representations for each token.
+
+---
+
+## Understanding the Tensor Shapes
+
+Suppose the sentence contains 3 tokens. After scaling, GPT has the Scaled Attention Scores `(3 × 3)`.
+
+Softmax is **not** applied to the entire matrix at once — it is applied **independently to each row**.
+
+<TokenMapping
+  title="Shape Before and After Softmax"
+  fromLabel="Stage"
+  toLabel="Shape"
+  items={[
+    { from: "Scaled Attention Scores (input)", to: "3 × 3" },
+    { from: "Softmax applied row-by-row",      to: "3 × 3" },
+    { from: "Attention Weight Matrix (output)", to: "3 × 3" },
+  ]}
+/>
+
+The dimensions never change. Only the values change.
+
+---
+
+## Mathematics — Row by Row
+
+<MathBlock title="Softmax Applied to One Row">
+  $$\text{Softmax}(x_i) = \frac{e^{x_i}}{\sum_j e^{x_j}}$$
+</MathBlock>
+
+For one Query with scaled scores `[3.46, 2.96, 2.67]`:
+
+<MathBlock title="Probability for Each Token">
+  $$p_1 = \frac{e^{3.46}}{e^{3.46}+e^{2.96}+e^{2.67}} \approx 0.47 \qquad p_2 \approx 0.29 \qquad p_3 \approx 0.24$$
+</MathBlock>
+
+`0.47 + 0.29 + 0.24 = 1` — a valid probability distribution. ✓
+
+---
+
+## Engineering Insight — Every Query Has Its Own Distribution
+
+Each Query performs its own independent Softmax — distributing 100% of its attention independently.
+
+<FlowDiagram title="Every Query Gets Its Own Full Distribution" steps={[
+  "Query 1 → Softmax → 100% attention distributed",
+  "Query 2 → Softmax → 100% attention distributed",
+  "Query 3 → Softmax → 100% attention distributed",
+  "Every row of the Attention Weight Matrix sums to 1"
+]} />
+
+---
+
+## Worked Example — Full 3×3 Matrix
+
+Scaled Attention Scores:
+
+<TokenMapping
+  title="Scaled Scores (Before Softmax)"
+  fromLabel="Query → Keys [I, Love, AI]"
+  toLabel="Scores"
+  items={[
+    { from: "I    (Query)", to: "[3.46,  2.96,  2.67]" },
+    { from: "Love (Query)", to: "[2.10,  4.52,  3.98]" },
+    { from: "AI   (Query)", to: "[1.84,  3.22,  4.88]" },
+  ]}
+/>
+
+After Softmax row by row — the **Attention Weight Matrix**:
+
+<DiagramContainer caption="Attention Weight Matrix — each row sums to 1. Darker cells = higher attention.">
+  <svg viewBox="0 0 340 200" width="100%" style={{ maxWidth: '340px' }} aria-hidden="true">
+    {['I','Love','AI'].map((label, ci) => (
+      <text key={label} x={130+ci*70} y={28} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-success)">{label}</text>
+    ))}
+    {[
+      { label:'I',    w:[0.47,0.29,0.24] },
+      { label:'Love', w:[0.06,0.62,0.32] },
+      { label:'AI',   w:[0.03,0.15,0.82] },
+    ].map((row, ri) => (
+      <g key={row.label}>
+        <text x="50" y={76+ri*52} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-accent)">{row.label}</text>
+        {row.w.map((w,ci) => {
+          const isMax = w === Math.max(...row.w);
+          return (
+            <g key={ci}>
+              <rect x={95+ci*70} y={56+ri*52} width={56} height={36} rx="6"
+                fill={`rgba(79,140,255,${0.05+w*0.5})`}
+                stroke={isMax ? 'var(--color-accent)' : 'var(--color-border)'}
+                strokeWidth={isMax ? 2 : 1}
+              />
+              <text x={123+ci*70} y={79+ri*52} textAnchor="middle" fontSize="12"
+                fontWeight={isMax ? '700' : '400'}
+                fill={isMax ? 'var(--color-accent)' : 'var(--color-text-secondary)'}>
+                {w}
+              </text>
+            </g>
+          );
+        })}
+        <text x="318" y={76+ri*52} textAnchor="middle" fontSize="10" fill="var(--color-success)">= 1</text>
+      </g>
+    ))}
+  </svg>
+</DiagramContainer>
+
+The token `AI` assigns 82% of its attention to itself — it has found itself most relevant in this context.
+
+---
+
+## Common Misconceptions
+
+**Softmax changes which token is most relevant.**
+
+No. Softmax preserves the ranking — it only converts scores into probabilities.
+
+**Softmax changes the tensor shape.**
+
+No. Input `(n×n)` → Output `(n×n)`. Only the values change.
+
+**The Attention Weight Matrix is trainable.**
+
+No. It is a temporary tensor computed during every forward pass. Only WQ, WK, WV are trainable.

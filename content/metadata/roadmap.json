@@ -276,6 +276,17 @@
         "estimatedReadingTime": "18 min",
         "estimatedStudyTime": "40 min",
         "tags": ["Self Attention", "Scaling", "Root d", "Softmax", "Transformers"]
+      },
+      {
+        "number": 14,
+        "title": "Softmax: From Scores to Attention Weights",
+        "slug": "module-2/day-14-softmax-from-scores-to-attention-weights",
+        "description": "Learn how Softmax converts scaled Attention Scores into probability distributions, creating the Attention Weight Matrix used by Self-Attention.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Self Attention", "Softmax", "Attention Weights", "Probability"]
       }
     ]
   },
