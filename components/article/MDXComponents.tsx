@@ -28,6 +28,8 @@ import TokenMapping from '@/components/ui/TokenMapping';
 import Comparison from '@/components/ui/Comparison';
 import MathBlock from '@/components/ui/MathBlock';
 import FunctionPlot from '@/components/ui/FunctionPlot';
+import ScalingVisualizer from '@/components/ui/ScalingVisualizer';
+import SoftmaxSaturation from '@/components/ui/SoftmaxSaturation';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -45,6 +47,8 @@ export {
   Comparison,
   MathBlock,
   FunctionPlot,
+  ScalingVisualizer,
+  SoftmaxSaturation,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -258,4 +262,6 @@ export const mdxComponents = {
   Comparison,
   MathBlock,
   FunctionPlot,
+  ScalingVisualizer,
+  SoftmaxSaturation,
 };

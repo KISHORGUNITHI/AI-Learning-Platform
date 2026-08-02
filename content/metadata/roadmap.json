@@ -265,6 +265,17 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Self Attention", "Dot Product", "Attention Scores", "Query", "Key", "Matrix Multiplication"]
+      },
+      {
+        "number": 13,
+        "title": "Why Do We Divide by √d?",
+        "slug": "module-2/day-13-why-do-we-divide-by-root-d",
+        "description": "Understand why Transformers scale the Attention Scores before applying Softmax and why √d keeps training numerically stable.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Self Attention", "Scaling", "Root d", "Softmax", "Transformers"]
       }
     ]
   },

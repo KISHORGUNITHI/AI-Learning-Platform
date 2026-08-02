@@ -1,0 +1,264 @@
+---
+title: "Why Do We Divide by √d?"
+slug: "module-2/day-13-why-do-we-divide-by-root-d"
+description: "Understand why Transformers scale the Attention Scores before applying Softmax and why √d keeps training numerically stable."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "18 min"
+estimatedStudyTime: "40 min"
+tags:
+  - Self Attention
+  - Scaling
+  - Root d
+  - Softmax
+  - Transformers
+learningObjectives:
+  - Understand why Attention Scores become very large.
+  - Learn why large values create problems for Softmax.
+  - Understand why GPT divides by √d.
+  - Build intuition behind stable numerical computation.
+  - Prepare for Softmax in the next lesson.
+prerequisites:
+  - topic: "Dot Product Attention & Attention Scores"
+    slug: "module-2/day-12-dot-product-attention-and-attention-scores"
+previous:
+  title: "Dot Product Attention & Attention Scores"
+  slug: "module-2/day-12-dot-product-attention-and-attention-scores"
+---
+
+> *"Sometimes the smallest mathematical operation prevents the biggest training problems."*
+
+---
+
+## Quick Recap
+
+In the previous lesson, GPT computed the Attention Score Matrix.
+
+<FlowDiagram title="Where We Are" steps={[
+  "Query × Keyᵀ",
+  "Attention Scores  (n × n)",
+  "Higher score = more relevant",
+  "But... scores can become dangerously large"
+]} />
+
+Everything seems perfect — but researchers discovered a hidden problem.
+
+---
+
+## The Problem
+
+Suppose two vectors have 4 dimensions. Their Dot Product might be `3.5`.
+
+Now imagine vectors with 768 dimensions. The Dot Product can be `42`, `67`, `95`, `128`.
+
+As the embedding dimension grows, the Attention Scores naturally become much larger.
+
+<Comparison
+  title="Small vs Large Embedding Dimension"
+  left={{
+    label: "Small Embedding (d = 4)",
+    points: [
+      "Only 4 multiplications summed",
+      "Dot product stays small (~3.5)",
+      "Softmax receives reasonable values",
+      "Gradients flow normally",
+    ]
+  }}
+  right={{
+    label: "Large Embedding (d = 768)",
+    points: [
+      "768 multiplications summed",
+      "Dot product becomes very large (~96)",
+      "Softmax receives extreme values",
+      "Training becomes unstable",
+    ]
+  }}
+/>
+
+---
+
+## Intuition — Why Size Makes Scores Explode
+
+The Dot Product adds together hundreds of multiplications. For a large vector, hundreds of numbers are added — not because the vectors became "more similar", but simply because there are far more dimensions contributing to the sum.
+
+---
+
+## Visual Activity — Scaling in Action
+
+Move the slider to see how the Dot Product grows with embedding dimension, and how dividing by √d brings it back to a stable range.
+
+<ScalingVisualizer />
+
+---
+
+## What Does GPT Actually Do?
+
+Instead of directly using `QKᵀ`, GPT performs one additional step.
+
+<FlowDiagram title="Scaled Attention Computation" steps={[
+  "Q × Kᵀ",
+  "Divide every score by √dₖ",
+  "Scaled Attention Scores",
+  "Apply Softmax"
+]} />
+
+---
+
+## Why √d Specifically?
+
+<Comparison
+  title="Why Not Divide by 2 or d?"
+  left={{
+    label: "Dividing by a constant (e.g. 2)",
+    points: [
+      "Helps for small dimensions",
+      "Doesn't scale with model size",
+      "Larger models still get too-large scores",
+    ]
+  }}
+  right={{
+    label: "Dividing by √dₖ",
+    points: [
+      "Grows at the same rate as the Dot Product",
+      "Works for any embedding dimension",
+      "Keeps scores in a stable range always",
+    ]
+  }}
+/>
+
+> **√d grows at almost the same rate as the Dot Product — making it an ideal scaling factor.**
+
+---
+
+## Mathematics
+
+<MathBlock title="Scaled Attention Scores">
+  $$\text{Scaled Scores} = \frac{QK^T}{\sqrt{d_k}}$$
+</MathBlock>
+
+where **Q** is the Query Matrix, **K** is the Key Matrix, and **dₖ** is the dimension of the Key vectors.
+
+This scaling happens **before Softmax**.
+
+---
+
+## Why Large Dot Products Are Dangerous
+
+Softmax uses the exponential function — and exponentials grow extremely fast.
+
+<TokenMapping
+  title="How Fast Exponentials Grow"
+  fromLabel="Input"
+  toLabel="eˣ output"
+  items={[
+    { from: "x = 2",  to: "≈ 7"           },
+    { from: "x = 4",  to: "≈ 55"          },
+    { from: "x = 8",  to: "≈ 2,981"       },
+    { from: "x = 96", to: "≈ 10⁴¹  (!!)" },
+  ]}
+/>
+
+When scores are `96`, `82`, `74`, the first exponential is astronomically larger than the rest — one token absorbs all the attention.
+
+---
+
+## Visual Activity — Softmax Saturation vs Stable Attention
+
+<SoftmaxSaturation />
+
+---
+
+## What Is Softmax Saturation?
+
+Without scaling, Softmax becomes extremely confident — almost all probability collapses onto a single token. This is **Softmax Saturation**.
+
+<Comparison
+  title="Saturated vs Stable Softmax"
+  left={{
+    label: "Without Scaling (Saturated)",
+    points: [
+      "Scores: 96, 82, 74",
+      "Softmax: [0.999999, 0.000001, 0.000000]",
+      "One token gets all the attention",
+      "Other tokens are completely ignored",
+    ]
+  }}
+  right={{
+    label: "After ÷ √768 (Stable)",
+    points: [
+      "Scores: 3.46, 2.96, 2.67",
+      "Softmax: [0.47, 0.29, 0.24]",
+      "Attention distributed across tokens",
+      "Model can learn from context",
+    ]
+  }}
+/>
+
+---
+
+## Why Saturation Breaks Training
+
+During training, GPT learns through Backpropagation — which depends on gradients.
+
+When Softmax saturates, its gradients become extremely small (**vanishing gradients**).
+
+<FlowDiagram title="How Saturation Breaks Learning" steps={[
+  "Large Attention Scores",
+  "Softmax Saturates",
+  "Probabilities near 0 or 1",
+  "Gradients become near-zero",
+  "Parameters barely update",
+  "Learning stops effectively"
+]} />
+
+Scaling prevents Softmax from reaching this saturated state, allowing gradients to flow much more effectively.
+
+---
+
+## What Changes After Scaling?
+
+Scaling does **not** change which token is most relevant — it only reduces the magnitude.
+
+<TokenMapping
+  title="Ranking is Preserved After Scaling"
+  fromLabel="Before Scaling"
+  toLabel="After ÷ √768"
+  items={[
+    { from: "96  (most relevant)",      to: "3.46  (still most relevant)"  },
+    { from: "82  (second)",             to: "2.96  (still second)"         },
+    { from: "74  (least relevant)",     to: "2.67  (still least relevant)" },
+  ]}
+/>
+
+The ordering is identical. Only the magnitude is reduced to a stable range.
+
+---
+
+## Key Takeaways
+
+- Dot Products naturally grow as the embedding dimension increases.
+- Softmax is highly sensitive to large input values because it uses exponentials.
+- Large Attention Scores cause **Softmax Saturation**.
+- Saturated Softmax produces probabilities close to 0 or 1, leading to vanishing gradients.
+- Dividing by **√dₖ** keeps Attention Scores in a numerically stable range.
+- Scaling **preserves the ranking** of scores — only the magnitude changes.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why does Softmax use exponentials?
+- Why are large Attention Scores dangerous?
+- What is Softmax Saturation?
+- Why does dividing by **√dₖ** improve training?
+- Does scaling change which token is most relevant?
+
+---
+
+## What's Next?
+
+We now have **Scaled Attention Scores** — raw numerical scores that are numerically stable.
+
+The next step is to convert them into **probabilities** using the **Softmax Function**, creating the **Attention Weight Matrix**.
+
+Each row of this matrix will represent a probability distribution — telling GPT exactly **how much attention each token should pay to every other token**.
