@@ -1,0 +1,178 @@
+---
+title: "Static vs Contextual Embeddings"
+slug: "module-2/day-4-static-vs-contextual-embeddings"
+description: "Learn why the same word can have different meanings depending on context and how Transformers solve this limitation."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "13 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Embeddings
+  - Contextual Embeddings
+  - Static Embeddings
+  - Transformer
+learningObjectives:
+  - Understand the difference between static and contextual embeddings.
+  - Learn why static embeddings have limitations.
+  - Discover how Transformers create contextual representations.
+  - Build intuition for why context is essential in language understanding.
+prerequisites:
+  - topic: "How Embeddings Learn Meaning"
+    slug: "module-2/day-3-how-embeddings-learn-meaning"
+previous:
+  title: "How Embeddings Learn Meaning"
+  slug: "module-2/day-3-how-embeddings-learn-meaning"
+next:
+  title: "Why Word Order Matters"
+  slug: "module-2/day-5-why-word-order-matters"
+---
+
+> *"The meaning of a word doesn't live inside the word itself — it lives inside the sentence."*
+
+---
+
+## The Problem
+
+Consider the word `Bank`.
+
+Without a sentence, there is no answer to what it means.
+
+Now read these two sentences:
+
+- `I deposited money in the bank.`
+- `The boat reached the river bank.`
+
+Same word. Completely different meanings.
+
+How can AI understand this?
+
+---
+
+## Intuition
+
+Imagine someone sends you a message: `I'm at the bank.`
+
+Would you think of a financial institution or the side of a river?
+
+You can't decide. You immediately ask: **"What's the context?"**
+
+Humans naturally use surrounding words to understand meaning. Modern LLMs do exactly the same.
+
+<Comparison
+  title="Same Word, Different Meaning"
+  left={{
+    label: "Financial Context",
+    points: [
+      "Surrounding words: money, account, deposit",
+      "Bank = financial institution",
+      "Vector points toward finance concepts",
+    ]
+  }}
+  right={{
+    label: "Geographic Context",
+    points: [
+      "Surrounding words: river, boat, water",
+      "Bank = side of a river",
+      "Vector points toward nature concepts",
+    ]
+  }}
+/>
+
+---
+
+## Static Embeddings
+
+Older language models used **Static Embeddings**.
+
+That means `Bank` always had **one single vector** — no matter where it appeared, the embedding never changed.
+
+<TokenMapping
+  title="Static Embedding — Always the Same"
+  fromLabel="Sentence"
+  toLabel="Embedding for 'bank'"
+  items={[
+    { from: "Money in the bank",    to: "[0.42, -0.81, 0.93, ...]" },
+    { from: "River bank",           to: "[0.42, -0.81, 0.93, ...]" },
+    { from: "Bank of clouds",       to: "[0.42, -0.81, 0.93, ...]" },
+  ]}
+/>
+
+One vector. One meaning. For every situation.
+
+This worked well for unambiguous words but completely failed for words with multiple meanings.
+
+---
+
+## The Transformer's Solution
+
+Transformers introduced **Contextual Embeddings**.
+
+Instead of assigning one fixed vector, the model first looks at the surrounding words, then builds a new representation. The meaning now depends on the sentence.
+
+<FlowDiagram title="How Contextual Embeddings Work" steps={[
+  "Sentence",
+  "Surrounding Words",
+  "Transformer (Attention)",
+  "Contextual Embedding",
+  "Context-Aware Meaning"
+]} />
+
+The same word can now have different representations depending on its context.
+
+<TokenMapping
+  title="Contextual Embedding — Changes with Context"
+  fromLabel="Sentence"
+  toLabel="Embedding for 'bank'"
+  items={[
+    { from: "Money in the bank",  to: "[0.91, 0.15, -0.42, ...]  ← finance" },
+    { from: "River bank",         to: "[-0.33, 0.87, 0.61, ...]  ← nature"  },
+  ]}
+/>
+
+Same word. Different vectors. Different meanings.
+
+---
+
+## Worked Example
+
+**Sentence 1:** `She opened a new bank account.`
+
+The surrounding words `opened` and `account` tell the model that **bank = financial institution**.
+
+**Sentence 2:** `The children played near the bank.`
+
+The surrounding words `played` and `near` suggest a physical location, so the model understands **bank = river bank**.
+
+The tokenizer produced the same Token ID both times. The difference comes entirely from the Transformer building a **context-aware representation**.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why can't one embedding represent every meaning of a word?
+- How does the same Token ID produce different meanings?
+- Why is context so important in language understanding?
+
+---
+
+## Key Takeaways
+
+- Static embeddings assign one vector to every word — regardless of context.
+- Many words have multiple meanings that static embeddings cannot capture.
+- Transformers build contextual embeddings using surrounding words.
+- The same word can have different representations in different sentences.
+- Context is what makes language understanding possible.
+
+---
+
+## What's Next?
+
+We've learned how embeddings represent meaning.
+
+But one major problem still exists.
+
+Even with contextual embeddings, the Transformer still doesn't know **where each word appears** in the sentence.
+
+For example, `Dog bites man` and `Man bites dog` contain the same words — but completely different meanings.
+
+In the next lesson, we'll discover **why Transformers need positional information** before they can truly understand language.
