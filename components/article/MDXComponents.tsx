@@ -35,6 +35,7 @@ import WeightedSumVisualizer from '@/components/ui/WeightedSumVisualizer';
 import SelfAttentionWalkthrough from '@/components/ui/SelfAttentionWalkthrough';
 import MultiHeadArchitecture from '@/components/ui/MultiHeadArchitecture';
 import ParallelHeadsVisualizer from '@/components/ui/ParallelHeadsVisualizer';
+import ConcatenationVisualizer from '@/components/ui/ConcatenationVisualizer';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -59,6 +60,7 @@ export {
   SelfAttentionWalkthrough,
   MultiHeadArchitecture,
   ParallelHeadsVisualizer,
+  ConcatenationVisualizer,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -279,4 +281,5 @@ export const mdxComponents = {
   SelfAttentionWalkthrough,
   MultiHeadArchitecture,
   ParallelHeadsVisualizer,
+  ConcatenationVisualizer,
 };

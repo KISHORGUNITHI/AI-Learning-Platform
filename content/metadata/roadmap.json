@@ -331,6 +331,17 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Multi Head Attention", "Parallel Computing", "Attention Heads", "Tensor Shapes", "Transformer"]
+      },
+      {
+        "number": 19,
+        "title": "Bringing All Attention Heads Together",
+        "slug": "module-2/day-19-bringing-all-attention-heads-together",
+        "description": "Learn how GPT combines the outputs of multiple attention heads using concatenation and the output projection matrix.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "10 min",
+        "estimatedStudyTime": "20 min",
+        "tags": ["Multi Head Attention", "Concatenation", "Output Projection", "WO"]
       }
     ]
   },
