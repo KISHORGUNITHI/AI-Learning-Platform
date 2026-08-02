@@ -1,0 +1,309 @@
+---
+title: "Dot Product Attention & Attention Scores"
+slug: "module-2/day-12-dot-product-attention-and-attention-scores"
+description: "Learn how GPT measures the relevance between tokens using the Dot Product and builds the Attention Score Matrix."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Self Attention
+  - Dot Product
+  - Attention Scores
+  - Query
+  - Key
+  - Matrix Multiplication
+learningObjectives:
+  - Understand why Query is compared with Key.
+  - Learn why the Dot Product is used to measure similarity.
+  - Understand how GPT computes Attention Scores.
+  - Learn how the Attention Score Matrix is formed.
+  - Follow the tensor dimensions during the computation.
+prerequisites:
+  - topic: "Query, Key and Value Intuition"
+    slug: "module-2/day-10-query-key-value-intuition"
+  - topic: "From Embeddings to Query, Key and Value"
+    slug: "module-2/day-11-from-embeddings-to-query-key-and-value"
+previous:
+  title: "From Embeddings to Query, Key and Value"
+  slug: "module-2/day-11-from-embeddings-to-query-key-and-value"
+---
+
+> *"Before a token learns from another token, GPT first asks one question: 'How relevant are you to me?'"*
+
+---
+
+## Quick Recap
+
+In the previous lesson, every token created three vectors.
+
+<FlowDiagram title="What We Have So Far" steps={[
+  "Input Embeddings",
+  "Query Matrix Q  (n × 768)",
+  "Key Matrix K    (n × 768)",
+  "Value Matrix V  (n × 768)",
+  "Model still doesn't know which tokens are important"
+]} />
+
+GPT has prepared everything — but the model still doesn't know **which tokens are important**.
+
+---
+
+## The Problem
+
+Consider the sentence `I love AI`.
+
+Suppose GPT is processing the token `love`.
+
+Should it pay attention to `I`, or `AI`, or both?
+
+If GPT gave every token equal importance, every sentence would be treated almost the same. Language doesn't work like that.
+
+GPT needs to answer one question for every token:
+
+> **How relevant is every other token to me?**
+
+---
+
+## Intuition
+
+Imagine searching for a book in a library. You don't randomly pick books — you compare **what you're looking for** against **what each book is about**.
+
+<Comparison
+  title="Library Search vs Self-Attention"
+  left={{
+    label: "Library Search",
+    points: [
+      "You carry a search query in mind",
+      "Each book has a label describing its topic",
+      "You compare your query with each label",
+      "Better match → more relevant book",
+    ]
+  }}
+  right={{
+    label: "Self-Attention",
+    points: [
+      "Each token carries a Query vector",
+      "Each token carries a Key vector (its label)",
+      "Query is compared with every Key",
+      "Higher score → more relevant token",
+    ]
+  }}
+/>
+
+---
+
+## Why Query × Key?
+
+GPT compares Query with Key — not with Value.
+
+<TokenMapping
+  title="Why This Comparison?"
+  fromLabel="Vector"
+  toLabel="Purpose"
+  items={[
+    { from: "Query", to: "What information am I looking for?" },
+    { from: "Key",   to: "What information do I contain?"     },
+    { from: "Value", to: "What information can I share? (used later)" },
+  ]}
+/>
+
+The comparison between Query and Key produces a number called the **Attention Score**.
+
+- Larger score → highly relevant tokens
+- Smaller score → weak relationship
+
+---
+
+## Building the Attention Score Matrix
+
+For the sentence `I  Love  AI`, every Query is compared against every Key.
+
+<DiagramContainer caption="Each row = one Query compared against every Key. Each cell = one attention score.">
+  <svg viewBox="0 0 340 220" width="100%" style={{ maxWidth: '340px' }} aria-hidden="true">
+    {/* Column headers (Keys) */}
+    {["I", "Love", "AI"].map((label, ci) => (
+      <text key={label} x={130 + ci * 70} y={30} textAnchor="middle"
+        fontSize="12" fontWeight="700" fill="var(--color-success)">
+        {label}
+      </text>
+    ))}
+    <text x={45} y={18} textAnchor="middle" fontSize="9" fill="var(--color-text-tertiary)">Queries ↓</text>
+    <text x={200} y={18} textAnchor="middle" fontSize="9" fill="var(--color-success)">Keys →</text>
+
+    {/* Row headers (Queries) + cells */}
+    {[
+      { label: "I",    scores: [8.1, 6.4, 2.3] },
+      { label: "Love", scores: [5.8, 9.5, 8.9] },
+      { label: "AI",   scores: [1.4, 8.7, 9.8] },
+    ].map((row, ri) => {
+      const maxScore = Math.max(...row.scores);
+      return (
+        <g key={row.label}>
+          {/* Row label */}
+          <text x={45} y={80 + ri * 56} textAnchor="middle"
+            fontSize="12" fontWeight="700" fill="var(--color-accent)">
+            {row.label}
+          </text>
+
+          {row.scores.map((score, ci) => {
+            const intensity = (score - 1) / 9;
+            const isMax = score === maxScore;
+            return (
+              <g key={ci}>
+                <rect
+                  x={95 + ci * 70} y={58 + ri * 56}
+                  width={56} height={40} rx="6"
+                  fill={`rgba(79,140,255,${0.08 + intensity * 0.35})`}
+                  stroke={isMax ? 'var(--color-accent)' : 'var(--color-border)'}
+                  strokeWidth={isMax ? 2 : 1}
+                />
+                <text x={123 + ci * 70} y={83 + ri * 56}
+                  textAnchor="middle" fontSize="13" fontWeight={isMax ? '700' : '400'}
+                  fill={isMax ? 'var(--color-accent)' : 'var(--color-text-secondary)'}>
+                  {score}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      );
+    })}
+
+    {/* Axis labels */}
+    <text x={45} y={210} textAnchor="middle" fontSize="9" fill="var(--color-accent)">Queries</text>
+    <text x={200} y={210} textAnchor="middle" fontSize="9" fill="var(--color-success)">Keys</text>
+  </svg>
+</DiagramContainer>
+
+The highest score in each row (shown in blue) means that Query finds that Key most relevant. These are **raw scores — not probabilities yet**.
+
+---
+
+## Understanding the Tensor Shapes
+
+Suppose the sentence has 3 tokens, each with a 768-dimensional embedding.
+
+<TokenMapping
+  title="Dimension Walkthrough"
+  fromLabel="Matrix"
+  toLabel="Shape"
+  items={[
+    { from: "Query Q",              to: "3 × 768"  },
+    { from: "Key K",                to: "3 × 768"  },
+    { from: "Key Transposed Kᵀ",    to: "768 × 3"  },
+    { from: "Q × Kᵀ → Scores",     to: "3 × 3"    },
+  ]}
+/>
+
+Why the transpose? We cannot multiply `(3×768) × (3×768)` — the inner dimensions don't match. Transposing the Key gives `(768×3)`, making the multiplication `(3×768) × (768×3) = (3×3)` ✓
+
+The embedding dimension **disappears** after multiplication. The output is always `n × n` where n = number of tokens.
+
+---
+
+## Mathematics
+
+<MathBlock title="Attention Score Computation">
+  $$\text{Attention Scores} = QK^T$$
+</MathBlock>
+
+<MathBlock title="Dimension Example">
+  $$(3 \times 768) \times (768 \times 3) = (3 \times 3)$$
+</MathBlock>
+
+The result is a square matrix where every Query has been compared against every Key simultaneously.
+
+---
+
+## Engineering Insight
+
+The Attention Score Matrix is **not** a learnable parameter — it is a temporary tensor created during every forward pass.
+
+<Comparison
+  title="Learned Parameters vs Temporary Tensors"
+  left={{
+    label: "Learned (Permanent)",
+    points: [
+      "WQ — Query weight matrix",
+      "WK — Key weight matrix",
+      "WV — Value weight matrix",
+      "Updated by backpropagation",
+    ]
+  }}
+  right={{
+    label: "Computed (Temporary)",
+    points: [
+      "Q, K, V matrices",
+      "Attention Score Matrix",
+      "Created fresh for every sentence",
+      "Discarded after each forward pass",
+    ]
+  }}
+/>
+
+---
+
+## Worked Example
+
+Sentence: `I love AI` → 3 tokens → 3 Queries, 3 Keys.
+
+<FlowDiagram title="Full Attention Score Computation" steps={[
+  "Query Q   (3 × 768)",
+  "Key K     (3 × 768)",
+  "Transpose Key → Kᵀ  (768 × 3)",
+  "Q × Kᵀ",
+  "Attention Score Matrix  (3 × 3)",
+  "Every Query compared against every Key"
+]} />
+
+Result — each row shows how relevant every other token is to one Query token:
+
+<TokenMapping
+  title="Attention Score Matrix — I Love AI"
+  fromLabel="Query Token"
+  toLabel="Scores [I, Love, AI]"
+  items={[
+    { from: "I    (Query)", to: "[8.1,  6.4,  2.3]" },
+    { from: "Love (Query)", to: "[5.8,  9.5,  8.9]" },
+    { from: "AI   (Query)", to: "[1.4,  8.7,  9.8]" },
+  ]}
+/>
+
+These are **raw similarity scores**, not probabilities. Larger = more relevant.
+
+---
+
+## Key Takeaways
+
+- GPT compares **Query** with **Key** to measure relevance between tokens.
+- The Dot Product (matrix multiplication) is the similarity measure.
+- The Key matrix is transposed before multiplication.
+- The Attention Score Matrix has shape **n × n** (tokens × tokens).
+- The embedding dimension disappears after the multiplication.
+- Attention Scores are temporary — computed fresh for every sentence.
+- These scores are raw similarities, not probabilities yet.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why is Query compared only with Key, not Value?
+- Why is the Key matrix transposed?
+- Why does the output become n × n?
+- Are Attention Scores learned parameters?
+- Why aren't these scores probabilities yet?
+
+---
+
+## What's Next?
+
+We now have the **Attention Score Matrix**.
+
+But there is one major problem — as the embedding dimension grows larger, the Dot Product values also grow larger. Large values make learning unstable.
+
+So before converting these scores into probabilities, GPT performs one simple but critical operation: dividing every score by
+
+$$\sqrt{d_k}$$
+
+In the next lesson, we'll discover **why this tiny mathematical operation is essential for stable Transformer training**.
