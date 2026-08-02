@@ -1,0 +1,261 @@
+---
+title: "From Scores to Predictions"
+slug: "module-1/day-6-from-scores-to-predictions"
+description: "Learn how GPT converts raw prediction scores into probabilities and finally chooses the next token."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "17 min"
+estimatedStudyTime: "40 min"
+tags:
+  - Logits
+  - Softmax
+  - Probability
+  - Inference
+learningObjectives:
+  - Understand what logits are.
+  - Learn why logits are not probabilities.
+  - Understand why Softmax is needed.
+  - See how probability distributions are formed.
+  - Learn the difference between training and inference.
+prerequisites:
+  - topic: "Inside One Training Iteration"
+    slug: "module-1/day-5-inside-one-training-iteration"
+previous:
+  title: "Inside One Training Iteration"
+  slug: "module-1/day-5-inside-one-training-iteration"
+next:
+  title: "Measuring Mistakes with Cross Entropy Loss"
+  slug: "module-1/day-7-cross-entropy-loss"
+---
+
+> *"GPT never directly predicts a word. It first assigns a score to every possible word, then decides which one is most likely."*
+
+---
+
+## The Problem
+
+The forward pass has finished.
+
+The network has processed the sentence `"The sky is"`.
+
+Now the question is — how does GPT actually choose `blue` instead of `green` or `computer`?
+
+Does it directly output a word?
+
+No. Something important happens first.
+
+---
+
+## Intuition
+
+Imagine five students writing an exam. Each receives a score.
+
+<TokenMapping
+  title="Exam Scores"
+  fromLabel="Student"
+  toLabel="Score"
+  items={[
+    { from: "Alice",   to: "92" },
+    { from: "Bob",     to: "87" },
+    { from: "Charlie", to: "61" },
+    { from: "David",   to: "55" },
+    { from: "Emma",    to: "30" },
+  ]}
+/>
+
+These scores rank the students. But they are **not probabilities**.
+
+Similarly, GPT first gives every vocabulary word a score. These scores are called **Logits**.
+
+---
+
+## Step 1 — Logits
+
+After the forward pass, the output layer produces one value for every word in the vocabulary.
+
+<TokenMapping
+  title="Raw Logits"
+  fromLabel="Word"
+  toLabel="Logit"
+  items={[
+    { from: "blue",     to: "8.1" },
+    { from: "green",    to: "6.3" },
+    { from: "red",      to: "2.7" },
+    { from: "orange",   to: "1.1" },
+    { from: "computer", to: "-0.8" },
+  ]}
+/>
+
+A larger logit means the model currently prefers that word more.
+
+But logits have problems — they can be negative, very large, and they don't sum to 1. They cannot be interpreted as probabilities.
+
+---
+
+## Vocabulary Score Pipeline
+
+<FlowDiagram title="From Sentence to Logits" steps={[
+  "Sentence",
+  "Forward Pass",
+  "Output Layer",
+  "One Logit per Vocabulary Word"
+]} />
+
+---
+
+## Why Can't We Use Logits Directly?
+
+Suppose we have `blue → 8.1`. What does `8.1` actually mean? 80% confidence? 90%?
+
+No. A logit has no direct probabilistic meaning.
+
+We need another mathematical transformation.
+
+---
+
+## Step 2 — Softmax
+
+Softmax converts logits into probabilities.
+
+<TokenMapping
+  title="After Softmax"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "blue",     to: "0.81" },
+    { from: "green",    to: "0.15" },
+    { from: "red",      to: "0.03" },
+    { from: "orange",   to: "0.009" },
+    { from: "computer", to: "0.001" },
+  ]}
+/>
+
+Now every value has meaning. The model estimates that `blue` has an 81% probability of being the next token.
+
+---
+
+## Mathematics
+
+Softmax is defined as:
+
+<MathBlock title="Softmax Function">
+  $$P_i = \frac{e^{z_i}}{\sum_{j=1}^{n} e^{z_j}}$$
+</MathBlock>
+
+where **zᵢ** is the logit of one word, **e^zᵢ** makes all values positive, and the denominator normalizes everything so all probabilities sum to **1**.
+
+> Convert arbitrary scores into a valid probability distribution.
+
+---
+
+## Softmax Pipeline
+
+<FlowDiagram title="Softmax Pipeline" steps={[
+  "Logits",
+  "Exponentiation",
+  "Normalization",
+  "Probability Distribution"
+]} />
+
+---
+
+## Training vs Inference
+
+<Comparison
+  title="Training vs Inference"
+  left={{
+    label: "Training",
+    points: [
+      "Correct answer is known",
+      "Probabilities compared with correct answer",
+      "Loss is calculated",
+      "Parameters are updated",
+    ]
+  }}
+  right={{
+    label: "Inference",
+    points: [
+      "No correct answer exists",
+      "GPT uses probabilities to generate next token",
+      "Sampling strategy decides which token to pick",
+      "Temperature, Top-k, Top-p control randomness",
+    ]
+  }}
+/>
+
+---
+
+## Worked Example
+
+Suppose GPT predicts:
+
+<TokenMapping
+  title="Prediction Distribution"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "blue",  to: "0.70" },
+    { from: "green", to: "0.20" },
+    { from: "red",   to: "0.08" },
+    { from: "dog",   to: "0.02" },
+  ]}
+/>
+
+During **training** — if the correct answer is `blue`, the model proceeds to calculate the loss.
+
+During **inference** — GPT usually generates `blue` because it has the highest probability.
+
+---
+
+## Common Misconceptions
+
+**GPT predicts words directly.**
+
+No. It predicts logits first.
+
+**Logits are probabilities.**
+
+No. Softmax converts logits into probabilities.
+
+**Softmax chooses the word.**
+
+Not exactly. Softmax produces probabilities. The decoding strategy decides which token to generate.
+
+**Every prediction uses the highest probability.**
+
+Not always. Sampling strategies can intentionally choose lower-probability words.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why doesn't GPT directly output words?
+- Why are logits needed?
+- Why can't scores be used as probabilities?
+- Why do probabilities always sum to one?
+- Why does inference sometimes generate different answers?
+
+---
+
+## Key Takeaways
+
+- GPT predicts logits, not words.
+- Logits are raw scores.
+- Softmax converts logits into probabilities.
+- Probability distributions always sum to one.
+- Training compares probabilities with the correct answer.
+- Inference generates text using those probabilities.
+
+---
+
+## What's Next?
+
+Now GPT knows **how confident** it is about every possible next word.
+
+But one question remains.
+
+If the correct answer was `blue` and GPT predicted `green` — **how wrong was it?**
+
+We need a mathematical way to measure that mistake.
+
+In the next lesson, we'll explore **Cross Entropy Loss** — the function that tells GPT exactly how much it needs to improve.
