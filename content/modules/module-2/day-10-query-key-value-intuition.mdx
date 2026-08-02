@@ -47,6 +47,41 @@ Can you read every single book? No. Instead, you search for the most relevant on
 
 Language works the same way. When a token wants to understand itself, it shouldn't treat every other token equally — it needs a way to decide **who is worth paying attention to**.
 
+<DiagramContainer caption="Attention is the process of finding the most relevant information">
+  <svg viewBox="0 0 340 180" width="100%" style={{ maxWidth: '340px' }} aria-hidden="true">
+    {/* Student */}
+    <circle cx="50" cy="90" r="18" fill="var(--color-accent-subtle)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="50" y="94" textAnchor="middle" fontSize="10" fill="var(--color-accent)">You</text>
+    <text x="50" y="120" textAnchor="middle" fontSize="9" fill="var(--color-text-tertiary)">Looking for AI</text>
+    {/* Books */}
+    {[
+      { x: 160, y: 30,  label: "AI",       highlight: true  },
+      { x: 230, y: 30,  label: "Cooking",  highlight: false },
+      { x: 160, y: 90,  label: "Physics",  highlight: false },
+      { x: 230, y: 90,  label: "AI Ethics",highlight: true  },
+      { x: 160, y: 150, label: "History",  highlight: false },
+      { x: 230, y: 150, label: "Football", highlight: false },
+    ].map((b) => (
+      <g key={b.label}>
+        <rect x={b.x - 28} y={b.y - 14} width={56} height={28} rx="5"
+          fill={b.highlight ? 'var(--color-accent-subtle)' : 'var(--color-surface-2)'}
+          stroke={b.highlight ? 'var(--color-accent)' : 'var(--color-border)'}
+          strokeWidth="1.5"
+          opacity={b.highlight ? 1 : 0.45}
+        />
+        <text x={b.x} y={b.y + 4} textAnchor="middle" fontSize="9"
+          fill={b.highlight ? 'var(--color-accent)' : 'var(--color-text-tertiary)'}>
+          {b.label}
+        </text>
+        {b.highlight && (
+          <line x1="68" y1="90" x2={b.x - 28} y2={b.y}
+            stroke="var(--color-accent)" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.6"/>
+        )}
+      </g>
+    ))}
+  </svg>
+</DiagramContainer>
+
 <Comparison
   title="Attention is Selective"
   left={{
@@ -78,6 +113,42 @@ Imagine a classroom. The teacher asks: **"Who knows Python?"**
 Every student reacts differently — some raise their hands, others stay silent. The teacher naturally pays attention to the relevant students.
 
 Tokens behave the same way. Every token decides **who is most useful** before learning from them.
+
+<DiagramContainer caption="Not every token is equally relevant to the question">
+  <svg viewBox="0 0 300 160" width="100%" style={{ maxWidth: '300px' }} aria-hidden="true">
+    {/* Teacher */}
+    <rect x="10" y="60" width="60" height="40" rx="8"
+      fill="var(--color-accent-subtle)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="40" y="78" textAnchor="middle" fontSize="9" fill="var(--color-accent)">Teacher</text>
+    <text x="40" y="92" textAnchor="middle" fontSize="8" fill="var(--color-accent)">"Who knows</text>
+    {/* Students */}
+    {[
+      { x: 140, y: 30,  label: "Python ✓", relevant: true  },
+      { x: 210, y: 30,  label: "Art ✗",    relevant: false },
+      { x: 140, y: 90,  label: "Python ✓", relevant: true  },
+      { x: 210, y: 90,  label: "Music ✗",  relevant: false },
+      { x: 140, y: 150, label: "Cooking ✗",relevant: false },
+      { x: 210, y: 150, label: "Python ✓", relevant: true  },
+    ].map((s) => (
+      <g key={`${s.x}-${s.y}`}>
+        <circle cx={s.x} cy={s.y} r="18"
+          fill={s.relevant ? 'var(--color-success-bg)' : 'var(--color-surface-2)'}
+          stroke={s.relevant ? 'var(--color-success)' : 'var(--color-border)'}
+          strokeWidth="1.5"
+          opacity={s.relevant ? 1 : 0.4}
+        />
+        <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="8"
+          fill={s.relevant ? 'var(--color-success-text)' : 'var(--color-text-tertiary)'}>
+          {s.label}
+        </text>
+        {s.relevant && (
+          <line x1="70" y1="80" x2={s.x - 18} y2={s.y}
+            stroke="var(--color-success)" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.6"/>
+        )}
+      </g>
+    ))}
+  </svg>
+</DiagramContainer>
 
 ---
 
