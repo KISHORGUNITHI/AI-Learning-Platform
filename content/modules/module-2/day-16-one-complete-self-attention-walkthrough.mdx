@@ -1,0 +1,69 @@
+---
+title: "One Complete Self-Attention Walkthrough"
+slug: "module-2/day-16-one-complete-self-attention-walkthrough"
+description: "Follow one complete Self-Attention computation from input embeddings to contextual representations."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "5 min"
+estimatedStudyTime: "10 min"
+tags:
+  - Self Attention
+  - Walkthrough
+  - Recap
+  - Transformer
+learningObjectives:
+  - Connect every concept learned in the Self-Attention section.
+  - Visualize the complete Self-Attention pipeline.
+  - Understand how each stage depends on the previous one.
+  - Build one complete mental model before learning Multi-Head Attention.
+prerequisites:
+  - topic: "Attention Weights × Value Matrix"
+    slug: "module-2/day-15-attention-weights-value-matrix"
+previous:
+  title: "Attention Weights × Value Matrix"
+  slug: "module-2/day-15-attention-weights-value-matrix"
+---
+
+> *"You don't truly understand Self-Attention until you can follow one complete journey from start to finish."*
+
+---
+
+## Interactive Self-Attention Pipeline
+
+Click any stage to explore it. Use the navigation buttons to walk through each step in order.
+
+<SelfAttentionWalkthrough />
+
+---
+
+## The Complete Formula
+
+<MathBlock title="Scaled Dot-Product Self-Attention">
+  $$\text{Attention}(Q, K, V) = \text{Softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+</MathBlock>
+
+Every step from Days 11–15 lives inside this single equation.
+
+---
+
+## Key Takeaways
+
+- Every token creates Query, Key and Value vectors.
+- Query compares with every Key to compute Attention Scores.
+- Scaling by √dₖ keeps the scores numerically stable.
+- Softmax converts the scores into a probability distribution.
+- Attention Weights determine how much information to gather from each token.
+- Value vectors provide the actual information.
+- The Context Matrix is the final output — each token now understands its sentence.
+
+---
+
+## What's Next?
+
+So far we've explored **one attention head**.
+
+But modern Transformers don't rely on just one.
+
+They run **multiple attention heads in parallel**, each learning different types of relationships at the same time.
+
+In the next lesson, we'll open the door to one of the most powerful ideas in the Transformer architecture: **Multi-Head Attention**.
