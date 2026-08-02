@@ -1,0 +1,168 @@
+---
+title: "Learned Positional Embeddings"
+slug: "module-2/day-6-learned-positional-embeddings"
+description: "Understand how GPT learns the position of every token by assigning a trainable vector to each position."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "15 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Positional Embeddings
+  - GPT
+  - Transformers
+  - Position Matrix
+  - Learned Embeddings
+learningObjectives:
+  - Understand what positional embeddings are.
+  - Learn why GPT uses trainable position vectors.
+  - Understand the positional embedding matrix.
+  - See how token embeddings and positional embeddings are combined.
+prerequisites:
+  - topic: "Why Word Order Matters"
+    slug: "module-2/day-5-why-word-order-matters"
+previous:
+  title: "Why Word Order Matters"
+  slug: "module-2/day-5-why-word-order-matters"
+next:
+  title: "Sinusoidal Positional Encoding"
+  slug: "module-2/day-7-sinusoidal-positional-encoding"
+---
+
+> *"Embeddings tell GPT what a word is. Positional embeddings tell GPT where that word is."*
+
+---
+
+## Quick Recap
+
+In the previous lesson we discovered a major limitation.
+
+<Comparison
+  title="What Embeddings Tell GPT"
+  left={{ label: "Word Meaning ✓", points: ["What each token represents", "Semantic relationships", "Learned through training"] }}
+  right={{ label: "Word Position ✗", points: ["Where each token appears", "Which came first or last", "Not in the embedding at all"] }}
+/>
+
+So before entering the Transformer, GPT injects positional information.
+
+---
+
+## The Big Idea
+
+Imagine the sentence `I Love AI`. The tokenizer produces token IDs — and alongside them, GPT also creates **Position IDs**.
+
+<TokenMapping
+  title="Token → Position Assignment"
+  fromLabel="Token"
+  toLabel="Position ID"
+  items={[
+    { from: "I",    to: "0" },
+    { from: "Love", to: "1" },
+    { from: "AI",   to: "2" },
+  ]}
+/>
+
+Position IDs are not learned — they are simply generated in order: `0, 1, 2, 3, ...`
+
+---
+
+## But Position IDs Have the Same Problem
+
+Just like Token IDs, Position IDs are integers.
+
+Does the number `2` contain useful positional information? No — it is only an identifier.
+
+So GPT converts Position IDs into vectors as well.
+
+---
+
+## Positional Embedding Matrix
+
+Exactly like the token embedding matrix, GPT has another learnable matrix:
+
+<TokenMapping
+  title="Positional Embedding Matrix"
+  fromLabel="Position ID"
+  toLabel="Positional Vector"
+  items={[
+    { from: "0",    to: "[P₀] — random → learned" },
+    { from: "1",    to: "[P₁] — random → learned" },
+    { from: "2",    to: "[P₂] — random → learned" },
+    { from: "...",  to: "..."                       },
+    { from: "2047", to: "[P₂₀₄₇] — random → learned" },
+  ]}
+/>
+
+Every position has its own learnable vector. Engineers decide the shape (e.g. `2048 × 768`) — training learns the values.
+
+---
+
+## Where Is It Stored?
+
+<FlowDiagram title="GPT Model Parameters" steps={[
+  "Token Embedding Matrix",
+  "Positional Embedding Matrix",
+  "Attention Weights",
+  "Feed Forward Weights",
+  "Output Projection"
+]} />
+
+Just like token embeddings, positional vectors are learned during training and stored with the rest of the model.
+
+---
+
+## Combining Both Embeddings
+
+GPT adds the token embedding and position embedding together — enriching the token's meaning with its position.
+
+<FlowDiagram title="Combining Token + Position" steps={[
+  "Token Embedding [T₀]",
+  "+ Position Embedding [P₀]",
+  "Final Vector [T₀ + P₀]",
+  "Repeated for every token",
+  "Enters Transformer Block"
+]} />
+
+The word keeps its meaning — but now also knows **where it appears** in the sentence.
+
+---
+
+## Complete Pipeline
+
+<FlowDiagram title="Full Input Pipeline" steps={[
+  "Input Text",
+  "Tokenizer",
+  "Token IDs → Embedding Lookup → Token Embeddings",
+  "Position IDs → Position Lookup → Positional Embeddings",
+  "Vector Addition (Token + Position)",
+  "Final Input Representation",
+  "Transformer Block"
+]} />
+
+---
+
+## Key Takeaways
+
+- Position IDs are simple integers generated in order.
+- GPT converts Position IDs into vectors via the Positional Embedding Matrix.
+- The matrix is randomly initialized and learned during training.
+- Token and positional embeddings are **added** together.
+- The final vector carries both meaning and position before entering the Transformer.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why do Position IDs also need embeddings?
+- Why are token and position vectors added instead of concatenated?
+- Are these positional vectors fixed forever?
+- Is there another way to represent positions besides learning them?
+
+---
+
+## Think Before the Next Lesson
+
+If learned positional embeddings work well...
+
+**Why did the original Transformer paper invent sinusoidal positional encoding instead?**
+
+That's exactly what we'll explore next.
