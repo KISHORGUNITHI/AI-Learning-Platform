@@ -1,0 +1,210 @@
+---
+title: "Query, Key and Value Intuition"
+slug: "module-2/day-10-query-key-value-intuition"
+description: "Build an intuitive understanding of why every token is transformed into Query, Key, and Value vectors before Self-Attention begins."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "18 min"
+estimatedStudyTime: "40 min"
+tags:
+  - Self Attention
+  - Query
+  - Key
+  - Value
+  - Transformer
+learningObjectives:
+  - Understand why one embedding is not enough.
+  - Learn the role of Query, Key, and Value.
+  - Build intuition for how tokens communicate.
+  - Prepare for the mathematical implementation of Self-Attention.
+prerequisites:
+  - topic: "Why Self-Attention Was Invented"
+    slug: "module-2/day-9-why-self-attention-was-invented"
+previous:
+  title: "Why Self-Attention Was Invented"
+  slug: "module-2/day-9-why-self-attention-was-invented"
+---
+
+> *"Before a token can understand other tokens, it must first know what it is looking for, how others describe themselves, and what information they can share."*
+
+---
+
+## Quick Recap
+
+In the previous lesson, we discovered that embeddings are **fixed representations** — they capture general meaning but cannot determine meaning in a specific sentence.
+
+To solve this, researchers introduced **Self-Attention**. But another question immediately appears:
+
+> **How does a token know which other tokens are important?**
+
+---
+
+## The Problem
+
+Imagine you walk into a library. Thousands of books surround you. You want to learn about `Artificial Intelligence`.
+
+Can you read every single book? No. Instead, you search for the most relevant ones.
+
+Language works the same way. When a token wants to understand itself, it shouldn't treat every other token equally — it needs a way to decide **who is worth paying attention to**.
+
+<Comparison
+  title="Attention is Selective"
+  left={{
+    label: "Without Attention",
+    points: [
+      "Every token treated equally",
+      "No way to filter relevance",
+      "All context mixed together",
+      "Meaning stays ambiguous",
+    ]
+  }}
+  right={{
+    label: "With Attention",
+    points: [
+      "Each token searches for relevant others",
+      "Relevance is scored mathematically",
+      "Important tokens contribute more",
+      "Context-aware meaning emerges",
+    ]
+  }}
+/>
+
+---
+
+## Intuition
+
+Imagine a classroom. The teacher asks: **"Who knows Python?"**
+
+Every student reacts differently — some raise their hands, others stay silent. The teacher naturally pays attention to the relevant students.
+
+Tokens behave the same way. Every token decides **who is most useful** before learning from them.
+
+---
+
+## Why Isn't One Embedding Enough?
+
+Currently every token has one embedding vector. That single vector is being asked to:
+
+- Search for information (asking questions)
+- Describe itself to others (answering questions)
+- Share its actual knowledge
+
+One vector doing three jobs creates unnecessary limitations. Researchers decided to split these responsibilities.
+
+<Comparison
+  title="One Vector vs Three Specialised Vectors"
+  left={{
+    label: "One Embedding (Overloaded)",
+    points: [
+      "Asks questions",
+      "Describes itself",
+      "Shares information",
+      "All three roles at once — inefficient",
+    ]
+  }}
+  right={{
+    label: "Query + Key + Value (Specialised)",
+    points: [
+      "Query: asks questions",
+      "Key: describes itself",
+      "Value: shares information",
+      "Each vector has one clear job",
+    ]
+  }}
+/>
+
+---
+
+## Three Different Roles
+
+Instead of using one embedding, every token creates **three different representations**.
+
+<TokenMapping
+  title="The Three Roles of Every Token"
+  fromLabel="Vector"
+  toLabel="Role"
+  items={[
+    { from: "Query (Q)", to: "What information am I looking for?" },
+    { from: "Key   (K)", to: "What information do I contain?"     },
+    { from: "Value (V)", to: "What information can I contribute?" },
+  ]}
+/>
+
+---
+
+## A Simple Example
+
+Consider the sentence: `The cat drinks milk.`
+
+Focus on the token `drinks`:
+
+<FlowDiagram title="Token 'drinks' Creates Three Vectors" steps={[
+  "Token: 'drinks'",
+  "Query: 'Who performs this action?'",
+  "Key:   'I represent an action (drinking)'",
+  "Value: 'I can contribute information about the action'"
+]} />
+
+The token `cat` creates its own Key — describing itself as the subject. If the Query from `drinks` and the Key from `cat` match well, the Value from `cat` will be used.
+
+No information is copied yet — we're only **preparing** the three representations.
+
+---
+
+## Engineering Insight
+
+Every token creates one Query, one Key, one Value. This happens for **every token** in the sentence.
+
+<TokenMapping
+  title="10-Token Sentence Creates..."
+  fromLabel="Role"
+  toLabel="Count"
+  items={[
+    { from: "Queries", to: "10 vectors" },
+    { from: "Keys",    to: "10 vectors" },
+    { from: "Values",  to: "10 vectors" },
+    { from: "Total",   to: "30 vectors prepared before any attention" },
+  ]}
+/>
+
+<FlowDiagram title="Preparation Stage" steps={[
+  "Sentence",
+  "Token Embeddings",
+  "Each Token Creates Q, K, V",
+  "30 Vectors Ready",
+  "Self-Attention Can Begin"
+]} />
+
+---
+
+## Key Takeaways
+
+- One embedding cannot efficiently perform every role.
+- Self-Attention separates responsibilities into Query, Key, and Value.
+- Query asks what information is needed.
+- Key describes what a token represents.
+- Value contains the information that can be shared.
+- Every token creates its own Query, Key, and Value vectors.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why does every token need three vectors?
+- Why can't one embedding perform all three jobs?
+- Which vector actually contains the information that gets shared?
+- When are Query, Key, and Value created?
+
+---
+
+## What's Next?
+
+Now we understand **why** Query, Key, and Value exist.
+
+The next question is even more interesting.
+
+> **How does GPT actually create these three vectors from a single embedding?**
+
+We'll discover that every embedding is multiplied by three different learnable weight matrices — **WQ**, **WK**, and **WV**.
+
+This is where the mathematics of Self-Attention truly begins.

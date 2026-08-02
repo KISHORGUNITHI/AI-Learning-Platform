@@ -232,6 +232,17 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Self Attention", "Context", "Embeddings", "Transformers", "NLP"]
+      },
+      {
+        "number": 10,
+        "title": "Query, Key and Value Intuition",
+        "slug": "module-2/day-10-query-key-value-intuition",
+        "description": "Build an intuitive understanding of why every token is transformed into Query, Key, and Value vectors before Self-Attention begins.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Self Attention", "Query", "Key", "Value", "Transformer"]
       }
     ]
   },
