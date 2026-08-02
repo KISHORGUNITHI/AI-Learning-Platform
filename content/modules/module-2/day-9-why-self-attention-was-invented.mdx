@@ -1,0 +1,263 @@
+---
+title: "Why Self-Attention Was Invented"
+slug: "module-2/day-9-why-self-attention-was-invented"
+description: "Discover why embeddings alone cannot understand context and why researchers invented the Self-Attention mechanism."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Self Attention
+  - Context
+  - Embeddings
+  - Transformers
+  - NLP
+learningObjectives:
+  - Understand why embeddings alone are not enough.
+  - Explain what a fixed representation is.
+  - Understand why context changes meaning.
+  - Discover why researchers invented Self-Attention.
+  - Build the intuition for contextual representations.
+prerequisites:
+  - topic: "The Final Input Representation"
+    slug: "module-2/day-8-the-final-input-representation"
+previous:
+  title: "The Final Input Representation"
+  slug: "module-2/day-8-the-final-input-representation"
+---
+
+> *"Embeddings tell us what a word generally means. Self-Attention discovers what it means in this sentence."*
+
+---
+
+## Quick Recap
+
+So far, our GPT pipeline looks like this.
+
+<FlowDiagram title="Pipeline So Far" steps={[
+  "Input Text",
+  "Tokenizer",
+  "Token IDs",
+  "Embedding Lookup",
+  "Token Embeddings",
+  "+ Positional Information",
+  "Final Input Representation"
+]} />
+
+At this point every token has meaning, semantic information, and positional information.
+
+It seems like we're ready. But researchers discovered a major problem.
+
+---
+
+## The Problem
+
+Imagine the sentence:
+
+> **The animal didn't cross the street because it was tired.**
+
+What does **"it"** refer to?
+
+Most humans instantly answer **The animal** without thinking — because we automatically look at surrounding words.
+
+But does GPT know this? Not yet.
+
+<Comparison
+  title="Humans vs GPT (Before Self-Attention)"
+  left={{
+    label: "Humans",
+    points: [
+      "Instantly look at surrounding words",
+      "Connect 'it' → 'animal'",
+      "Use full sentence context",
+      "Understand meaning automatically",
+    ]
+  }}
+  right={{
+    label: "GPT Without Self-Attention",
+    points: [
+      "Each token has only its own embedding",
+      "No mechanism to look at neighbours",
+      "Cannot resolve 'it' → 'animal'",
+      "Stuck with general meaning only",
+    ]
+  }}
+/>
+
+---
+
+## Why Can't Embeddings Solve This?
+
+An embedding stores the **general meaning** of a word learned during training.
+
+For the word `bank`, the embedding captures:
+
+- money, finance, institution
+- river bank, side of a river
+
+Now consider two sentences:
+
+- `The bank approved my loan.`
+- `The fisherman sat near the bank.`
+
+<TokenMapping
+  title="Same Embedding — Different Meaning"
+  fromLabel="Sentence"
+  toLabel="Embedding for 'bank'"
+  items={[
+    { from: "bank approved my loan",    to: "[0.42, -0.81, 0.93, ...]" },
+    { from: "sat near the river bank",  to: "[0.42, -0.81, 0.93, ...]" },
+  ]}
+/>
+
+Exactly the same vector enters the Transformer — but the meaning is completely different.
+
+---
+
+## Fixed Representations
+
+An embedding retrieved from the embedding matrix is called a **Fixed Representation**.
+
+Every time GPT sees `Dog`, it retrieves the exact same vector — regardless of context.
+
+<FlowDiagram title="Fixed Representation" steps={[
+  "Embedding Matrix → Dog → [0.84, -0.15, 0.27, ...]",
+  "Dog barked louder  →  same vector",
+  "Dog bit the man    →  same vector",
+  "Dog is a guide     →  same vector",
+  "Dog slept quietly  →  same vector",
+]} />
+
+Same vector. Every context. No difference.
+
+---
+
+## Why Is This a Problem?
+
+Language is contextual. The meaning of a word depends on the words around it.
+
+<Comparison
+  title="The Same Word — Two Meanings"
+  left={{
+    label: "Financial Context",
+    points: [
+      "He deposited money in the bank.",
+      "Surrounding: money, deposit",
+      "Correct meaning: financial institution",
+    ]
+  }}
+  right={{
+    label: "Geographic Context",
+    points: [
+      "They sat beside the river bank.",
+      "Surrounding: river, sat",
+      "Correct meaning: side of a river",
+    ]
+  }}
+/>
+
+GPT sees the same embedding in both cases. It has no mechanism yet to decide which meaning fits.
+
+---
+
+## The Limitation of Fixed Representations
+
+<Comparison
+  title="What Embeddings Answer vs What They Can't"
+  left={{
+    label: "Embeddings Answer ✓",
+    points: [
+      "Who am I? (general identity)",
+      "What meanings could I have?",
+      "What are my typical contexts?",
+    ]
+  }}
+  right={{
+    label: "Embeddings Cannot Answer ✗",
+    points: [
+      "Who am I after looking at everyone else?",
+      "Which meaning fits THIS sentence?",
+      "What role do I play right now?",
+    ]
+  }}
+/>
+
+Embeddings only solve the first part. Something else must solve the second.
+
+---
+
+## The Big Insight
+
+Researchers realized that instead of giving every word a fixed meaning, the model should allow each word to:
+
+<FlowDiagram title="What Self-Attention Enables" steps={[
+  "Look at other words in the sentence",
+  "Gather useful information from them",
+  "Understand the current context",
+  "Update its own representation",
+  "Know what it means in THIS sentence"
+]} />
+
+This idea became **Self-Attention**.
+
+---
+
+## Engineering Insight
+
+Think of embeddings as a person's résumé.
+
+A résumé tells us education, skills, and experience. But when that person joins a team, their role depends on everyone else in the room.
+
+Similarly — an embedding provides general knowledge, while Self-Attention determines the token's role in the current sentence.
+
+---
+
+## Updated Pipeline
+
+<FlowDiagram title="Complete GPT Pipeline (Updated)" steps={[
+  "Input Text",
+  "Tokenizer",
+  "Token IDs",
+  "Embedding Lookup",
+  "Token Embeddings",
+  "Positional Information",
+  "Self-Attention",
+  "Context-Aware Representations",
+  "Transformer Block"
+]} />
+
+Self-Attention transforms **General Meaning** into **Contextual Meaning**.
+
+---
+
+## Key Takeaways
+
+- Embeddings store general semantic knowledge.
+- Every occurrence of a word initially receives the same embedding.
+- This is called a fixed representation.
+- Natural language depends heavily on context.
+- Embeddings alone cannot resolve contextual meaning.
+- Researchers invented Self-Attention to solve this problem.
+- Self-Attention creates context-aware representations.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why can't embeddings alone understand language?
+- What is a fixed representation?
+- Why does the same word require different meanings in different sentences?
+- How can a token learn from surrounding tokens?
+- What problem was Self-Attention actually invented to solve?
+
+---
+
+## What's Next?
+
+Now that we understand **why Self-Attention was needed**, the next question naturally arises.
+
+If every token needs to gather information from other tokens — **how does a token know which other tokens are important?**
+
+To answer that, researchers gave every token three special roles: **Query**, **Key**, and **Value**.
+
+These three ideas power the entire Self-Attention mechanism, and we'll build them from first principles in the next lesson.
