@@ -1,0 +1,288 @@
+---
+title: "From Text to Numbers"
+slug: "module-1/day-2-from-text-to-numbers"
+description: "Learn why computers cannot understand words directly, how tokenization works, and why a neural network starts as an empty brain with random parameters."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "14 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Tokenization
+  - Neural Network
+  - Parameters
+  - GPT
+learningObjectives:
+  - Explain why computers cannot understand words.
+  - Understand what tokenization is.
+  - Learn how token IDs are created.
+  - Understand why GPT starts with random parameters.
+  - Build intuition for neural networks before training.
+prerequisites:
+  - topic: "How an LLM Actually Learns"
+    slug: "module-1/day-1-how-an-llm-actually-learns"
+previous:
+  title: "How an LLM Actually Learns"
+  slug: "module-1/day-1-how-an-llm-actually-learns"
+next:
+  title: "Learning from Mistakes"
+  slug: "module-1/day-3-learning-from-mistakes"
+---
+
+## The Problem
+
+In the previous lesson, we collected and cleaned billions of pieces of text.
+
+Now imagine giving the following sentence directly to a computer.
+
+> **"Who are you?"**
+
+Seems simple.
+
+But here's the problem.
+
+A computer doesn't understand English.
+
+It doesn't know:
+
+- what "Who" means
+- what "are" means
+- what "you" means
+
+To the computer, these are simply symbols.
+
+So before learning can begin, we must answer an important question:
+
+> **How can a computer understand human language?**
+
+---
+
+## Intuition
+
+Imagine talking to someone who only understands numbers.
+
+You say:
+
+> Hello
+
+They stare at you.
+
+Then you write:
+
+```
+101
+```
+
+Now they understand.
+
+Nothing changed except the representation.
+
+Computers work the same way.
+
+They don't understand words. They understand numbers.
+
+Every word must first be converted into numbers.
+
+---
+
+## Tokenization
+
+This conversion process is called **Tokenization**.
+
+Instead of reading words, the tokenizer breaks text into smaller pieces called **tokens**.
+
+Example:
+
+```
+Who are you?
+```
+
+might become:
+
+```
+Who
+↓
+are
+↓
+you
+↓
+?
+```
+
+Each token is then assigned a unique numerical ID.
+
+```
+Who → 51
+are → 884
+you → 77
+?   → 18
+```
+
+These numbers are not meaningful by themselves. They simply act as identifiers.
+
+Think of them like student roll numbers.
+
+A roll number identifies a student, but it doesn't describe their personality.
+
+Similarly, a token ID identifies a token.
+
+---
+
+## Visual Walkthrough
+
+```text
+Sentence
+↓
+Tokenizer
+↓
+Tokens
+↓
+Token IDs
+↓
+Neural Network
+```
+
+This is the first moment where language becomes something a computer can process.
+
+---
+
+## Does GPT Understand These Numbers?
+
+Not yet.
+
+Many beginners think:
+
+> "Once words become numbers, GPT understands them."
+
+That's not true.
+
+The numbers are only labels.
+
+The model still doesn't know what they represent.
+
+At this point, it is like giving someone a dictionary where every word has been replaced by an ID.
+
+Without learning, those IDs have no meaning.
+
+---
+
+## The Neural Network
+
+Now that the input has become numbers, those numbers enter the neural network.
+
+But another surprise awaits us.
+
+The neural network already exists **before training begins**.
+
+Engineers design the architecture first. Then they initialize it with random values.
+
+Think of it like constructing an empty school building.
+
+The classrooms exist. The desks exist. The walls exist.
+
+But no teaching has happened yet.
+
+Similarly, GPT already has:
+
+- Layers
+- Connections
+- Mathematical operations
+
+But it contains no knowledge.
+
+---
+
+## Parameters
+
+Inside the neural network, there are billions of adjustable values.
+
+These are called **parameters**.
+
+You can imagine them as tiny knobs.
+
+During training, the model continuously adjusts these knobs to improve its predictions.
+
+Knowledge is eventually stored in these parameters.
+
+But today, every parameter is almost random.
+
+---
+
+## Worked Example
+
+Imagine buying a brand-new guitar.
+
+The guitar already has:
+
+- Strings
+- Frets
+- Body
+
+But nobody knows how to play it yet.
+
+Training doesn't build the guitar.
+
+Training teaches someone how to use it.
+
+GPT works similarly.
+
+Engineers build the architecture. Training teaches it patterns.
+
+---
+
+## Common Misconceptions
+
+**Token IDs contain meaning.**
+
+No. They are only identifiers. Meaning is learned later.
+
+**Training creates the neural network.**
+
+No. The architecture is designed before training begins. Training only changes the parameters.
+
+**Parameters are knowledge from the beginning.**
+
+No. Initially they are almost random numbers. Knowledge appears only after repeated training.
+
+---
+
+## Questions That Changed My Understanding
+
+While learning this topic, ask yourself:
+
+- Why can't computers understand words directly?
+- Why do we need token IDs instead of raw text?
+- If token IDs don't contain meaning, where does meaning come from?
+- Why does the neural network already exist before training?
+
+We'll answer these questions throughout the coming lessons.
+
+---
+
+## Key Takeaways
+
+- Computers understand numbers, not words.
+- Tokenization converts text into tokens.
+- Every token receives a unique numerical ID.
+- Token IDs are identifiers, not meaning.
+- The neural network exists before training.
+- Training adjusts random parameters to gradually learn patterns.
+
+---
+
+## What's Next?
+
+The model now has:
+
+- Clean data 
+- Token IDs 
+- A neural network with random parameters 
+
+So what happens next?
+
+The model makes its **first prediction**.
+
+Most of those predictions are completely wrong.
+
+Surprisingly, that's exactly how learning begins.
+
+In the next lesson, we'll discover how GPT learns from its mistakes using **Predictions, Loss, and Backpropagation**.
