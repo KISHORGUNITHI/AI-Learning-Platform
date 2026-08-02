@@ -243,6 +243,17 @@
         "estimatedReadingTime": "18 min",
         "estimatedStudyTime": "40 min",
         "tags": ["Self Attention", "Query", "Key", "Value", "Transformer"]
+      },
+      {
+        "number": 11,
+        "title": "From Embeddings to Query, Key and Value",
+        "slug": "module-2/day-11-from-embeddings-to-query-key-and-value",
+        "description": "Learn how GPT transforms a single embedding into Query, Key, and Value vectors using three learnable weight matrices.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Self Attention", "Query", "Key", "Value", "Matrix Multiplication", "Weight Matrices"]
       }
     ]
   },

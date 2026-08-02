@@ -1,0 +1,297 @@
+---
+title: "From Embeddings to Query, Key and Value"
+slug: "module-2/day-11-from-embeddings-to-query-key-and-value"
+description: "Learn how GPT transforms a single embedding into Query, Key, and Value vectors using three learnable weight matrices."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Self Attention
+  - Query
+  - Key
+  - Value
+  - Matrix Multiplication
+  - Weight Matrices
+learningObjectives:
+  - Understand where Query, Key and Value vectors come from.
+  - Learn why GPT creates three different representations from one embedding.
+  - Understand the purpose of the WQ, WK and WV matrices.
+  - Follow the tensor dimensions during the transformation.
+  - Prepare for attention score computation.
+prerequisites:
+  - topic: "Query, Key and Value Intuition"
+    slug: "module-2/day-10-query-key-value-intuition"
+previous:
+  title: "Query, Key and Value Intuition"
+  slug: "module-2/day-10-query-key-value-intuition"
+---
+
+> *"One embedding cannot perform every responsibility. Before Self-Attention begins, GPT transforms it into three specialized representations."*
+
+---
+
+## Quick Recap
+
+In the previous lesson we learned that every token creates three roles — Query, Key, and Value.
+
+But one important question still remains:
+
+> **Where do these three vectors actually come from?**
+
+---
+
+## The Problem
+
+Suppose the token `Cat` has the embedding `[0.42, -0.81, 1.24, ...]`.
+
+How does GPT suddenly obtain a Query, Key, and Value from this single vector?
+
+Did engineers manually create them? Does GPT store three vectors per word?
+
+No. GPT learns three different mathematical transformations during training.
+
+---
+
+## Intuition
+
+Imagine a software engineer in a company. The same person can perform three completely different responsibilities:
+
+- Asking questions during meetings
+- Identifying the right experts
+- Sharing their own knowledge
+
+The person hasn't changed — only the role has changed.
+
+Similarly, GPT starts with **one embedding vector**, then transforms it into three different representations, each with one specific responsibility.
+
+---
+
+## The Three Learnable Matrices
+
+Instead of directly using the embedding during Self-Attention, GPT first creates Query, Key, and Value using three different learnable matrices:
+
+<TokenMapping
+  title="The Three Weight Matrices"
+  fromLabel="Matrix"
+  toLabel="What It Learns"
+  items={[
+    { from: "WQ", to: "How to ask questions (Query)" },
+    { from: "WK", to: "How to describe information (Key)" },
+    { from: "WV", to: "What information to share (Value)" },
+  ]}
+/>
+
+Each matrix starts random and learns its job through training.
+
+---
+
+## The Transformation Pipeline
+
+<DiagramContainer caption="One embedding is transformed into three specialized representations while preserving sequence length and embedding dimension">
+  <svg viewBox="0 0 420 220" width="100%" style={{ maxWidth: '420px' }} aria-hidden="true">
+    {/* Input box */}
+    <rect x="140" y="8" width="140" height="36" rx="6"
+      fill="var(--color-surface-2)" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <text x="210" y="22" textAnchor="middle" fontSize="10" fontWeight="600" fill="var(--color-text-primary)">Input Embeddings</text>
+    <text x="210" y="36" textAnchor="middle" fontSize="9" fill="var(--color-text-tertiary)">5 × 768</text>
+
+    {/* Arrows down to three branches */}
+    <line x1="210" y1="44" x2="210" y2="60" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="210" y1="60" x2="75" y2="60" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="210" y1="60" x2="345" y2="60" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="75" y1="60" x2="75" y2="76" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="210" y1="60" x2="210" y2="76" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="345" y1="60" x2="345" y2="76" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+
+    {/* WQ */}
+    <rect x="30" y="76" width="90" height="36" rx="6"
+      fill="rgba(59,130,246,0.12)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="75" y="90" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-accent)">× WQ</text>
+    <text x="75" y="104" textAnchor="middle" fontSize="9" fill="var(--color-accent)">(768 × 768)</text>
+
+    {/* WK */}
+    <rect x="165" y="76" width="90" height="36" rx="6"
+      fill="rgba(52,211,153,0.12)" stroke="var(--color-success)" strokeWidth="1.5"/>
+    <text x="210" y="90" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-success)">× WK</text>
+    <text x="210" y="104" textAnchor="middle" fontSize="9" fill="var(--color-success)">(768 × 768)</text>
+
+    {/* WV */}
+    <rect x="300" y="76" width="90" height="36" rx="6"
+      fill="rgba(245,158,11,0.12)" stroke="var(--color-warning)" strokeWidth="1.5"/>
+    <text x="345" y="90" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-warning)">× WV</text>
+    <text x="345" y="104" textAnchor="middle" fontSize="9" fill="var(--color-warning)">(768 × 768)</text>
+
+    {/* Down arrows */}
+    <line x1="75" y1="112" x2="75" y2="138" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="210" y1="112" x2="210" y2="138" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+    <line x1="345" y1="112" x2="345" y2="138" stroke="var(--color-border-strong)" strokeWidth="1.5"/>
+
+    {/* Query output */}
+    <rect x="30" y="138" width="90" height="36" rx="6"
+      fill="rgba(59,130,246,0.18)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="75" y="153" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-accent)">Query</text>
+    <text x="75" y="167" textAnchor="middle" fontSize="9" fill="var(--color-accent)">(5 × 768)</text>
+
+    {/* Key output */}
+    <rect x="165" y="138" width="90" height="36" rx="6"
+      fill="rgba(52,211,153,0.18)" stroke="var(--color-success)" strokeWidth="1.5"/>
+    <text x="210" y="153" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-success)">Key</text>
+    <text x="210" y="167" textAnchor="middle" fontSize="9" fill="var(--color-success)">(5 × 768)</text>
+
+    {/* Value output */}
+    <rect x="300" y="138" width="90" height="36" rx="6"
+      fill="rgba(245,158,11,0.18)" stroke="var(--color-warning)" strokeWidth="1.5"/>
+    <text x="345" y="153" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-warning)">Value</text>
+    <text x="345" y="167" textAnchor="middle" fontSize="9" fill="var(--color-warning)">(5 × 768)</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## Understanding the Dimensions
+
+Suppose the sentence has 5 tokens, each with a 768-dimensional embedding. The input matrix is `5 × 768`.
+
+<TokenMapping
+  title="Dimension Flow Through Each Transformation"
+  fromLabel="Operation"
+  toLabel="Result Dimensions"
+  items={[
+    { from: "Input Embeddings",     to: "5 × 768" },
+    { from: "× WQ  (768 × 768)",    to: "5 × 768  → Query Matrix" },
+    { from: "× WK  (768 × 768)",    to: "5 × 768  → Key Matrix"   },
+    { from: "× WV  (768 × 768)",    to: "5 × 768  → Value Matrix" },
+  ]}
+/>
+
+The sequence length (5) and embedding dimension (768) are **preserved** after every transformation. Only the internal representation changes.
+
+---
+
+## Mathematics
+
+<MathBlock title="Query Matrix">
+  $$Q = XW_Q \quad (5 \times 768) \times (768 \times 768) = (5 \times 768)$$
+</MathBlock>
+
+<MathBlock title="Key Matrix">
+  $$K = XW_K \quad (5 \times 768) \times (768 \times 768) = (5 \times 768)$$
+</MathBlock>
+
+<MathBlock title="Value Matrix">
+  $$V = XW_V \quad (5 \times 768) \times (768 \times 768) = (5 \times 768)$$
+</MathBlock>
+
+---
+
+## Where Are WQ, WK and WV Stored?
+
+<FlowDiagram title="Learnable Parameters Inside a Transformer Block" steps={[
+  "Transformer Block",
+  "WQ — Query weight matrix",
+  "WK — Key weight matrix",
+  "WV — Value weight matrix",
+  "Feed Forward Network weights",
+  "Other learnable parameters"
+]} />
+
+All three matrices start random. Backpropagation gradually updates them until they learn to produce useful Query, Key, and Value vectors.
+
+---
+
+## Why Three Different Matrices?
+
+If GPT used the **same weight matrix** for all three:
+
+<Comparison
+  title="Same Matrix vs Three Separate Matrices"
+  left={{
+    label: "One Shared Matrix W",
+    points: [
+      "Query = Key = Value",
+      "All three representations identical",
+      "Cannot ask meaningful questions",
+      "Cannot specialize for different tasks",
+    ]
+  }}
+  right={{
+    label: "Three Separate Matrices WQ WK WV",
+    points: [
+      "Each matrix learns a different job",
+      "Query specializes in searching",
+      "Key specializes in describing",
+      "Value specializes in sharing",
+    ]
+  }}
+/>
+
+Specialization is one of the core reasons Self-Attention works so effectively.
+
+---
+
+## Worked Example
+
+Sentence: `The cat drinks milk.`
+
+<FlowDiagram title="Creating Q, K, V for Every Token" steps={[
+  "Token Embeddings: [The, cat, drinks, milk]",
+  "Apply WQ → Query Matrix (4 × 768)",
+  "Apply WK → Key Matrix   (4 × 768)",
+  "Apply WV → Value Matrix  (4 × 768)",
+  "No attention calculated yet — only preparation"
+]} />
+
+At this point, nothing has been compared. No attention scores exist. GPT has only prepared the three representations needed for the next stage.
+
+---
+
+## Where Does Learning Happen?
+
+<FlowDiagram title="How WQ, WK, WV Learn During Training" steps={[
+  "Input Embeddings",
+  "Q, K, V Created",
+  "Attention Computed",
+  "Prediction Made",
+  "Loss Calculated",
+  "Backpropagation",
+  "WQ, WK, WV Updated"
+]} />
+
+Over billions of training examples, these matrices learn how to generate useful Queries, meaningful Keys, and informative Values.
+
+---
+
+## Key Takeaways
+
+- Every token starts with one embedding vector.
+- GPT transforms that embedding into three different vectors using WQ, WK, WV.
+- All three matrices are learnable parameters updated during training.
+- Matrix multiplication creates Q, K and V while preserving tensor dimensions.
+- Every token generates its own Query, Key and Value.
+- Three separate matrices allow each representation to specialize.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why are three different weight matrices required?
+- Why do Query, Key and Value keep the same dimensions?
+- Why doesn't GPT directly use embeddings for attention?
+- What happens after every token has its Query, Key and Value vectors?
+
+---
+
+## What's Next?
+
+Every token now has its Query, Key, and Value vectors prepared.
+
+But the model still doesn't know **which tokens are important**.
+
+> **How does a Query decide which Keys are most relevant?**
+
+GPT compares every Query with every Key using one of the simplest and most powerful operations in machine learning: **The Dot Product**.
+
+That comparison produces the **Attention Scores** — which determine how much attention each token should pay to every other token.
+
+In the next lesson, we'll build the intuition behind the Dot Product before introducing the complete Self-Attention computation.
