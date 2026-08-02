@@ -1,0 +1,32 @@
+[
+  {
+    "order": 1,
+    "title": "Motivation & Start Here",
+    "slug": "start-here",
+    "description": "Why this learning journey exists, what you will build, and how to get the most out of it.",
+    "published": true,
+    "estimatedReadingTime": "8 min",
+    "estimatedStudyTime": "15 min",
+    "tags": ["Orientation", "Motivation"]
+  },
+  {
+    "order": 2,
+    "title": "AI Journey",
+    "slug": "ai-journey",
+    "description": "A bird's-eye view of the AI landscape — where we are, how we got here, and where this course fits.",
+    "published": true,
+    "estimatedReadingTime": "10 min",
+    "estimatedStudyTime": "20 min",
+    "tags": ["Overview", "AI History"]
+  },
+  {
+    "order": 3,
+    "title": "Modern AI Systems",
+    "slug": "modern-ai-systems",
+    "description": "What modern AI systems actually look like under the hood — before we go deep on any single component.",
+    "published": true,
+    "estimatedReadingTime": "12 min",
+    "estimatedStudyTime": "25 min",
+    "tags": ["Overview", "LLM", "Systems"]
+  }
+]

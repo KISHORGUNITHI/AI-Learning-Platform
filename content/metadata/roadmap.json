@@ -1,0 +1,509 @@
+[
+  {
+    "number": 1,
+    "title": "Language Representation",
+    "description": "How machines convert raw text into numbers they can reason about. Every LLM starts here — tokenisation, embeddings, and the geometry of meaning.",
+    "color": "#3b82f6",
+    "days": [
+      {
+        "number": 1,
+        "title": "How an LLM Actually Learns",
+        "slug": "module-1/day-1-how-an-llm-actually-learns",
+        "description": "Understand what training really means and why 'GPT reads billions of books' is only half the story.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "12 min",
+        "estimatedStudyTime": "30 min",
+        "tags": ["LLM", "GPT", "Training", "AI Fundamentals"]
+      },
+      {
+        "number": 2,
+        "title": "From Text to Numbers",
+        "slug": "module-1/day-2-from-text-to-numbers",
+        "description": "Learn why computers cannot understand words directly, how tokenization works, and why a neural network starts as an empty brain with random parameters.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "14 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Tokenization", "Neural Network", "Parameters", "GPT"]
+      },
+      {
+        "number": 3,
+        "title": "Learning from Mistakes",
+        "slug": "module-1/day-3-learning-from-mistakes",
+        "description": "Discover how GPT learns through prediction, loss calculation, backpropagation, and parameter updates.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "16 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Prediction", "Logits", "Softmax", "Loss", "Backpropagation", "Gradient Descent"]
+      },
+      {
+        "number": 4,
+        "title": "Inside the GPT Architecture",
+        "slug": "module-1/day-4-inside-the-gpt-architecture",
+        "description": "Explore the internal structure of GPT and understand where knowledge is stored after training.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["GPT","Transformer","Architecture","Parameters","Neural Network"]
+      },
+      {
+        "number": 5,
+        "title": "Inside One Training Iteration",
+        "slug": "module-1/day-5-inside-one-training-iteration",
+        "description": "Follow a single input as it flows through the neural network and understand what every layer actually does during a forward pass.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Forward Pass", "Neural Network", "Weights", "Bias", "Activation"]
+      },
+      {
+        "number": 6,
+        "title": "From Scores to Predictions",
+        "slug": "module-1/day-6-from-scores-to-predictions",
+        "description": "Learn how GPT converts raw prediction scores into probabilities and finally chooses the next token.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "17 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Logits", "Softmax", "Probability", "Inference"]
+      },
+      {
+        "number": 7,
+        "title": "Measuring Mistakes with Cross Entropy Loss",
+        "slug": "module-1/day-7-cross-entropy-loss",
+        "description": "Learn how GPT measures the quality of its predictions and why Cross Entropy Loss became the standard loss function for language models.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "16 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Cross Entropy", "Loss", "Softmax", "Training"]
+      },
+      {
+        "number": 8,
+        "title": "Learning Through Backpropagation",
+        "slug": "module-1/day-8-backpropagation",
+        "description": "Discover how GPT traces mistakes backward through the network to determine exactly which parameters should change.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Backpropagation", "Gradients", "Chain Rule", "Neural Networks"]
+      },
+      {
+        "number": 9,
+        "title": "Gradient Descent & Optimization",
+        "slug": "module-1/day-9-gradient-descent-and-optimization",
+        "description": "Learn how GPT updates its parameters after backpropagation and why optimization algorithms like Gradient Descent and Adam are essential for learning.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Gradient Descent", "Optimization", "Adam", "Learning Rate"]
+      },
+      {
+        "number": 10,
+        "title": "One Complete GPT Training Walkthrough",
+        "slug": "module-1/day-10-complete-gpt-training-walkthrough",
+        "description": "Bring together everything you've learned in Module 1 by following one complete GPT training iteration from raw text to updated parameters.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "50 min",
+        "tags": ["GPT Training", "End-to-End", "Recap", "Training Pipeline"]
+      },
+      {
+        "number": 11,
+        "title": "Engineering Insights: Behind LLM Training",
+        "slug": "module-1/bonus-engineering-insights",
+        "description": "Quick engineering insights that explain how Large Language Models are actually trained behind the scenes.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "25 min",
+        "tags": ["Engineering", "Matrix Multiplication", "GPU", "Batch", "Adam", "Embeddings"]
+      }
+    ]
+  },
+  {
+    "number": 2,
+    "title": "Transformer Architecture",
+    "description": "The architecture that changed everything. Built from first principles: attention, layers, and why this design works so well for language.",
+    "color": "#8b5cf6",
+    "days": [
+      {
+        "number": 1,
+        "title": "Why Token IDs Are Not Enough",
+        "slug": "module-2/day-1-why-token-ids-are-not-enough",
+        "description": "Understand why GPT converts Token IDs into embedding vectors before any Transformer computation begins.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "12 min",
+        "estimatedStudyTime": "30 min",
+        "tags": ["Embeddings", "Token IDs", "Language Representation", "Transformer"]
+      },
+      {
+        "number": 2,
+        "title": "The Embedding Matrix",
+        "slug": "module-2/day-2-the-embedding-matrix",
+        "description": "Discover where embedding vectors come from, why they start random, and how GPT learns meaningful representations.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "14 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Embeddings", "Embedding Matrix", "Learnable Parameters", "Random Initialization"]
+      },
+      {
+        "number": 3,
+        "title": "How Embeddings Learn Meaning",
+        "slug": "module-2/day-3-how-embeddings-learn-meaning",
+        "description": "Discover how random embedding vectors gradually become meaningful through training and why similar words end up close together.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "14 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Embeddings", "Semantic Space", "Training", "Learnable Parameters"]
+      },
+      {
+        "number": 4,
+        "title": "Static vs Contextual Embeddings",
+        "slug": "module-2/day-4-static-vs-contextual-embeddings",
+        "description": "Learn why the same word can have different meanings depending on context and how Transformers solve this limitation.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "13 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Embeddings", "Contextual Embeddings", "Static Embeddings", "Transformer"]
+      },
+      {
+        "number": 5,
+        "title": "Why Word Order Matters",
+        "slug": "module-2/day-5-why-word-order-matters",
+        "description": "Discover why Transformers cannot understand sequence by themselves and why positional information is essential.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "30 min",
+        "tags": ["Transformers", "Positional Information", "Word Order", "Permutation Invariance", "Embeddings"]
+      },
+      {
+        "number": 6,
+        "title": "Learned Positional Embeddings",
+        "slug": "module-2/day-6-learned-positional-embeddings",
+        "description": "Understand how GPT learns the position of every token by assigning a trainable vector to each position.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Positional Embeddings", "GPT", "Transformers", "Position Matrix", "Learned Embeddings"]
+      },
+      {
+        "number": 7,
+        "title": "Sinusoidal Positional Encoding",
+        "slug": "module-2/day-7-sinusoidal-positional-encoding",
+        "description": "Learn how the original Transformer paper represented token positions using sine and cosine waves instead of learnable vectors.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Transformers", "Positional Encoding", "Sinusoidal Encoding", "Sine", "Cosine"]
+      },
+      {
+        "number": 8,
+        "title": "The Final Input Representation",
+        "slug": "module-2/day-8-the-final-input-representation",
+        "description": "Understand how token embeddings and positional information are combined to create the final representation that enters the first Transformer block.",
+        "published": true,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Embeddings", "Positional Embeddings", "Transformer Input", "Input Representation"]
+      }
+    ]
+  },
+  {
+    "number": 3,
+    "title": "LLM Internals",
+    "description": "Inside the large language model: how training works, what the model is actually doing during inference, and why it behaves the way it does.",
+    "color": "#10b981",
+    "days": [
+      {
+        "number": 1,
+        "title": "How LLMs Are Trained",
+        "slug": "module-3/day-1-how-llms-are-trained",
+        "description": "Pre-training, next-token prediction, and the scale that makes it work.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "16 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["LLM", "Pre-training", "Training"]
+      },
+      {
+        "number": 2,
+        "title": "Inference & Token Generation",
+        "slug": "module-3/day-2-inference-and-token-generation",
+        "description": "What actually happens when an LLM generates text, one token at a time.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "14 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["LLM", "Inference", "Sampling"]
+      },
+      {
+        "number": 3,
+        "title": "Temperature & Sampling",
+        "slug": "module-3/day-3-temperature-and-sampling",
+        "description": "Why the same prompt can produce different outputs, and how to control it.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "13 min",
+        "estimatedStudyTime": "30 min",
+        "tags": ["Temperature", "Sampling", "LLM"]
+      },
+      {
+        "number": 4,
+        "title": "Fine-Tuning & RLHF",
+        "slug": "module-3/day-4-fine-tuning-and-rlhf",
+        "description": "How base models are shaped into assistants through instruction tuning and human feedback.",
+        "published": false,
+        "difficulty": "Advanced",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "55 min",
+        "tags": ["Fine-Tuning", "RLHF", "LLM", "Alignment"]
+      },
+      {
+        "number": 5,
+        "title": "System Prompts & Prompt Engineering",
+        "slug": "module-3/day-5-system-prompts-and-prompt-engineering",
+        "description": "How instructions shape LLM behaviour, and what prompt engineering actually is.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Prompting", "System Prompt", "LLM"]
+      }
+    ]
+  },
+  {
+    "number": 4,
+    "title": "Retrieval-Augmented Generation",
+    "description": "How to give LLMs access to external knowledge without retraining them. The architecture behind most production AI applications.",
+    "color": "#f59e0b",
+    "days": [
+      {
+        "number": 1,
+        "title": "Why LLMs Hallucinate",
+        "slug": "module-4/day-1-why-llms-hallucinate",
+        "description": "Understanding the root cause of hallucinations and why RAG is the most practical solution.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "12 min",
+        "estimatedStudyTime": "25 min",
+        "tags": ["Hallucination", "RAG", "LLM"]
+      },
+      {
+        "number": 2,
+        "title": "Vector Databases",
+        "slug": "module-4/day-2-vector-databases",
+        "description": "How to store and efficiently search millions of embeddings.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "16 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Vector DB", "Embeddings", "RAG"]
+      },
+      {
+        "number": 3,
+        "title": "The RAG Pipeline",
+        "slug": "module-4/day-3-rag-pipeline",
+        "description": "The full retrieval-augmented generation flow: chunking, embedding, retrieval, and generation.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "50 min",
+        "tags": ["RAG", "Pipeline", "LLM"]
+      },
+      {
+        "number": 4,
+        "title": "Chunking Strategies",
+        "slug": "module-4/day-4-chunking-strategies",
+        "description": "How you split documents determines retrieval quality. The decisions that most tutorials skip.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["RAG", "Chunking", "Retrieval"]
+      },
+      {
+        "number": 5,
+        "title": "Reranking & Advanced Retrieval",
+        "slug": "module-4/day-5-reranking-and-advanced-retrieval",
+        "description": "Why naive vector search is often not enough, and how rerankers close the gap.",
+        "published": false,
+        "difficulty": "Advanced",
+        "estimatedReadingTime": "17 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["RAG", "Reranking", "Retrieval"]
+      }
+    ]
+  },
+  {
+    "number": 5,
+    "title": "Agentic AI",
+    "description": "Moving from a model that answers questions to a system that takes actions. Tools, planning, memory, and the architecture of AI agents.",
+    "color": "#ef4444",
+    "days": [
+      {
+        "number": 1,
+        "title": "What is an AI Agent?",
+        "slug": "module-5/day-1-what-is-an-ai-agent",
+        "description": "The difference between an LLM and an agent — and why the gap matters.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "12 min",
+        "estimatedStudyTime": "25 min",
+        "tags": ["Agents", "LLM", "Agentic AI"]
+      },
+      {
+        "number": 2,
+        "title": "Tool Use & Function Calling",
+        "slug": "module-5/day-2-tool-use-and-function-calling",
+        "description": "How agents use tools, and how LLMs are trained to call external functions.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "16 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Tool Use", "Function Calling", "Agents"]
+      },
+      {
+        "number": 3,
+        "title": "Memory Systems",
+        "slug": "module-5/day-3-memory-systems",
+        "description": "Short-term, long-term, and episodic memory — how agents remember across interactions.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Memory", "Agents", "Agentic AI"]
+      },
+      {
+        "number": 4,
+        "title": "Planning & ReAct",
+        "slug": "module-5/day-4-planning-and-react",
+        "description": "How agents reason and act in loops, and the ReAct pattern that makes it reliable.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "50 min",
+        "tags": ["Planning", "ReAct", "Agents"]
+      },
+      {
+        "number": 5,
+        "title": "Multi-Agent Systems",
+        "slug": "module-5/day-5-multi-agent-systems",
+        "description": "When one agent is not enough — orchestrators, workers, and agent-to-agent communication.",
+        "published": false,
+        "difficulty": "Advanced",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "55 min",
+        "tags": ["Multi-Agent", "Orchestration", "Agentic AI"]
+      }
+    ]
+  },
+  {
+    "number": 6,
+    "title": "Machine Learning Foundations",
+    "description": "The classical ML models that still underpin much of production AI — and the concepts that make deep learning intelligible.",
+    "color": "#06b6d4",
+    "days": [
+      {
+        "number": 1,
+        "title": "What is Learning?",
+        "slug": "module-6/day-1-what-is-learning",
+        "description": "Formalising the concept of a model learning from data.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "12 min",
+        "estimatedStudyTime": "30 min",
+        "tags": ["ML", "Supervised Learning", "Foundations"]
+      },
+      {
+        "number": 2,
+        "title": "Loss Functions",
+        "slug": "module-6/day-2-loss-functions",
+        "description": "How we measure how wrong a model is — and why the choice of loss matters.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "14 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Loss Functions", "ML", "Training"]
+      },
+      {
+        "number": 3,
+        "title": "Gradient Descent",
+        "slug": "module-6/day-3-gradient-descent",
+        "description": "The optimisation algorithm at the heart of every ML model, from linear regression to GPT.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "17 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Gradient Descent", "Optimisation", "ML"]
+      },
+      {
+        "number": 4,
+        "title": "Overfitting & Regularisation",
+        "slug": "module-6/day-4-overfitting-and-regularisation",
+        "description": "The most important concept in practical machine learning — and how to fight it.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Overfitting", "Regularisation", "ML"]
+      }
+    ]
+  },
+  {
+    "number": 7,
+    "title": "Deep Learning",
+    "description": "From a single artificial neuron to the networks that power modern AI — built from scratch, understood from the inside.",
+    "color": "#ec4899",
+    "days": [
+      {
+        "number": 1,
+        "title": "The Perceptron",
+        "slug": "module-7/day-1-the-perceptron",
+        "description": "The atom of neural computation — one neuron, one decision boundary.",
+        "published": false,
+        "difficulty": "Beginner",
+        "estimatedReadingTime": "14 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Perceptron", "Neural Networks", "Deep Learning"]
+      },
+      {
+        "number": 2,
+        "title": "Backpropagation",
+        "slug": "module-7/day-2-backpropagation",
+        "description": "How neural networks learn — the chain rule applied to computational graphs.",
+        "published": false,
+        "difficulty": "Advanced",
+        "estimatedReadingTime": "22 min",
+        "estimatedStudyTime": "60 min",
+        "tags": ["Backpropagation", "Neural Networks", "Training"]
+      },
+      {
+        "number": 3,
+        "title": "Activation Functions",
+        "slug": "module-7/day-3-activation-functions",
+        "description": "Why non-linearity is essential, and what ReLU, sigmoid, and GELU actually do.",
+        "published": false,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Activation Functions", "Neural Networks", "Deep Learning"]
+      }
+    ]
+  }
+]
