@@ -1,0 +1,288 @@
+---
+title: "Measuring Mistakes with Cross Entropy Loss"
+slug: "module-1/day-7-cross-entropy-loss"
+description: "Learn how GPT measures the quality of its predictions and why Cross Entropy Loss became the standard loss function for language models."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "16 min"
+estimatedStudyTime: "40 min"
+tags:
+  - Cross Entropy
+  - Loss
+  - Softmax
+  - Training
+learningObjectives:
+  - Understand what Loss is.
+  - Learn why measuring mistakes is necessary.
+  - Understand Cross Entropy Loss intuitively.
+  - See why confident wrong answers receive larger penalties.
+  - Learn the Cross Entropy formula at a high level.
+prerequisites:
+  - topic: "From Scores to Predictions"
+    slug: "module-1/day-6-from-scores-to-predictions"
+previous:
+  title: "From Scores to Predictions"
+  slug: "module-1/day-6-from-scores-to-predictions"
+next:
+  title: "Learning Through Backpropagation"
+  slug: "module-1/day-8-backpropagation"
+---
+
+> *"A model can't improve unless it knows how wrong it was."*
+
+---
+
+## The Problem
+
+After the forward pass, GPT has generated probabilities.
+
+Suppose the sentence is `The sky is ____` and the correct answer is `blue`.
+
+But GPT predicts `green`.
+
+The model knows it made a mistake. But — **how big was that mistake?**
+
+Was it a tiny mistake? Or a huge one?
+
+We need a way to measure it.
+
+---
+
+## Intuition
+
+Imagine taking an exam.
+
+<TokenMapping
+  title="Exam Performance"
+  fromLabel="Score"
+  toLabel="Mistake Size"
+  items={[
+    { from: "98%", to: "Very small" },
+    { from: "60%", to: "Moderate"   },
+    { from: "20%", to: "Very large" },
+  ]}
+/>
+
+Loss works exactly the same way.
+
+> **"How far was the prediction from the correct answer?"**
+
+---
+
+## What is Loss?
+
+Loss is simply a number.
+
+<Comparison
+  title="What Loss Tells Us"
+  left={{ label: "Small Loss", points: ["Good prediction", "Model was mostly correct", "Parameters need little adjustment"] }}
+  right={{ label: "Large Loss", points: ["Poor prediction", "Model was very wrong", "Parameters need significant adjustment"] }}
+/>
+
+The goal of training is simple — reduce the loss again and again until the predictions become accurate.
+
+---
+
+## Prediction Evaluation Pipeline
+
+<FlowDiagram title="Loss Calculation" steps={[
+  "Prediction",
+  "Compare with Correct Answer",
+  "Calculate Loss",
+  "Training Continues"
+]} />
+
+---
+
+## Why Not Just Count Wrong Predictions?
+
+Suppose GPT makes two wrong predictions.
+
+<TokenMapping
+  title="Prediction A"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "Blue",  to: "0.49" },
+    { from: "Green", to: "0.51" },
+  ]}
+/>
+
+<TokenMapping
+  title="Prediction B"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "Blue",  to: "0.01" },
+    { from: "Green", to: "0.99" },
+  ]}
+/>
+
+Both are wrong. But clearly, the second prediction is much worse.
+
+A good loss function must understand this difference.
+
+---
+
+## Cross Entropy Loss
+
+Cross Entropy doesn't only check whether the answer is right. It also considers **how confident** the model was.
+
+<Comparison
+  title="Confidence vs Loss"
+  left={{ label: "Confidently Correct", points: ["High probability on correct word", "Very small loss", "Minimal parameter update needed"] }}
+  right={{ label: "Confidently Wrong", points: ["High probability on wrong word", "Very large loss", "Large parameter update required"] }}
+/>
+
+---
+
+## Example
+
+Correct answer: **Blue**
+
+<TokenMapping
+  title="Prediction A — Very Small Loss"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "Blue",  to: "0.90" },
+    { from: "Green", to: "0.10" },
+  ]}
+/>
+
+<TokenMapping
+  title="Prediction B — Moderate Loss"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "Blue",  to: "0.55" },
+    { from: "Green", to: "0.45" },
+  ]}
+/>
+
+<TokenMapping
+  title="Prediction C — Very Large Loss"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "Blue",  to: "0.02" },
+    { from: "Green", to: "0.98" },
+  ]}
+/>
+
+Cross Entropy penalizes confident mistakes much more strongly.
+
+---
+
+## Mathematics
+
+The full Cross Entropy Loss formula is:
+
+<MathBlock title="Cross Entropy Loss">
+  $$L = -\sum_{i=1}^{C} y_i \log(p_i)$$
+</MathBlock>
+
+where **L** is the loss, **yᵢ** is the correct label (1 for correct token, 0 for all others), **pᵢ** is the predicted probability, and **C** is the vocabulary size.
+
+For language models, only the correct token contributes. The formula simplifies to:
+
+<MathBlock title="Simplified Cross Entropy">
+  $$L = -\log(p_{\text{correct}})$$
+</MathBlock>
+
+This means a higher probability on the correct word → lower loss. A lower probability → higher loss.
+
+---
+
+## Why Logarithm?
+
+The logarithm makes confident wrong predictions receive much larger penalties than uncertain ones.
+
+We'll study logarithms in depth later when we dive into optimization.
+
+---
+
+## Visual Walkthrough
+
+<FlowDiagram title="Full Training Step (so far)" steps={[
+  "Sentence",
+  "Forward Pass",
+  "Logits",
+  "Softmax",
+  "Probabilities",
+  "Correct Answer",
+  "Cross Entropy Loss"
+]} />
+
+---
+
+## Worked Example
+
+Sentence: `The sky is ____` — Correct answer: **Blue**
+
+<TokenMapping
+  title="Model Prediction"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "Blue",  to: "0.20" },
+    { from: "Green", to: "0.75" },
+    { from: "Dog",   to: "0.05" },
+  ]}
+/>
+
+Since GPT assigned a low probability to the correct answer, Cross Entropy produces a large loss.
+
+> "You were very confident — but confidently wrong."
+
+---
+
+## Common Misconceptions
+
+**Loss is the error itself.**
+
+No. Loss is a measurement of the error.
+
+**Every wrong prediction gets the same loss.**
+
+No. Cross Entropy depends on confidence.
+
+**Higher probability always means lower loss.**
+
+Only if that probability belongs to the **correct** answer.
+
+**Cross Entropy changes the parameters.**
+
+No. It only measures the mistake. Parameter updates happen later.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why isn't counting mistakes enough?
+- Why do we need probabilities to calculate loss?
+- Why are confident mistakes punished more?
+- Why is Cross Entropy used instead of Mean Squared Error?
+- What happens after the loss is calculated?
+
+---
+
+## Key Takeaways
+
+- Loss measures how wrong a prediction was.
+- Cross Entropy uses probabilities, not just correct or incorrect labels.
+- Confident wrong predictions receive larger penalties.
+- Lower loss means better predictions.
+- Loss itself doesn't improve the model — it only provides feedback.
+
+---
+
+## What's Next?
+
+Now GPT knows **how wrong** its prediction was.
+
+But another question appears.
+
+How does the model figure out **which of its billions of parameters caused that mistake?**
+
+The answer lies in one of the most important algorithms in deep learning: **Backpropagation**.
