@@ -1,0 +1,277 @@
+---
+title: "Modern AI Systems"
+slug: "modern-ai-systems"
+description: "Explore the building blocks that power modern AI applications and understand how they work together to create intelligent systems."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "12 min"
+estimatedStudyTime: "25 min"
+tags:
+  - AI
+  - LLM
+  - RAG
+  - Agents
+learningObjectives:
+  - Understand the major components of a modern AI system.
+  - Learn why LLMs alone are not enough.
+  - Get a high-level overview of Tokens, Memory, RAG, Tools, and Agents.
+  - Build a mental model before diving into the technical modules.
+prerequisites:
+  - topic: "AI Journey"
+    slug: "ai-journey"
+next:
+  title: "How an LLM Actually Learns"
+  slug: "module-1/day-1-how-an-llm-actually-learns"
+previous:
+  title: "AI Journey"
+  slug: "ai-journey"
+---
+
+> *"A Large Language Model is only one part of the story. Modern AI systems combine multiple components to solve real-world problems."*
+
+By now, you've seen how AI evolved from traditional programming to Large Language Models.
+
+But if you've used ChatGPT, Gemini, or Claude, you might wonder:
+
+> **"Is the language model alone responsible for everything?"**
+
+The answer is **No.**
+
+Today's AI applications combine several components that work together like a team.
+
+Let's understand the big picture.
+
+---
+
+## The Problem
+
+Imagine asking an AI:
+
+> "Summarize the PDF I uploaded yesterday."
+
+How can it answer?
+
+A language model cannot magically know:
+
+- Your files
+- Your previous chats
+- Today's weather
+- Live stock prices
+- Your calendar
+
+Yet modern AI assistants perform these tasks every day.
+
+How?
+
+Because they are much more than just an LLM.
+
+---
+
+## Intuition
+
+Think of an AI assistant as a human professional.
+
+A doctor doesn't rely only on memory.
+
+They use:
+
+- Medical books
+- Patient records
+- Laboratory reports
+- Medical instruments
+
+Similarly, an AI system combines different components to complete a task.
+
+Each component has a specific responsibility.
+
+---
+
+## The Building Blocks
+
+A modern AI application usually consists of the following pieces.
+
+```text
+User
+↓
+Prompt
+↓
+Tokens
+↓
+Large Language Model
+↓
+Memory
+↓
+Knowledge (RAG)
+↓
+Tools
+↓
+AI Agent
+↓
+Final Response
+```
+
+Let's briefly understand each one.
+
+---
+
+## Tokens
+
+Computers don't understand words directly.
+
+Before an LLM can process your prompt, your sentence is broken into small pieces called **tokens**.
+
+These tokens become the language the model understands.
+
+You'll learn exactly how tokenization works in Module 1.
+
+---
+
+## Context
+
+An LLM only knows the information currently available during the conversation.
+
+This information is called the **context**.
+
+Everything inside the context influences the model's response.
+
+However, context has a limit.
+
+When the conversation becomes too long, older information may no longer fit.
+
+This introduces another challenge.
+
+How can AI remember important information?
+
+---
+
+## Memory
+
+Memory helps AI retain useful information across conversations or tasks.
+
+For example, an assistant might remember:
+
+- Your preferred programming language
+- Your learning goals
+- Previous discussions
+
+Instead of asking you the same questions repeatedly, it can continue naturally.
+
+Memory makes AI feel more personalized.
+
+---
+
+## Knowledge Retrieval (RAG)
+
+Sometimes the required information doesn't exist inside the model.
+
+For example:
+
+- Company documents
+- Research papers
+- Product manuals
+- PDFs
+- Internal knowledge bases
+
+Instead of retraining the model, we retrieve the relevant information first, then provide it to the LLM.
+
+This approach is called **Retrieval-Augmented Generation (RAG).**
+
+It allows AI to answer questions using external knowledge.
+
+---
+
+## Tools
+
+Language models can generate text, but they cannot perform real-world actions on their own.
+
+Suppose you ask:
+
+> "What's the weather in Hyderabad right now?"
+
+The LLM doesn't know today's weather.
+
+Instead, it calls a weather API, receives the latest data, and then explains the result in natural language.
+
+The weather API is a **tool**.
+
+Similarly, AI systems can use tools to:
+
+- Search the web
+- Send emails
+- Execute code
+- Access databases
+- Read files
+- Schedule meetings
+
+Tools allow AI to interact with the real world.
+
+---
+
+## AI Agents
+
+An AI Agent combines everything we've discussed.
+
+Instead of simply generating text, an agent can:
+
+- Understand a goal
+- Plan the steps
+- Retrieve knowledge
+- Use tools
+- Remember important information
+- Produce a final answer
+
+This makes AI capable of completing tasks rather than only answering questions.
+
+---
+
+## Putting Everything Together
+
+Imagine you ask:
+
+> "Read my project report, identify missing sections, and email me a summary."
+
+A modern AI system might perform the following steps:
+
+```text
+Receive your request
+↓
+Read the uploaded report
+↓
+Retrieve relevant information
+↓
+Use the language model to analyze it
+↓
+Generate a summary
+↓
+Use an email tool
+↓
+Send the email
+↓
+Return a confirmation
+```
+
+Notice that the LLM is only one component in this workflow.
+
+The entire system works together to complete the task.
+
+---
+
+## Key Takeaways
+
+- Modern AI systems are much more than language models.
+- Tokens allow models to understand text.
+- Context determines what the model currently knows.
+- Memory helps retain information across interactions.
+- RAG provides external knowledge.
+- Tools enable real-world actions.
+- AI Agents combine all these components to solve complex tasks.
+
+---
+
+## What's Next?
+
+Congratulations!
+
+You now have a high-level understanding of how modern AI systems are built.
+
+From the next lesson onward, we'll begin **Module 1**, where we'll stop looking at the big picture and start exploring the internal workings of AI step by step — from the very beginning.
