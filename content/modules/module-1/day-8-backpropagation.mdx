@@ -1,0 +1,261 @@
+---
+title: "Learning Through Backpropagation"
+slug: "module-1/day-8-backpropagation"
+description: "Discover how GPT traces mistakes backward through the network to determine exactly which parameters should change."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "18 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Backpropagation
+  - Gradients
+  - Chain Rule
+  - Neural Networks
+learningObjectives:
+  - Understand why Backpropagation is needed.
+  - Learn how errors travel backward through the network.
+  - Understand what gradients represent.
+  - Build intuition for the Chain Rule.
+  - See how every parameter receives its own correction.
+prerequisites:
+  - topic: "Measuring Mistakes with Cross Entropy Loss"
+    slug: "module-1/day-7-cross-entropy-loss"
+previous:
+  title: "Measuring Mistakes with Cross Entropy Loss"
+  slug: "module-1/day-7-cross-entropy-loss"
+next:
+  title: "Gradient Descent & Optimization"
+  slug: "module-1/day-9-gradient-descent-and-optimization"
+---
+
+> *"Knowing that a prediction was wrong isn't enough. The model must also discover exactly which parameters caused that mistake."*
+
+---
+
+## The Problem
+
+In the previous lesson, the model calculated the loss.
+
+Suppose the loss is very high. The model now knows:
+
+> "My prediction was wrong."
+
+But another question appears.
+
+The network contains **billions of parameters**. Which ones caused the mistake?
+
+Should every parameter change equally? Or should some change more than others?
+
+The model needs a systematic way to answer these questions.
+
+---
+
+## Intuition
+
+Imagine a group project. Five students worked together. The final result was poor.
+
+Now the teacher asks:
+
+> "Who contributed most to the mistakes?"
+
+Every student didn't contribute equally. Some made large mistakes. Some made only tiny ones.
+
+Backpropagation performs the same investigation inside a neural network — it determines how much each parameter contributed to the final error.
+
+---
+
+## What is Backpropagation?
+
+Backpropagation is the algorithm that sends the error backward through the network.
+
+As it travels backward, it calculates:
+
+- which parameters influenced the prediction
+- how much they influenced it
+- whether they should increase or decrease
+
+Notice something important.
+
+Backpropagation **does not update** the parameters. It only computes the information needed for the update.
+
+---
+
+## Backpropagation Pipeline
+
+<FlowDiagram title="Backpropagation Flow" steps={[
+  "Prediction",
+  "Loss",
+  "Trace Error Backward",
+  "Compute Gradients",
+  "Send to Optimizer"
+]} />
+
+---
+
+## Why Does It Travel Backward?
+
+The prediction is produced at the output layer. So the error is first known there.
+
+To understand how earlier layers contributed, the model must move backwards.
+
+Think of it like tracing a river. Instead of flowing from the source, you're walking upstream to find where the pollution began.
+
+That's exactly what Backpropagation does.
+
+---
+
+## Gradients
+
+The result of Backpropagation is called a **Gradient**.
+
+A gradient tells a parameter:
+
+- how much it contributed to the loss
+- which direction it should move to reduce that loss
+
+<Comparison
+  title="Gradient Magnitude"
+  left={{ label: "Large Gradient", points: ["Large influence on the error", "Needs a bigger parameter update", "Was a major contributor to the mistake"] }}
+  right={{ label: "Small Gradient", points: ["Small influence on the error", "Needs only a minor adjustment", "Had little impact on the prediction"] }}
+/>
+
+---
+
+## Gradient Intuition
+
+Imagine standing on a mountain. You want to reach the lowest point.
+
+The steepness of the ground tells you which direction leads downhill.
+
+A gradient works similarly — it tells the optimizer which direction changes the loss the fastest.
+
+---
+
+## Mathematics
+
+The gradient of the loss with respect to a weight is written as:
+
+<MathBlock title="Gradient of the Loss">
+  $$\frac{\partial L}{\partial W}$$
+</MathBlock>
+
+where **L** is the loss and **W** is one parameter.
+
+This value answers:
+
+> "If this parameter changes a tiny amount, how much will the loss change?"
+
+---
+
+## The Chain Rule
+
+The network contains many layers. A parameter in the first layer affects the output indirectly — its influence passes through every layer after it.
+
+To calculate this influence, Backpropagation uses the **Chain Rule**.
+
+The idea is simple: the total influence equals the product of the influence at every intermediate step.
+
+<MathBlock title="Chain Rule">
+  $$\frac{\partial L}{\partial W_1} = \frac{\partial L}{\partial W_3} \times \frac{\partial W_3}{\partial W_2} \times \frac{\partial W_2}{\partial W_1}$$
+</MathBlock>
+
+Don't worry about computing it manually. Remember only the intuition:
+
+> Every layer passes error information backward to the previous layer.
+
+---
+
+## Visual Walkthrough
+
+<FlowDiagram title="Forward Pass" steps={[
+  "Input",
+  "Layer 1",
+  "Layer 2",
+  "Layer 3",
+  "Prediction",
+  "Loss"
+]} />
+
+<FlowDiagram title="Backward Pass (Backpropagation)" steps={[
+  "Loss",
+  "Layer 3 ← gradient",
+  "Layer 2 ← gradient",
+  "Layer 1 ← gradient",
+  "All Gradients Computed"
+]} />
+
+---
+
+## Worked Example
+
+Suppose three neurons contribute to the prediction.
+
+<FlowDiagram title="Three-Neuron Network" steps={[
+  "Input",
+  "Neuron A",
+  "Neuron B",
+  "Neuron C",
+  "Prediction"
+]} />
+
+The prediction is wrong. Backpropagation begins at the output.
+
+It first evaluates **Neuron C**, then **Neuron B**, finally **Neuron A**.
+
+Each neuron receives a gradient showing its contribution to the error.
+
+Later, the optimizer uses these gradients to update the parameters.
+
+---
+
+## Common Misconceptions
+
+**Backpropagation changes the weights.**
+
+No. It only computes gradients.
+
+**Every parameter changes equally.**
+
+No. Each parameter receives its own gradient.
+
+**Gradients only tell the direction.**
+
+Not exactly. They indicate both the direction and the magnitude of the change.
+
+**Backpropagation happens during inference.**
+
+No. It is used only during training.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why does the error travel backward?
+- Why doesn't every parameter receive the same update?
+- What exactly is a gradient?
+- Why is the Chain Rule necessary?
+- What happens after gradients are calculated?
+
+---
+
+## Key Takeaways
+
+- Backpropagation traces the error backward through the network.
+- It computes gradients for every learnable parameter.
+- Gradients measure each parameter's contribution to the loss.
+- The Chain Rule allows gradients to flow through many layers.
+- Backpropagation computes corrections but does not update parameters.
+
+---
+
+## What's Next?
+
+Backpropagation has finished its work.
+
+Every parameter now knows how much it contributed to the mistake and which direction it should move.
+
+But one final question remains.
+
+**Who actually updates the parameters?**
+
+In the next lesson, we'll study **Gradient Descent** — the optimization algorithm that gradually transforms random parameters into learned knowledge.
