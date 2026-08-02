@@ -1,0 +1,393 @@
+---
+title: "Inside the GPT Architecture"
+slug: "module-1/day-4-inside-the-gpt-architecture"
+description: "Explore the internal structure of GPT and understand where knowledge is stored after training."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "15 min"
+estimatedStudyTime: "35 min"
+tags:
+  - GPT
+  - Transformer
+  - Architecture
+  - Parameters
+  - Neural Network
+learningObjectives:
+  - Understand the difference between architecture and knowledge.
+  - Learn where GPT stores information after training.
+  - Recognize the major components inside GPT.
+  - Understand why training changes parameters but not the architecture.
+  - Prepare for opening the Transformer block in Module 2.
+prerequisites:
+  - topic: "Learn from Mistakes"
+    slug: "module-1/day-3-learning-from-mistakes"
+previous:
+  title: "Learning from Mistakes"
+  slug: "module-1/day-3-learning-from-mistakes"
+next:
+  title: "Inside One Training Iteration"
+  slug: "module-1/day-5-inside-one-training-iteration"
+---
+
+# Inside the GPT Architecture
+
+> *"The architecture gives GPT its ability to learn. The parameters determine what it has learned."*
+
+---
+# The Problem
+
+We've now seen the complete learning process.
+
+The model:
+
+- Makes predictions.
+- Measures mistakes.
+- Updates parameters.
+- Repeats this process billions of times.
+
+But one important question remains.
+
+> **After all this training, where does the knowledge actually go?**
+
+Is it stored inside the dataset?
+
+Inside the source code?
+
+Inside the architecture?
+
+Or somewhere else?
+
+---
+
+# Intuition
+
+Imagine buying a brand-new notebook.
+
+The notebook already has:
+
+- Pages
+- Cover
+- Binding
+
+But it contains no knowledge.
+
+As you study,
+
+you begin writing on those pages.
+
+Eventually,
+
+the notebook becomes full of information.
+
+Notice something important.
+
+The notebook itself never changed.
+
+Only what was written inside it changed.
+
+GPT works in exactly the same way.
+
+The architecture stays the same.
+
+The parameters change.
+
+---
+
+# Architecture vs Knowledge
+
+Many beginners think:
+
+> GPT becomes smarter because engineers continuously redesign it.
+
+That's not how training works.
+
+The architecture is designed **once**.
+
+Training then updates the parameters inside that architecture.
+
+Think of it like a house.
+
+The blueprint remains the same.
+
+Only the furniture inside changes.
+
+---
+
+# Before Training
+
+```text
+GPT Architecture
+
+↓
+
+Random Parameters
+
+↓
+
+No Knowledge
+```
+
+At this stage,
+
+the model is simply a mathematical structure.
+
+It has no understanding of language.
+
+---
+
+# After Training
+
+```text
+GPT Architecture
+
+↓
+
+Learned Parameters
+
+↓
+
+Language Knowledge
+```
+
+The architecture is identical.
+
+Only the parameter values have changed.
+
+---
+
+# Where is Knowledge Stored?
+
+The answer is surprisingly simple.
+
+Knowledge is **not** stored in:
+
+❌ The dataset
+
+❌ The source code
+
+❌ The tokenizer
+
+Knowledge is stored inside the model's **learned parameters**.
+
+Every time Gradient Descent updates a weight,
+
+the model remembers a tiny amount.
+
+Billions of tiny updates eventually become intelligence.
+
+---
+
+# A High-Level View of GPT
+
+Although we'll study each part in Module 2,
+
+it's useful to know the major building blocks.
+
+```text
+Input Tokens
+
+↓
+
+Embeddings
+
+↓
+
+Transformer Blocks
+
+↓
+
+Output Layer
+
+↓
+
+Predicted Token
+```
+
+This is the complete inference pipeline of GPT.
+
+Today, don't worry about how each block works.
+
+We'll open each one in the coming module.
+
+---
+
+# Mathematical Perspective
+
+During training,
+
+only the parameters are updated.
+
+Conceptually, we can think of this as:
+
+```math
+\theta_{\text{new}}
+=
+\theta_{\text{old}}
+-
+\eta\nabla L
+```
+
+where:
+
+- **θ** → All learnable parameters of the model
+- **η** → Learning rate
+- **∇L** → Gradient of the loss
+
+> Notice that the architecture itself does not change—only the values of the parameters.
+
+---
+
+# Complete Training Journey
+
+```text
+Raw Text
+
+↓
+
+Cleaning
+
+↓
+
+Tokenization
+
+↓
+
+Token IDs
+
+↓
+
+Embeddings
+
+↓
+
+Transformer
+
+↓
+
+Logits
+
+↓
+
+Softmax
+
+↓
+
+Loss
+
+↓
+
+Backpropagation
+
+↓
+
+Parameter Updates
+
+↓
+
+Trained GPT
+```
+
+Everything you've learned in Module 1 fits into this single pipeline.
+
+---
+
+# Worked Example
+
+Imagine two students buying the exact same textbook.
+
+The book's structure is identical.
+
+The chapters are identical.
+
+The pages are identical.
+
+After six months:
+
+One student has highlighted important concepts, written notes, and solved every exercise.
+
+The other student has left every page blank.
+
+The books are structurally the same.
+
+But one now contains much more useful information.
+
+GPT works similarly.
+
+Every trained GPT model shares the same architecture.
+
+What makes them different is the values stored in their parameters.
+
+---
+
+# Common Misconceptions
+
+### ❌ The architecture stores knowledge.
+
+No.
+
+The architecture defines *where* learning happens.
+
+The parameters store *what* has been learned.
+
+---
+
+### ❌ Training redesigns the model.
+
+No.
+
+Training updates parameter values.
+
+The architecture remains unchanged.
+
+---
+
+### ❌ The dataset becomes part of GPT.
+
+No.
+
+The dataset is only used during training.
+
+After training,
+
+the learned patterns remain inside the parameters.
+
+---
+
+# Questions That Changed My Understanding
+
+- Why doesn't GPT need the training dataset after training?
+- Why are parameters called "learnable"?
+- If the architecture never changes, why do different GPT models behave differently?
+- What actually happens inside a Transformer Block?
+
+Those are exactly the questions we'll answer next.
+
+---
+
+# Key Takeaways
+
+- The architecture is designed before training.
+- Training changes parameter values, not the architecture.
+- Knowledge is stored inside learned parameters.
+- GPT consists of embeddings, transformer blocks, and an output layer.
+- Module 1 has explained the complete high-level training pipeline.
+- Module 2 will explore each internal component in depth.
+
+---
+
+# What's Next?
+
+You've now completed **Module 1**.
+
+You understand:
+
+- How data is collected.
+- How text becomes numbers.
+- How GPT learns through prediction and correction.
+- Where the learned knowledge is stored.
+
+But we've treated the Transformer as a "black box."
+
+It's finally time to open that box.
+
+In **Module 2**, we'll explore every internal component of a Transformer—from embeddings and positional information to self-attention, multi-head attention, feed-forward networks, and beyond.
