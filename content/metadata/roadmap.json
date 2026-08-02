@@ -309,9 +309,7 @@
         "estimatedReadingTime": "5 min",
         "estimatedStudyTime": "10 min",
         "tags": ["Self Attention", "Walkthrough", "Recap", "Transformer"]
-      }
-    ]
-  },
+      },
       {
         "number": 17,
         "title": "Why One Attention Head Isn't Enough",
