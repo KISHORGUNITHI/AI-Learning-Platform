@@ -1,0 +1,218 @@
+---
+title: "The Embedding Matrix"
+slug: "module-2/day-2-the-embedding-matrix"
+description: "Discover where embedding vectors come from, why they start random, and how GPT learns meaningful representations."
+published: true
+difficulty: "Beginner"
+estimatedReadingTime: "14 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Embeddings
+  - Embedding Matrix
+  - Learnable Parameters
+  - Random Initialization
+learningObjectives:
+  - Understand what an Embedding Matrix is.
+  - Learn where embedding vectors come from.
+  - Understand why embeddings start as random numbers.
+  - Learn why the Embedding Matrix is a learnable parameter.
+  - Build intuition for how words gradually gain meaning.
+prerequisites:
+  - topic: "Why Token IDs Are Not Enough"
+    slug: "module-2/day-1-why-token-ids-are-not-enough"
+previous:
+  title: "Why Token IDs Are Not Enough"
+  slug: "module-2/day-1-why-token-ids-are-not-enough"
+next:
+  title: "How Embeddings Learn Meaning"
+  slug: "module-2/day-3-how-embeddings-learn-meaning"
+---
+
+> *"Nobody manually writes the meaning of words into GPT. The model discovers that meaning by learning."*
+
+---
+
+## What is Vectorization?
+
+In the previous lesson, we learned that Token IDs cannot carry meaning.
+
+Before GPT can perform any mathematical computation, it must convert Token IDs into dense numerical vectors.
+
+This process is called **Vectorization**, and it is performed by the **Embedding Layer**.
+
+<FlowDiagram title="Vectorization Pipeline" steps={[
+  "Input Text",
+  "Tokenizer",
+  "Token IDs",
+  "Vectorization (Embedding Lookup)",
+  "Embedding Vectors",
+  "Transformer"
+]} />
+
+> Vectorization converts symbolic Token IDs into dense numerical vectors using the learned Embedding Matrix.
+
+---
+
+## The Problem
+
+Suppose the tokenizer produces `Cat → Token ID = 205`.
+
+We know GPT converts it into `[0.42, -0.81, 1.24, ...]`.
+
+But where did these numbers come from?
+
+Did OpenAI engineers manually write them?
+
+Did someone create a giant dictionary containing every word and its meaning?
+
+**No.**
+
+---
+
+## Intuition
+
+Imagine opening a brand new notebook. Every page is completely blank.
+
+As you continue learning, you gradually fill each page with useful information.
+
+The Embedding Matrix works in a very similar way — initially every row contains meaningless random numbers. Training slowly transforms them into meaningful representations.
+
+<TokenMapping
+  title="Embedding Matrix Before Training"
+  fromLabel="Token ID"
+  toLabel="Vector (random)"
+  items={[
+    { from: "Token 0", to: "[0.12, -0.44, 0.91, ...]"  },
+    { from: "Token 1", to: "[-0.63, 0.28, -1.10, ...]" },
+    { from: "Token 2", to: "[0.84, 0.09, -0.51, ...]"  },
+    { from: "...",     to: "..."                        },
+  ]}
+/>
+
+---
+
+## Deep Explanation
+
+GPT stores all embedding vectors inside one large table — the **Embedding Matrix**.
+
+Each row represents one token. Whenever GPT receives a Token ID, it retrieves the corresponding row from this table.
+
+<FlowDiagram title="Embedding Lookup" steps={[
+  "Token ID: 205",
+  "Embedding Matrix",
+  "Row 205",
+  "Embedding Vector: [0.42, -0.81, 1.24, ...]"
+]} />
+
+This retrieval process is called an **Embedding Lookup**.
+
+---
+
+## Why Random Numbers?
+
+Suppose every embedding started as `[0, 0, 0, 0, 0]`.
+
+Every word would look identical. GPT would have no way to distinguish Cat from Dog from Car.
+
+Random initialization gives every token a unique starting point. Training gradually improves those vectors.
+
+<TokenMapping
+  title="Embedding for 'cat' — Before vs After Training"
+  fromLabel="Stage"
+  toLabel="Vector"
+  items={[
+    { from: "Before Training", to: "[0.12, -0.81, 0.63, ...]"  },
+    { from: "After Training",  to: "[-0.74, 1.08, 0.52, ...]"  },
+  ]}
+/>
+
+The numbers changed. The meaning emerged.
+
+---
+
+## Learnable Parameters
+
+Does the Embedding Matrix stay fixed forever?
+
+No. It is a **learnable parameter** — just like the weights inside a neural network. Every prediction slightly adjusts some of its values during training.
+
+<FlowDiagram title="How Embeddings Learn" steps={[
+  "Input Sentence",
+  "Prediction",
+  "Loss",
+  "Backpropagation",
+  "Embedding Matrix Updated"
+]} />
+
+The Embedding Matrix learns together with the rest of the model.
+
+---
+
+## Embedding Dimension
+
+Each embedding vector has a fixed length called the **Embedding Dimension**.
+
+<TokenMapping
+  title="Common Embedding Dimensions"
+  fromLabel="Model"
+  toLabel="Embedding Dimension"
+  items={[
+    { from: "GPT-2 Small",  to: "768"  },
+    { from: "GPT-2 Large",  to: "1280" },
+    { from: "GPT-3",        to: "12288" },
+    { from: "GPT-4 (est.)", to: "~25600" },
+  ]}
+/>
+
+Every token inside the model uses the same number of values. We'll explore why this dimension matters later in the roadmap.
+
+---
+
+## Worked Example
+
+Suppose the tokenizer produces `Dog → 417`.
+
+GPT searches the Embedding Matrix, retrieves Row 417, and obtains `[-0.82, 0.44, 1.73, ...]`.
+
+That vector — not the Token ID — is sent into the Transformer.
+
+<FlowDiagram title="Complete Embedding Flow" steps={[
+  "Token: Dog",
+  "Token ID: 417",
+  "Embedding Matrix Row 417",
+  "Vector: [-0.82, 0.44, 1.73, ...]",
+  "Sent to Transformer"
+]} />
+
+---
+
+## Questions That Changed My Understanding
+
+- Who creates embedding vectors?
+- Why don't engineers manually assign meanings?
+- Why are embeddings random before training?
+- Why is the Embedding Matrix considered a learnable parameter?
+
+---
+
+## Key Takeaways
+
+- GPT stores all embeddings inside the Embedding Matrix.
+- Every Token ID maps to one row in that matrix.
+- Embeddings start as random numbers.
+- Training gradually transforms them into meaningful vectors.
+- The Embedding Matrix is a learnable parameter updated during backpropagation.
+
+---
+
+## What's Next?
+
+Now we know where embedding vectors come from.
+
+But another fascinating question appears.
+
+**How do random numbers eventually represent meaning?**
+
+Why do words like Cat, Dog, and Tiger end up close together in vector space, while Car and Computer move somewhere else?
+
+In the next lesson, we'll discover how embeddings gradually learn semantic relationships during training.
