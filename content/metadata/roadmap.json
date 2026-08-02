@@ -287,6 +287,17 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Self Attention", "Softmax", "Attention Weights", "Probability"]
+      },
+      {
+        "number": 15,
+        "title": "Attention Weights × Value Matrix",
+        "slug": "module-2/day-15-attention-weights-value-matrix",
+        "description": "Learn how GPT uses the Attention Weight Matrix to combine information from the Value vectors and create contextual representations.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Self Attention", "Attention Weights", "Value Matrix", "Weighted Sum", "Contextual Embeddings"]
       }
     ]
   },

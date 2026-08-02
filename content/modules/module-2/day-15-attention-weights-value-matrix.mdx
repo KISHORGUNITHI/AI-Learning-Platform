@@ -1,0 +1,297 @@
+---
+title: "Attention Weights × Value Matrix"
+slug: "module-2/day-15-attention-weights-value-matrix"
+description: "Learn how GPT uses the Attention Weight Matrix to combine information from the Value vectors and create contextual representations."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Self Attention
+  - Attention Weights
+  - Value Matrix
+  - Weighted Sum
+  - Contextual Embeddings
+learningObjectives:
+  - Understand why Value vectors exist.
+  - Learn why Attention Weights alone are not enough.
+  - Understand how GPT gathers information from multiple tokens.
+  - Learn why the Value Matrix is multiplied with the Attention Weight Matrix.
+  - Prepare to build the final contextual representation.
+prerequisites:
+  - topic: "Softmax: From Scores to Attention Weights"
+    slug: "module-2/day-14-softmax-from-scores-to-attention-weights"
+previous:
+  title: "Softmax: From Scores to Attention Weights"
+  slug: "module-2/day-14-softmax-from-scores-to-attention-weights"
+---
+
+> *"Attention decides who is important. The Value vectors determine what information is actually shared."*
+
+---
+
+## Quick Recap
+
+<FlowDiagram title="Where We Are" steps={[
+  "QKᵀ / √d → Attention Scores",
+  "Softmax → Attention Weight Matrix  [0.20, 0.60, 0.20]",
+  "GPT knows who deserves attention",
+  "But what information should it actually receive?"
+]} />
+
+---
+
+## The Problem
+
+Suppose GPT decides Token A gets 47%, Token B 29%, Token C 24%.
+
+Now what?
+
+<Comparison
+  title="What Attention Weights Tell Us vs What They Don't"
+  left={{
+    label: "Attention Weights Tell Us ✓",
+    points: [
+      "Who deserves attention",
+      "How much each token contributes",
+      "The relative importance of each token",
+    ]
+  }}
+  right={{
+    label: "Attention Weights Cannot Tell Us ✗",
+    points: [
+      "What knowledge each token carries",
+      "What information to actually gather",
+      "The content of the contextual representation",
+    ]
+  }}
+/>
+
+GPT still needs the actual information stored inside the tokens. That information lives in the **Value vectors**.
+
+---
+
+## Intuition
+
+Imagine writing a research paper using three books.
+
+<TokenMapping
+  title="Book Importance vs Book Content"
+  fromLabel="Book"
+  toLabel="Importance"
+  items={[
+    { from: "Book A — Deep Learning", to: "50%  — most important" },
+    { from: "Book B — Transformers",  to: "30%  — second"        },
+    { from: "Book C — Attention",     to: "20%  — supporting"    },
+  ]}
+/>
+
+These percentages tell you **how important** each book is — but you still need to open the books and read them. The Value vectors are the content of those books.
+
+---
+
+## The Three Roles — Completed
+
+<TokenMapping
+  title="Query, Key, Value — Final Picture"
+  fromLabel="Vector"
+  toLabel="Role"
+  items={[
+    { from: "Query", to: "Asks: what am I looking for?"         },
+    { from: "Key",   to: "Answers: what do I contain?"          },
+    { from: "Value", to: "Shares: the actual information itself" },
+  ]}
+/>
+
+Query compares against Keys → creates Attention Weights.
+Attention Weights combine with Values → creates the Context.
+
+---
+
+## Visual Activity — Gathering Information
+
+Step through the animation below to see how the token `Love` collects information from all three Value vectors.
+
+<WeightedSumVisualizer />
+
+---
+
+## Why Don't We Use Keys?
+
+Keys were created only for **matching** — once GPT determines which tokens are relevant, Keys have completed their job.
+
+<Comparison
+  title="Key vs Value — Different Responsibilities"
+  left={{
+    label: "Key (for matching)",
+    points: [
+      "Used to compute attention scores",
+      "Compared against Queries",
+      "Job is done after scores are computed",
+      "Not used in the final weighted sum",
+    ]
+  }}
+  right={{
+    label: "Value (for information)",
+    points: [
+      "Contains the actual knowledge",
+      "Combined using attention weights",
+      "Produces the contextual representation",
+      "This is what gets transferred",
+    ]
+  }}
+/>
+
+---
+
+## Understanding the Tensor Shapes
+
+<TokenMapping
+  title="The Final Multiplication"
+  fromLabel="Matrix"
+  toLabel="Shape"
+  items={[
+    { from: "Attention Weight Matrix", to: "n × n     e.g. 3 × 3"   },
+    { from: "Value Matrix",            to: "n × d     e.g. 3 × 768" },
+    { from: "Context Matrix (output)", to: "n × d     e.g. 3 × 768" },
+  ]}
+/>
+
+The output has the same shape as the input embeddings. Every token now carries contextual information.
+
+---
+
+## Mathematics
+
+<MathBlock title="Final Self-Attention Step">
+  $$\text{Context} = \text{Attention Weights} \times V$$
+</MathBlock>
+
+<MathBlock title="Dimension Example">
+  $$(n \times n) \times (n \times d) = (n \times d)$$
+</MathBlock>
+
+<MathBlock title="Complete Self-Attention Formula">
+  $$\text{Attention}(Q, K, V) = \text{Softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+</MathBlock>
+
+---
+
+## Engineering Insight — Why Matrix Multiplication is Efficient
+
+GPT doesn't compute one weighted sum at a time — it computes **all of them simultaneously** using a single matrix multiplication.
+
+<Comparison
+  title="Sequential vs Parallel Computation"
+  left={{
+    label: "Sequential (slow)",
+    points: [
+      "Compute weighted sum for token 1",
+      "Compute weighted sum for token 2",
+      "Compute weighted sum for token 3",
+      "n separate operations",
+    ]
+  }}
+  right={{
+    label: "Matrix Multiplication (fast)",
+    points: [
+      "One single operation",
+      "All tokens computed in parallel",
+      "GPU-optimised matrix multiplication",
+      "This is why Transformers are fast",
+    ]
+  }}
+/>
+
+---
+
+## Worked Example
+
+Attention Weights for `I Love AI`:
+
+<TokenMapping
+  title="Attention Weight Matrix"
+  fromLabel="Query → [I, Love, AI]"
+  toLabel="Weights"
+  items={[
+    { from: "I    (Query)", to: "[0.70, 0.20, 0.10]" },
+    { from: "Love (Query)", to: "[0.15, 0.70, 0.15]" },
+    { from: "AI   (Query)", to: "[0.10, 0.30, 0.60]" },
+  ]}
+/>
+
+New representation for `Love`:
+
+```text
+0.15 × Value(I) + 0.70 × Value(Love) + 0.15 × Value(AI) = Context(Love)
+```
+
+`Context(Love)` is no longer just the embedding for "Love" — it contains 70% of "Love"'s knowledge plus context from "I" and "AI".
+
+---
+
+## Before vs After Self-Attention
+
+<Comparison
+  title="Fixed Embeddings vs Contextual Representations"
+  left={{
+    label: "Before Self-Attention",
+    points: [
+      "Each token only knows itself",
+      "I → Embedding(I) only",
+      "Love → Embedding(Love) only",
+      "AI → Embedding(AI) only",
+    ]
+  }}
+  right={{
+    label: "After Self-Attention",
+    points: [
+      "Each token knows the entire sentence",
+      "I → Embedding(I) + info from Love + info from AI",
+      "Love → Embedding(Love) + info from I + info from AI",
+      "AI → Embedding(AI) + info from I + info from Love",
+    ]
+  }}
+/>
+
+---
+
+## Key Takeaways
+
+- Attention Weights determine **how much** information to gather.
+- Value vectors contain **what** information is gathered.
+- GPT computes the Context Matrix using one single matrix multiplication.
+- Output shape remains `(n × d)` — same sequence length and embedding dimension.
+- Every output token now contains contextual information from the entire sentence.
+- This Context Matrix is the output of the Self-Attention layer.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why are Value vectors needed?
+- Why don't Keys carry the information?
+- Why is matrix multiplication used instead of individual weighted sums?
+- Why does the output keep the same dimensions?
+- What exactly changes after Self-Attention?
+
+---
+
+## What's Next?
+
+We have now completed the **entire Self-Attention computation**.
+
+<FlowDiagram title="Complete Self-Attention Pipeline" steps={[
+  "Input Embeddings + Positional Info",
+  "× WQ, WK, WV → Q, K, V",
+  "QKᵀ / √d → Scaled Attention Scores",
+  "Softmax → Attention Weight Matrix",
+  "Attention Weights × V → Context Matrix",
+  "Contextual Representations"
+]} />
+
+But one important question still remains:
+
+> **If one attention mechanism is good... can GPT learn multiple types of relationships at the same time?**
+
+The answer is **yes** — in the next lesson, we'll discover **Multi-Head Attention**, where multiple attention heads work in parallel, each learning different types of relationships simultaneously.

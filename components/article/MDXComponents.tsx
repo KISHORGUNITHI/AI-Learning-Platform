@@ -31,6 +31,7 @@ import FunctionPlot from '@/components/ui/FunctionPlot';
 import ScalingVisualizer from '@/components/ui/ScalingVisualizer';
 import SoftmaxSaturation from '@/components/ui/SoftmaxSaturation';
 import SoftmaxVisualizer from '@/components/ui/SoftmaxVisualizer';
+import WeightedSumVisualizer from '@/components/ui/WeightedSumVisualizer';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -51,6 +52,7 @@ export {
   ScalingVisualizer,
   SoftmaxSaturation,
   SoftmaxVisualizer,
+  WeightedSumVisualizer,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -267,4 +269,5 @@ export const mdxComponents = {
   ScalingVisualizer,
   SoftmaxSaturation,
   SoftmaxVisualizer,
+  WeightedSumVisualizer,
 };
