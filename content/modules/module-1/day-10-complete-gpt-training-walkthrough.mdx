@@ -1,0 +1,316 @@
+---
+title: "One Complete GPT Training Walkthrough"
+slug: "module-1/day-10-complete-gpt-training-walkthrough"
+description: "Bring together everything you've learned in Module 1 by following one complete GPT training iteration from raw text to updated parameters."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "50 min"
+tags:
+  - GPT Training
+  - End-to-End
+  - Recap
+  - Training Pipeline
+learningObjectives:
+  - Connect every concept learned in Module 1.
+  - Follow one complete GPT training iteration.
+  - Understand how every stage depends on the previous one.
+  - Build a complete mental model of LLM training.
+  - Prepare for opening the Transformer in Module 2.
+prerequisites:
+  - topic: "Gradient Descent & Optimization"
+    slug: "module-1/day-9-gradient-descent-and-optimization"
+previous:
+  title: "Gradient Descent & Optimization"
+  slug: "module-1/day-9-gradient-descent-and-optimization"
+next:
+  title: "⚙️ Engineering Insights: Behind LLM Training"
+  slug: "module-1/bonus-engineering-insights"
+---
+
+> *"You don't truly understand a system until you can follow one complete journey from beginning to end."*
+
+---
+
+## The Problem
+
+Over the past nine lessons, we learned many concepts individually.
+
+- Dataset
+- Tokenization
+- Neural Network
+- Forward Pass
+- Logits
+- Softmax
+- Loss
+- Backpropagation
+- Gradient Descent
+
+But one important question remains.
+
+> **How do all these pieces work together?**
+
+Today, we'll answer that question.
+
+---
+
+## Intuition
+
+Imagine learning how to build a car.
+
+One day you study the engine. Another day the gearbox. Another day the brakes.
+
+Eventually, someone asks:
+
+> **"Can you explain how the entire car works?"**
+
+That's today's goal. We're not learning new parts — we're assembling everything we've already learned.
+
+---
+
+## The Complete GPT Training Pipeline
+
+<FlowDiagram title="Complete GPT Training Pipeline" steps={[
+  "Raw Text",
+  "Data Cleaning",
+  "Training Dataset",
+  "Tokenization",
+  "Token IDs",
+  "Neural Network",
+  "Forward Pass",
+  "Logits",
+  "Softmax",
+  "Probability Distribution",
+  "Cross Entropy Loss",
+  "Backpropagation",
+  "Gradients",
+  "Gradient Descent / Adam",
+  "Updated Parameters",
+  "Repeat Billions of Times",
+  "Trained GPT"
+]} />
+
+Everything in Module 1 fits into this single pipeline.
+
+---
+
+## Step 1 — Collect Raw Text
+
+Training begins with collecting enormous amounts of text: books, articles, research papers, Wikipedia, public websites, and programming code.
+
+Together, this forms the training **corpus**.
+
+---
+
+## Step 2 — Clean the Data
+
+The internet contains duplicate content, spam, broken text, and low-quality information.
+
+Engineers clean the data before training.
+
+> Better data leads to better learning.
+
+---
+
+## Step 3 — Tokenization
+
+The sentence `The sky is blue.` is broken into tokens, then each token receives a unique Token ID.
+
+<TokenMapping
+  title="Tokenization Example"
+  fromLabel="Token"
+  toLabel="ID"
+  items={[
+    { from: "The",  to: "383"  },
+    { from: "sky",  to: "5376" },
+    { from: "is",   to: "318"  },
+    { from: "blue", to: "4171" },
+    { from: ".",    to: "13"   },
+  ]}
+/>
+
+The model understands numbers — not words.
+
+---
+
+## Step 4 — The Neural Network
+
+The Token IDs enter GPT.
+
+Initially, the network contains billions of **random parameters**. The architecture already exists, but no learning has happened yet.
+
+---
+
+## Step 5 — Forward Pass
+
+The input travels through every layer.
+
+<FlowDiagram title="Inside One Layer" steps={[
+  "Input",
+  "Weights",
+  "Bias",
+  "Activation",
+  "Output"
+]} />
+
+The final layer produces one score for every vocabulary word.
+
+---
+
+## Step 6 — Logits
+
+The output layer produces raw scores called **Logits**.
+
+<TokenMapping
+  title="Raw Logits"
+  fromLabel="Word"
+  toLabel="Score"
+  items={[
+    { from: "blue",     to: "8.4"  },
+    { from: "green",    to: "6.2"  },
+    { from: "dog",      to: "0.8"  },
+    { from: "computer", to: "-1.5" },
+  ]}
+/>
+
+These scores indicate preference, not probability.
+
+---
+
+## Step 7 — Softmax
+
+Softmax converts the logits into probabilities.
+
+<TokenMapping
+  title="After Softmax"
+  fromLabel="Word"
+  toLabel="Probability"
+  items={[
+    { from: "blue",     to: "0.84" },
+    { from: "green",    to: "0.13" },
+    { from: "dog",      to: "0.02" },
+    { from: "computer", to: "0.01" },
+  ]}
+/>
+
+Now the model can compare its prediction with the correct answer.
+
+---
+
+## Step 8 — Cross Entropy Loss
+
+The model compares its prediction with the correct next token.
+
+If the prediction is poor, the loss becomes large. If the prediction is good, the loss becomes small.
+
+Loss answers one question:
+
+> **"How wrong was my prediction?"**
+
+---
+
+## Step 9 — Backpropagation
+
+The model traces the error backwards, computing gradients for every learnable parameter.
+
+These gradients tell each parameter how much it contributed to the mistake.
+
+---
+
+## Step 10 — Gradient Descent / Adam
+
+The optimizer receives the gradients and updates every parameter by a tiny amount.
+
+<MathBlock title="Parameter Update">
+  $$W_{\text{new}} = W_{\text{old}} - \eta \nabla L$$
+</MathBlock>
+
+Each update slightly reduces the loss. Learning occurs through millions and billions of tiny improvements.
+
+---
+
+## Step 11 — Repeat
+
+One prediction teaches almost nothing. So the entire pipeline repeats — again, again, and again. Sometimes for **trillions of tokens**.
+
+Eventually, the random parameters become learned parameters. That is what we call a trained GPT model.
+
+---
+
+## Worked Example
+
+Suppose the training sentence is `The sky is blue.`
+
+<FlowDiagram title="One Training Iteration" steps={[
+  "Input: The sky is ____",
+  "Forward Pass → predicts 'green'",
+  "Loss is large (wrong answer)",
+  "Backpropagation computes gradients",
+  "Adam updates parameters",
+  "Next time: P(blue) is slightly higher",
+  "After billions of steps: GPT learns naturally"
+]} />
+
+---
+
+## Common Misconceptions
+
+**GPT memorizes every sentence.**
+
+No. It learns statistical patterns through repeated optimization.
+
+**One training step teaches the model.**
+
+No. Training requires billions of iterations.
+
+**The architecture changes during training.**
+
+No. Only the parameter values change.
+
+**GPT becomes intelligent instantly.**
+
+No. Intelligence emerges gradually through continuous learning.
+
+---
+
+## Questions That Changed My Understanding
+
+- Why does GPT need so many training iterations?
+- Why are tiny parameter updates enough?
+- Why is the training pipeline repeated so many times?
+- Where exactly is knowledge stored after training?
+
+At this point, you should now be able to answer every one of these questions.
+
+---
+
+## Key Takeaways
+
+- GPT training is a continuous pipeline, not isolated steps.
+- Every component in Module 1 depends on the previous one.
+- Training transforms random parameters into learned parameters.
+- Knowledge is stored in the learned parameter values.
+- Module 1 provides the foundation for understanding every modern LLM.
+
+---
+
+## Module 1 Complete
+
+Congratulations!
+
+You've completed the foundation of LLM training. You now understand how data is prepared, how text becomes numbers, how the neural network processes information, how predictions are made, how mistakes are measured, how gradients are computed, how parameters are updated, and how GPT gradually learns from experience.
+
+---
+
+## What's Next?
+
+So far, we've treated the Transformer as a **black box**. We know information goes in, and predictions come out.
+
+But:
+
+> **What actually happens inside a Transformer?**
+
+In **Module 2**, we'll open that black box and explore every internal component — from embeddings and positional information to self-attention, multi-head attention, feed-forward networks, residual connections, and layer normalization.
+But, Let us see the some of the **Key Engineering Insights** about LLM training.
+
+This is where you'll begin understanding *why Transformers changed the history of AI*.
