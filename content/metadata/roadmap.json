@@ -342,6 +342,17 @@
         "estimatedReadingTime": "10 min",
         "estimatedStudyTime": "20 min",
         "tags": ["Multi Head Attention", "Concatenation", "Output Projection", "WO"]
+      },
+      {
+        "number": 20,
+        "title": "Why Self-Attention Alone Isn't Enough",
+        "slug": "module-2/day-20-why-self-attention-alone-isnt-enough",
+        "description": "Learn why Self-Attention is only the communication layer of a Transformer and why another neural network is required.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "12 min",
+        "estimatedStudyTime": "30 min",
+        "tags": ["Transformer", "Self Attention", "Feed Forward Network", "FFN"]
       }
     ]
   },

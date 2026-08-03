@@ -1,0 +1,166 @@
+---
+title: "Why Self-Attention Alone Isn't Enough"
+slug: "module-2/day-20-why-self-attention-alone-isnt-enough"
+description: "Learn why Self-Attention is only the communication layer of a Transformer and why another neural network is required."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "12 min"
+estimatedStudyTime: "30 min"
+tags:
+  - Transformer
+  - Self Attention
+  - Feed Forward Network
+  - FFN
+learningObjectives:
+  - Understand the limitation of Self-Attention.
+  - Learn why another computation is needed.
+  - Understand the different responsibilities of Attention and FFN.
+prerequisites:
+  - topic: "Bringing All Attention Heads Together"
+    slug: "module-2/day-19-bringing-all-attention-heads-together"
+previous:
+  title: "Bringing All Attention Heads Together"
+  slug: "module-2/day-19-bringing-all-attention-heads-together"
+---
+
+> *"Attention tells a token what to listen to. It does not decide what the token should become."*
+
+---
+
+## Quick Recap
+
+After Multi-Head Attention, every token has gathered useful information from the entire sentence — every token is now **context-aware**.
+
+<FlowDiagram title="What Attention Produced" steps={[
+  "Input: I   Love   AI",
+  "Multi-Head Attention",
+  "Each token knows about all other tokens",
+  "Context-aware representations"
+]} />
+
+---
+
+## The Important Question
+
+Is the Transformer Block finished now?
+
+<DiagramContainer caption="Attention has exchanged information — but nothing has processed that information yet.">
+  <svg viewBox="0 0 260 200" width="100%" style={{ maxWidth: '260px' }} aria-hidden="true">
+    {[
+      { label: 'Input Tokens',          y: 16,  color: 'var(--color-text-secondary)' },
+      { label: 'Multi-Head Attention',  y: 56,  color: 'var(--color-accent)'         },
+      { label: 'Context-aware Tokens',  y: 96,  color: 'var(--color-accent-secondary)' },
+      { label: '✗  NOT Finished',       y: 136, color: 'var(--color-error)'           },
+      { label: 'Need More Computation', y: 176, color: 'var(--color-success)'         },
+    ].map((item, i, arr) => (
+      <g key={item.label}>
+        <rect x="30" y={item.y} width="200" height="28" rx="6"
+          fill={item.label.includes('✗') ? 'rgba(239,68,68,0.12)' : 'var(--color-surface-2)'}
+          stroke={item.color} strokeWidth={item.label.includes('✗') ? 2 : 1}
+        />
+        <text x="130" y={item.y + 18} textAnchor="middle" fontSize="10" fontWeight={item.label.includes('✗') ? '700' : '500'} fill={item.color}>
+          {item.label}
+        </text>
+        {i < arr.length - 1 && (
+          <line x1="130" y1={item.y + 28} x2="130" y2={item.y + 38}
+            stroke="var(--color-border)" strokeWidth="1.5" markerEnd="url(#a)" />
+        )}
+      </g>
+    ))}
+  </svg>
+</DiagramContainer>
+
+---
+
+## What Does Attention Actually Do?
+
+Self-Attention answers only one question:
+
+> **Which tokens should influence me?**
+
+It never asks:
+
+> **How should I transform this representation?**
+
+<Comparison
+  title="Attention vs FFN — Two Different Jobs"
+  left={{
+    label: 'Self-Attention',
+    points: [
+      'Asks: who should I listen to?',
+      'Collects information from other tokens',
+      'Tokens communicate with each other',
+      'Produces context-aware vectors',
+    ]
+  }}
+  right={{
+    label: 'Feed Forward Network',
+    points: [
+      'Asks: how should I change?',
+      'Processes information independently',
+      'Each token transformed on its own',
+      'Builds richer semantic features',
+    ]
+  }}
+/>
+
+---
+
+## One Simple Analogy
+
+Attention is like collecting ingredients and mixing them together. But a bowl of mixed ingredients is not food yet — something still has to transform them.
+
+That transformation is the FFN.
+
+<FlowDiagram title="Communication Then Transformation" steps={[
+  "Sentence",
+  "Attention — Exchange Information",
+  "FFN — Transform Information",
+  "Better Token Representation"
+]} />
+
+---
+
+## Attention vs FFN
+
+<TokenMapping
+  title="Responsibilities"
+  fromLabel="Self-Attention"
+  toLabel="Feed Forward Network"
+  items={[
+    { from: "Communicates",                   to: "Computes"                          },
+    { from: "Exchanges information",           to: "Transforms information"            },
+    { from: "Queries, Keys and Values",        to: "Neural Network layers"             },
+    { from: "Tokens interact with each other", to: "Each token processed independently" },
+  ]}
+/>
+
+---
+
+## The Transformer Pattern
+
+Every Transformer Block repeats the same two responsibilities in sequence.
+
+<FlowDiagram title="The Transformer Rhythm" steps={[
+  "Attention  —  Exchange Information",
+  "FFN  —  Transform Information",
+  "Attention  —  Exchange Again",
+  "FFN  —  Transform Again",
+  "... × N blocks",
+  "Token representations become richer with every repetition"
+]} />
+
+---
+
+## Key Takeaways
+
+- Self-Attention exchanges information between tokens.
+- It does not deeply process that information.
+- Another neural network is required — the Feed Forward Network.
+- Every Transformer Block alternates: **communicate then transform**.
+
+---
+
+## What's Next?
+
+Now that we know **why the FFN exists**, we'll open it up and study its internal architecture — two linear layers with a non-linear activation in between, and why this simple design is so effective.
