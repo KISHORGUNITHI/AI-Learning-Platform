@@ -89,13 +89,13 @@ function preprocessMdx(content: string): string {
   return content.replace(
     /<MathBlock([^>]*?)>\s*\$\$([\s\S]*?)\$\$\s*<\/MathBlock>/g,
     (_, attrs, formula) => {
-      // Escape backslashes for JS/TS parser inside JSX string literal double quotes
+      // Escape backslashes for JS/TS parser inside JS string literal (double quotes)
       // and escape any double quotes inside the formula
       const escapedFormula = formula
         .trim()
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"');
-      return `<MathBlock${attrs} formula="${escapedFormula}" />`;
+      return `<MathBlock${attrs} formula={"${escapedFormula}"} />`;
     }
   );
 }
