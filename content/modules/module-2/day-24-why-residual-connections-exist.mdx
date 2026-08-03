@@ -1,0 +1,236 @@
+---
+title: "Why Residual (Skip) Connections Exist"
+slug: "module-2/day-24-why-residual-connections-exist"
+description: "Understand why researchers invented residual connections and how they made very deep Transformers trainable."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "15 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Residual Connections
+  - Skip Connections
+  - Vanishing Gradients
+  - Transformer
+  - Deep Learning
+learningObjectives:
+  - Understand why deeper networks became difficult to train.
+  - Learn about information degradation.
+  - Understand vanishing gradients intuitively.
+  - Understand the identity mapping problem.
+  - Learn why researchers introduced residual connections.
+  - Understand why every Transformer block outputs x + F(x).
+prerequisites:
+  - topic: "Opening the Feed Forward Network"
+    slug: "module-2/day-23-opening-the-feed-forward-network"
+previous:
+  title: "Opening the Feed Forward Network"
+  slug: "module-2/day-23-opening-the-feed-forward-network"
+---
+
+> *"Adding more layers should make a model better. For a long time, it made them worse."*
+
+---
+
+## The Problem
+
+GPT doesn't use one Transformer block — it stacks dozens.
+
+<FlowDiagram title="Stacked Transformer Blocks" steps={[
+  "Input",
+  "Block 1",
+  "Block 2",
+  "Block 3",
+  "...",
+  "Block 48",
+  "Output"
+]} />
+
+A natural question: if one block helps, shouldn't more blocks always help?
+
+**Surprisingly, no.** Researchers discovered that after a certain depth, optimization became much harder.
+
+---
+
+## Three Major Problems
+
+<TokenMapping
+  title="Problems That Appear With Depth"
+  fromLabel="Problem"
+  toLabel="What Happens"
+  items={[
+    { from: "Information Degradation", to: "Useful representations are gradually overwritten"    },
+    { from: "Vanishing Gradients",     to: "Early layers receive near-zero learning signal"      },
+    { from: "Identity Mapping",        to: "Learning to 'do nothing' is surprisingly difficult"  },
+  ]}
+/>
+
+---
+
+## 1. Information Degradation
+
+Block 1 produces a useful representation. Every additional block modifies it — and with enough transformations, useful information gradually becomes hard to preserve.
+
+<FlowDiagram title="Information Degradation Over Layers" steps={[
+  "Input → Block 1 → Useful Representation",
+  "Block 2 → Transforms it",
+  "Block 3 → Transforms it again",
+  "Block N → Original signal diluted"
+]} />
+
+---
+
+## 2. Vanishing Gradients
+
+During training, gradients travel backward through all layers.
+
+<TokenMapping
+  title="Gradient Magnitude Across Layers"
+  fromLabel="Layer"
+  toLabel="Gradient"
+  items={[
+    { from: "Layer 48 (output)", to: "1.000" },
+    { from: "Layer 40",          to: "0.512" },
+    { from: "Layer 30",          to: "0.134" },
+    { from: "Layer 20",          to: "0.021" },
+    { from: "Layer 10",          to: "0.003" },
+    { from: "Layer 1 (early)",   to: "≈ 0.000 — learns nothing" },
+  ]}
+/>
+
+As gradients pass through many layers, they become exponentially smaller. Early layers receive almost no learning signal — the **Vanishing Gradient Problem**.
+
+---
+
+## 3. Identity Mapping Problem
+
+If one block has already learned a perfect representation, the next block should ideally leave it unchanged.
+
+<Comparison
+  title="What We Want vs What Happens"
+  left={{
+    label: "Ideal Behaviour",
+    points: [
+      "Block adds useful refinement",
+      "If nothing to learn: pass input through unchanged",
+      "Output ≈ Input when no improvement needed",
+    ]
+  }}
+  right={{
+    label: "Reality Without Residuals",
+    points: [
+      "Block must learn to copy its own input",
+      "Learning 'do nothing' is surprisingly hard",
+      "Each new block risks destroying previous work",
+    ]
+  }}
+/>
+
+---
+
+## The Key Insight
+
+Researchers asked a simple question:
+
+Instead of forcing every block to completely replace its input, **why not let it learn only the change?**
+
+<Comparison
+  title="Replace vs Refine"
+  left={{
+    label: "Without Residuals",
+    points: [
+      "Output = F(x)",
+      "Block must learn the full representation",
+      "Original input is replaced",
+      "Hard to train at depth",
+    ]
+  }}
+  right={{
+    label: "With Residuals",
+    points: [
+      "Output = x + F(x)",
+      "Block only learns the improvement",
+      "Original input is preserved",
+      "Easy to train even at depth 48+",
+    ]
+  }}
+/>
+
+---
+
+## Visual Intuition
+
+<DiagramContainer caption="The original input x bypasses the block and is added to its output — preserving information while allowing refinement">
+  <svg viewBox="0 0 280 200" width="100%" style={{ maxWidth:'280px' }} aria-hidden="true">
+    {/* Input */}
+    <rect x="100" y="8" width="80" height="26" rx="5" fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+    <text x="140" y="25" textAnchor="middle" fontSize="10" fill="var(--color-text-secondary)">Input  x</text>
+
+    {/* Split */}
+    <line x1="140" y1="34" x2="140" y2="46" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="140" y1="46" x2="60" y2="46" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="60" y1="46" x2="60" y2="148" stroke="var(--color-accent)" strokeWidth="2" strokeDasharray="5 3"/>
+    <text x="42" y="100" fontSize="9" fontWeight="700" fill="var(--color-accent)" textAnchor="middle">x</text>
+    <text x="42" y="112" fontSize="8" fill="var(--color-accent)" textAnchor="middle">(skip)</text>
+
+    {/* Transformer block */}
+    <line x1="140" y1="46" x2="140" y2="58" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="80" y="58" width="120" height="64" rx="6" fill="rgba(79,140,255,0.1)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="140" y="82" textAnchor="middle" fontSize="9" fontWeight="600" fill="var(--color-accent)">Transformer Block</text>
+    <text x="140" y="96" textAnchor="middle" fontSize="8" fill="var(--color-accent)">Attention + FFN</text>
+    <text x="140" y="112" textAnchor="middle" fontSize="9" fill="var(--color-accent-secondary)">F(x)</text>
+    <line x1="140" y1="122" x2="140" y2="148" stroke="var(--color-border)" strokeWidth="1.5"/>
+
+    {/* Addition node */}
+    <line x1="60" y1="148" x2="120" y2="148" stroke="var(--color-accent)" strokeWidth="2"/>
+    <circle cx="140" cy="148" r="14" fill="var(--color-surface-2)" stroke="var(--color-accent)" strokeWidth="2"/>
+    <text x="140" y="153" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--color-accent)">+</text>
+
+    {/* Output */}
+    <line x1="140" y1="162" x2="140" y2="174" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="80" y="174" width="120" height="22" rx="5" fill="var(--color-success-bg)" stroke="var(--color-success)" strokeWidth="1.5"/>
+    <text x="140" y="189" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-success-text)">Output = x + F(x)</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## Why Addition Works
+
+Suppose `x = [2, 5]` and the block computes `F(x) = [-1, 2]`.
+
+<TokenMapping
+  title="With vs Without Residuals"
+  fromLabel="Method"
+  toLabel="Output"
+  items={[
+    { from: "Without residuals: F(x)",       to: "[-1, 2]  — original lost"        },
+    { from: "With residuals: x + F(x)",      to: "[1, 7]  — refined, not replaced" },
+  ]}
+/>
+
+The model keeps the previous representation while the block adds useful improvements.
+
+---
+
+## Mathematics
+
+<MathBlock title="Residual Connection">
+  $$\text{Output} = x + F(x)$$
+</MathBlock>
+
+where **x** is the original input and **F(x)** is the transformation learned by the Transformer block.
+
+---
+
+## Key Takeaways
+
+- Stacking Transformer blocks introduces three problems: information degradation, vanishing gradients, and identity mapping.
+- Residual connections solve all three by preserving the input.
+- Every block learns a **modification** `F(x)`, not a complete replacement.
+- The fundamental equation: `Output = x + F(x)`.
+
+---
+
+## What's Next?
+
+Now that we know **why** residual connections exist, we'll see **how GPT places them** around Multi-Head Attention and Feed Forward Networks inside every Transformer block.

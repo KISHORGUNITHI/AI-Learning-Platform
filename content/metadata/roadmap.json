@@ -386,6 +386,17 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Feed Forward Network", "FFN", "Neural Network", "Linear Layer", "Transformer"]
+      },
+      {
+        "number": 24,
+        "title": "Why Residual (Skip) Connections Exist",
+        "slug": "module-2/day-24-why-residual-connections-exist",
+        "description": "Understand why researchers invented residual connections and how they made very deep Transformers trainable.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Residual Connections", "Skip Connections", "Vanishing Gradients", "Transformer", "Deep Learning"]
       }
     ]
   },
