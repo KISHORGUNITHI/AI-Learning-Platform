@@ -364,6 +364,17 @@
         "estimatedReadingTime": "15 min",
         "estimatedStudyTime": "35 min",
         "tags": ["Feed Forward Network", "FFN", "Transformer", "Linear Layer", "Neural Network"]
+      },
+      {
+        "number": 22,
+        "title": "Inside the Feed Forward Network (Part 2)",
+        "slug": "module-2/day-22-inside-the-feed-forward-network-part-2",
+        "description": "Follow the complete transformation of a token inside the Feed Forward Network, from expansion to activation to compression.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Feed Forward Network", "FFN", "GELU", "Transformer"]
       }
     ]
   },

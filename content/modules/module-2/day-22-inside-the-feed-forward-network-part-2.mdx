@@ -1,0 +1,169 @@
+---
+title: "Inside the Feed Forward Network (Part 2)"
+slug: "module-2/day-22-inside-the-feed-forward-network-part-2"
+description: "Follow the complete transformation of a token inside the Feed Forward Network, from expansion to activation to compression."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "15 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Feed Forward Network
+  - FFN
+  - GELU
+  - Transformer
+learningObjectives:
+  - Follow the complete FFN pipeline.
+  - Understand the role of expansion.
+  - Understand why GELU sits between the two Linear layers.
+  - Learn why the output returns to the original embedding dimension.
+prerequisites:
+  - topic: "Inside the Feed Forward Network"
+    slug: "module-2/day-21-inside-the-feed-forward-network"
+previous:
+  title: "Inside the Feed Forward Network"
+  slug: "module-2/day-21-inside-the-feed-forward-network"
+---
+
+> *"The Feed Forward Network doesn't gather information. It transforms the information already gathered."*
+
+---
+
+## Quick Recap
+
+In the previous lesson we opened the FFN. Today we follow one token through the complete journey.
+
+<FlowDiagram title="FFN Journey at a Glance" steps={[
+  "Input  (768)",
+  "Linear Expansion  768 → 3072",
+  "GELU Activation",
+  "Linear Compression  3072 → 768",
+  "Richer Token Representation"
+]} />
+
+---
+
+## Visual Activity — Complete FFN Pipeline
+
+Step through all five stages below. The dimension bar shows how the feature vector width changes at each stage.
+
+<FFNPipelineVisualizer />
+
+---
+
+## Stage 1 — Expansion
+
+The first Linear layer temporarily expands from `768` to `3072`.
+
+<TokenMapping
+  title="Why Expand?"
+  fromLabel="768 Dimensions"
+  toLabel="3072 Dimensions"
+  items={[
+    { from: "Limited feature space",    to: "4× larger feature space"          },
+    { from: "Some patterns may clash",  to: "More room to separate features"   },
+    { from: "Less expressive",          to: "Richer computation possible"      },
+  ]}
+/>
+
+---
+
+## Stage 2 — Feature Transformation (GELU)
+
+The expanded representation passes through **GELU** — the dimensions stay at `3072`, but the values change.
+
+<FunctionPlot fn="gelu" title="GELU Activation Function" caption="GELU smoothly gates features — near-zero inputs are suppressed, large positive inputs pass through" xLabel="input value" yLabel="output value" />
+
+<Callout>
+GELU transforms feature importance rather than changing the tensor shape. Important features glow brighter, weak features fade.
+</Callout>
+
+---
+
+## Stage 3 — Compression
+
+After transformation, the second Linear layer compresses back to `768`.
+
+<Comparison
+  title="Before vs After FFN"
+  left={{
+    label: "Input (768)",
+    points: [
+      "Context-aware from Attention",
+      "Knows what other tokens said",
+      "But hasn't processed that knowledge",
+    ]
+  }}
+  right={{
+    label: "Output (768)",
+    points: [
+      "Same shape — 768 dimensions",
+      "Richer learned features",
+      "Processed and transformed",
+    ]
+  }}
+/>
+
+---
+
+## Tensor Flow
+
+<TokenMapping
+  title="Tensor Shapes Through the FFN"
+  fromLabel="Stage"
+  toLabel="Shape (3 tokens)"
+  items={[
+    { from: "Input",              to: "3 × 768"  },
+    { from: "After Linear 1",     to: "3 × 3072" },
+    { from: "After GELU",         to: "3 × 3072" },
+    { from: "After Linear 2",     to: "3 × 768"  },
+    { from: "Output",             to: "3 × 768"  },
+  ]}
+/>
+
+The sequence length (3) never changes — only the feature dimension temporarily expands then returns.
+
+---
+
+## Mathematics
+
+<MathBlock title="FFN Forward Pass">
+  $$\text{FFN}(x) = W_2 \cdot \text{GELU}(W_1 x + b_1) + b_2$$
+</MathBlock>
+
+where **W₁** `(768 × 3072)` expands, **GELU** activates, and **W₂** `(3072 × 768)` compresses back.
+
+---
+
+## Engineering Insight
+
+The FFN performs three jobs in sequence.
+
+<FlowDiagram title="Three Jobs of the FFN" steps={[
+  "Expand  →  Create more feature capacity (768 → 3072)",
+  "Transform  →  Learn richer feature combinations (GELU)",
+  "Compress  →  Return to original embedding dimension (3072 → 768)"
+]} />
+
+Each token undergoes this complete transformation **independently**.
+
+---
+
+## Key Takeaways
+
+- The FFN transforms every token independently.
+- The representation is temporarily expanded to 4× the embedding dim.
+- GELU transforms feature importance without changing the shape.
+- The representation is compressed back to the original embedding dimension.
+- Output has the same shape as the input, but richer learned features.
+
+---
+
+## What's Next?
+
+We've followed the complete FFN pipeline.
+
+But one important question still remains:
+
+> **What actually happens inside those Linear layers?**
+
+In the next lesson, we'll explore how thousands of neurons work together to transform each token.
