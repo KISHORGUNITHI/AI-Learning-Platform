@@ -37,6 +37,7 @@ import MultiHeadArchitecture from '@/components/ui/MultiHeadArchitecture';
 import ParallelHeadsVisualizer from '@/components/ui/ParallelHeadsVisualizer';
 import ConcatenationVisualizer from '@/components/ui/ConcatenationVisualizer';
 import FFNPipelineVisualizer from '@/components/ui/FFNPipelineVisualizer';
+import FFNNeuronVisualizer from '@/components/ui/FFNNeuronVisualizer';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -63,6 +64,7 @@ export {
   ParallelHeadsVisualizer,
   ConcatenationVisualizer,
   FFNPipelineVisualizer,
+  FFNNeuronVisualizer,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -285,4 +287,5 @@ export const mdxComponents = {
   ParallelHeadsVisualizer,
   ConcatenationVisualizer,
   FFNPipelineVisualizer,
+  FFNNeuronVisualizer,
 };

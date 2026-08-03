@@ -375,6 +375,17 @@
         "estimatedReadingTime": "15 min",
         "estimatedStudyTime": "35 min",
         "tags": ["Feed Forward Network", "FFN", "GELU", "Transformer"]
+      },
+      {
+        "number": 23,
+        "title": "Opening the Feed Forward Network",
+        "slug": "module-2/day-23-opening-the-feed-forward-network",
+        "description": "Open the Feed Forward Network and explore what actually happens inside its Linear layers.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Feed Forward Network", "FFN", "Neural Network", "Linear Layer", "Transformer"]
       }
     ]
   },

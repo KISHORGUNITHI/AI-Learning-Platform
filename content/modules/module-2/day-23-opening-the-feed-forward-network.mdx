@@ -1,0 +1,171 @@
+---
+title: "Opening the Feed Forward Network"
+slug: "module-2/day-23-opening-the-feed-forward-network"
+description: "Open the Feed Forward Network and explore what actually happens inside its Linear layers."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Feed Forward Network
+  - FFN
+  - Neural Network
+  - Linear Layer
+  - Transformer
+learningObjectives:
+  - Open the FFN and inspect its internal structure.
+  - Understand what a Linear layer is made of.
+  - Learn how individual neurons transform token representations.
+  - Connect the FFN back to the Neural Networks learned in Module 1.
+prerequisites:
+  - topic: "Inside the Feed Forward Network (Part 2)"
+    slug: "module-2/day-22-inside-the-feed-forward-network-part-2"
+previous:
+  title: "Inside the Feed Forward Network (Part 2)"
+  slug: "module-2/day-22-inside-the-feed-forward-network-part-2"
+---
+
+> *"The FFN may look like a single box, but inside it is a neural network containing thousands of neurons working together."*
+
+---
+
+## Quick Recap
+
+Previously we followed the complete FFN pipeline: `768 → 3072 → GELU → 3072 → 768`.
+
+But one question still remains:
+
+> **What is actually inside those two Linear layers?**
+
+---
+
+## Visual Activity — Opening the FFN
+
+Zoom through all four levels below — from the black box all the way down to a single neuron.
+
+<FFNNeuronVisualizer />
+
+---
+
+## One Linear Layer Is a Neural Network
+
+The first Linear layer isn't one giant calculation. It contains **3072 neurons** for GPT-2 Small — every neuron receives all 768 input features.
+
+<DiagramContainer caption="768 inputs connect to every one of the 3072 neurons">
+  <svg viewBox="0 0 300 120" width="100%" style={{ maxWidth:'300px' }} aria-hidden="true">
+    {/* Input nodes */}
+    {[20,40,60,80,100].map((y,i) => (
+      <g key={i}>
+        <circle cx="30" cy={y} r="7" fill="var(--color-surface-2)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+        <text x="30" y={y+4} textAnchor="middle" fontSize="7" fill="var(--color-accent)">x{i+1}</text>
+      </g>
+    ))}
+    <text x="30" y="115" textAnchor="middle" fontSize="8" fill="var(--color-text-tertiary)">×768</text>
+    {/* Neuron nodes */}
+    {[15,35,55,75,95,115].map((y,i) => (
+      <g key={i}>
+        {[20,40,60,80,100].map((iy) => (
+          <line key={iy} x1="37" y1={iy} x2="243" y2={y} stroke={`rgba(79,140,255,0.15)`} strokeWidth="0.75"/>
+        ))}
+        <circle cx="250" cy={y} r="8" fill="rgba(79,140,255,0.18)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+        <text x="250" y={y+4} textAnchor="middle" fontSize="7" fill="var(--color-accent)">n{i+1}</text>
+      </g>
+    ))}
+    <text x="270" y="60" textAnchor="middle" fontSize="8" fill="var(--color-text-tertiary)">×3072</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## Opening One Neuron
+
+Every neuron performs one computation — the same neuron from Module 1.
+
+<MathBlock title="One Neuron">
+  $$\text{output} = \sum_{i=1}^{768} w_i x_i + b$$
+</MathBlock>
+
+where **w** are learned weights, **x** are the 768 input features, and **b** is the bias. One neuron → one output value.
+
+---
+
+## Every Neuron Learns Something Different
+
+During training, Backpropagation updates each neuron's weights independently. Different neurons naturally begin detecting different patterns.
+
+<TokenMapping
+  title="Examples of Learned Feature Detectors (Illustrative)"
+  fromLabel="Neuron Type"
+  toLabel="Pattern Detected"
+  items={[
+    { from: "Some neurons", to: "Past tense constructions"   },
+    { from: "Some neurons", to: "Question patterns"         },
+    { from: "Some neurons", to: "Variable / code references" },
+    { from: "Some neurons", to: "Negation signals"          },
+    { from: "Some neurons", to: "Sentiment features"        },
+  ]}
+/>
+
+These labels are **illustrative** — the network discovers useful feature detectors automatically through training. Nobody programs them.
+
+---
+
+## Thousands of Neurons Work Together
+
+<FlowDiagram title="Collective Learning" steps={[
+  "768 input features",
+  "3072 neurons — each receives all 768 features",
+  "Each neuron computes one weighted sum + activation",
+  "3072 learned feature values",
+  "Rich intermediate representation"
+]} />
+
+No single neuron represents language. Intelligence emerges from thousands of simple neurons working in parallel.
+
+---
+
+## Engineering Perspective
+
+<Comparison
+  title="Self-Attention vs Feed Forward Network"
+  left={{
+    label: "Self-Attention",
+    points: [
+      "Tokens exchange information",
+      "Communication layer",
+      "Uses Q, K, V matrices",
+    ]
+  }}
+  right={{
+    label: "Feed Forward Network",
+    points: [
+      "Neurons transform information",
+      "Computation layer",
+      "Uses thousands of neurons",
+    ]
+  }}
+/>
+
+Together — communication then transformation — each Transformer Block gradually builds richer representations.
+
+---
+
+## Key Takeaways
+
+- A Linear layer contains thousands of neurons.
+- Every neuron receives the complete input vector.
+- Each neuron has its own learned weights and bias.
+- Different neurons detect different patterns during training.
+- Together, thousands of neurons transform the token into a richer representation.
+
+---
+
+## What's Next?
+
+The Transformer now has Multi-Head Attention ✅ and Feed Forward Network ✅.
+
+But one question remains:
+
+> **How does GPT prevent information from being lost as it passes through dozens of Transformer Blocks?**
+
+In the next lesson we'll explore **Residual (Skip) Connections** — one of the most important ideas in deep learning.
