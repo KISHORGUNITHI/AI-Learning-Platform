@@ -1,0 +1,246 @@
+---
+title: "Residual Connections — What They Actually Skip"
+slug: "module-2/day-25-residual-connections-what-they-actually-skip"
+description: "Understand the biggest misconception about skip connections and learn how residual connections create an identity pathway for information and gradients."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "18 min"
+estimatedStudyTime: "40 min"
+tags:
+  - Residual Connections
+  - Skip Connections
+  - Vanishing Gradients
+  - Gradient Flow
+  - Transformer
+learningObjectives:
+  - Understand the biggest misconception about Skip Connections.
+  - Learn why layers are not actually skipped.
+  - Understand what really travels through the shortcut path.
+  - Learn why residual connections improve gradient flow.
+  - Understand why x + F(x) is so powerful.
+prerequisites:
+  - topic: "Why Residual (Skip) Connections Exist"
+    slug: "module-2/day-24-why-residual-connections-exist"
+previous:
+  title: "Why Residual (Skip) Connections Exist"
+  slug: "module-2/day-24-why-residual-connections-exist"
+---
+
+> *"The name 'skip connection' is misleading. Nothing is skipped. The shortcut carries the original signal alongside the computation."*
+
+---
+
+## The Biggest Misconception
+
+When people hear **Skip Connection**, they imagine something like this:
+
+<DiagramContainer caption="Common misconception — people assume Layer 2 and 3 are bypassed entirely">
+  <svg viewBox="0 0 280 200" width="100%" style={{ maxWidth:'280px' }} aria-hidden="true">
+    {['Input','Layer 1','Layer 2','Layer 3','Layer 4','Output'].map((l,i) => (
+      <g key={l}>
+        <rect x="80" y={8+i*32} width="80" height="24" rx="5"
+          fill={i===2||i===3 ? 'rgba(239,68,68,0.08)' : 'var(--color-surface-2)'}
+          stroke={i===2||i===3 ? 'var(--color-error)' : 'var(--color-border)'}
+          strokeWidth="1" opacity={i===2||i===3 ? 0.5 : 1}
+        />
+        <text x="120" y={24+i*32} textAnchor="middle" fontSize="9"
+          fill={i===2||i===3 ? 'var(--color-error)' : 'var(--color-text-secondary)'}>
+          {l} {i===2||i===3 ? '(skipped?)' : ''}
+        </text>
+        {i < 5 && <line x1="120" y1={32+i*32} x2="120" y2={40+i*32} stroke="var(--color-border)" strokeWidth="1"/>}
+      </g>
+    ))}
+    {/* "Skip" arrow */}
+    <path d="M 160 40 Q 230 100 160 136" fill="none" stroke="var(--color-error)" strokeWidth="2" strokeDasharray="5 3" markerEnd="url(#ar)"/>
+    <text x="240" y="96" fontSize="8" fill="var(--color-error)" fontStyle="italic">skip?</text>
+  </svg>
+</DiagramContainer>
+
+This is **not** how residual connections work. Nothing is skipped.
+
+---
+
+## What Actually Happens
+
+During the forward pass, every Transformer block executes completely.
+
+<FlowDiagram title="Every Block Still Runs" steps={[
+  "Input",
+  "Multi-Head Attention  ← runs",
+  "Feed Forward Network  ← runs",
+  "Multi-Head Attention  ← runs",
+  "Feed Forward Network  ← runs",
+  "Output"
+]} />
+
+Every Attention layer runs. Every FFN runs. Every computation happens.
+
+---
+
+## Then Why Is It Called a Skip Connection?
+
+The **computation** is not skipped. Instead, the original input gets an **additional path** that runs alongside the computation.
+
+<DiagramContainer caption="x travels alongside F(x) — both reach the addition node. Nothing is bypassed.">
+  <svg viewBox="0 0 260 200" width="100%" style={{ maxWidth:'260px' }} aria-hidden="true">
+    {/* Input */}
+    <rect x="90" y="8" width="80" height="24" rx="5" fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+    <text x="130" y="24" textAnchor="middle" fontSize="10" fill="var(--color-text-secondary)">Input (x)</text>
+    {/* Split */}
+    <line x1="130" y1="32" x2="130" y2="44" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="130" y1="44" x2="50" y2="44" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="50" y1="44" x2="50" y2="148" stroke="var(--color-accent)" strokeWidth="2.5" strokeDasharray="5 3"/>
+    <text x="28" y="100" fontSize="9" fontWeight="700" fill="var(--color-accent)" textAnchor="middle">x</text>
+    <text x="28" y="113" fontSize="8" fill="var(--color-accent)" textAnchor="middle">identity</text>
+    {/* Block */}
+    <line x1="130" y1="44" x2="130" y2="56" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="75" y="56" width="110" height="60" rx="6" fill="rgba(79,140,255,0.1)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="130" y="76" textAnchor="middle" fontSize="9" fontWeight="600" fill="var(--color-accent)">Transformer Block</text>
+    <text x="130" y="90" textAnchor="middle" fontSize="8" fill="var(--color-accent)">Attention + FFN</text>
+    <text x="130" y="106" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-accent-secondary)">F(x)</text>
+    {/* Lines to addition */}
+    <line x1="130" y1="116" x2="130" y2="148" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="50" y1="148" x2="116" y2="148" stroke="var(--color-accent)" strokeWidth="2.5"/>
+    {/* Addition */}
+    <circle cx="130" cy="148" r="14" fill="var(--color-surface-2)" stroke="var(--color-success)" strokeWidth="2"/>
+    <text x="130" y="153" textAnchor="middle" fontSize="14" fontWeight="700" fill="var(--color-success)">+</text>
+    {/* Output */}
+    <line x1="130" y1="162" x2="130" y2="176" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="70" y="176" width="120" height="20" rx="5" fill="var(--color-success-bg)" stroke="var(--color-success)" strokeWidth="1.5"/>
+    <text x="130" y="190" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--color-success-text)">x + F(x)</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## What Does F(x) Represent?
+
+<TokenMapping
+  title="F(x) in Different Contexts"
+  fromLabel="Location"
+  toLabel="F(x) = ?"
+  items={[
+    { from: "Around Multi-Head Attention", to: "Output of the Attention block"      },
+    { from: "Around Feed Forward Network", to: "Output of the FFN"                  },
+    { from: "Combined in one block",       to: "Attention output + FFN output"      },
+  ]}
+/>
+
+Residual connections are placed around **both** computations inside every Transformer block.
+
+---
+
+## Residual Connections Inside a Transformer Block
+
+<FlowDiagram title="Two Residual Connections Per Block" steps={[
+  "Input (x₁)",
+  "Multi-Head Attention → F₁(x₁)",
+  "Add:  x₁ + F₁(x₁)  =  x₂",
+  "Feed Forward Network → F₂(x₂)",
+  "Add:  x₂ + F₂(x₂)  =  output"
+]} />
+
+---
+
+## Why This Matters During Backpropagation
+
+Without residual connections, the gradient has only one path through every layer.
+
+<Comparison
+  title="Without vs With Residual Connections"
+  left={{
+    label: "Without Residuals",
+    points: [
+      "One single gradient path",
+      "Passes through every layer",
+      "Multiplied many times → shrinks",
+      "Early layers stop learning",
+    ]
+  }}
+  right={{
+    label: "With Residuals",
+    points: [
+      "Two gradient paths at each block",
+      "Identity path bypasses the block",
+      "Strong signal always reaches early layers",
+      "Very deep models can be trained",
+    ]
+  }}
+/>
+
+---
+
+## The Mathematical Insight
+
+Differentiate `y = x + F(x)` with respect to x:
+
+<MathBlock title="Gradient Through a Residual Connection">
+  $$\frac{dy}{dx} = 1 + \frac{dF(x)}{dx}$$
+</MathBlock>
+
+The **+1** is the key. Even if `dF(x)/dx ≈ 0` (the block learns nothing useful), the gradient remains `1 + 0 = 1` — strong enough to continue flowing backward.
+
+<TokenMapping
+  title="Why the +1 Changes Everything"
+  fromLabel="Scenario"
+  toLabel="Gradient"
+  items={[
+    { from: "Without residuals, block learns little", to: "≈ 0  — learning stops"      },
+    { from: "With residuals, block learns little",    to: "1 + 0 = 1  — learning continues" },
+    { from: "With residuals, block learns well",      to: "1 + dF/dx > 1  — strong signal"  },
+  ]}
+/>
+
+---
+
+## Visualizing Gradient Flow
+
+<DiagramContainer caption="With residuals, gradients have a direct highway back to early layers — no degradation">
+  <svg viewBox="0 0 260 220" width="100%" style={{ maxWidth:'260px' }} aria-hidden="true">
+    {/* Blocks */}
+    {['Block 48','Block 47','Block 46','Block 45','Block 1'].map((b,i) => {
+      const y = 10 + i * 40;
+      return (
+        <g key={b}>
+          <rect x="70" y={y} width="100" height="24" rx="5"
+            fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+          <text x="120" y={y+15} textAnchor="middle" fontSize="9" fill="var(--color-text-secondary)">{b}</text>
+          {/* Main gradient path */}
+          {i < 4 && <line x1="120" y1={y+24} x2="120" y2={y+40}
+            stroke="var(--color-error)" strokeWidth="2" opacity="0.6"/>}
+          {/* Identity shortcut */}
+          {i < 4 && <line x1="175" y1={y+12} x2="175" y2={y+52}
+            stroke="var(--color-success)" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.8"/>}
+          {i < 4 && <line x1="170" y1={y+52} x2="175" y2={y+52}
+            stroke="var(--color-success)" strokeWidth="1.5" opacity="0.8"/>}
+        </g>
+      );
+    })}
+    {/* Labels */}
+    <text x="110" y="210" fontSize="8" fill="var(--color-error)">main path</text>
+    <text x="165" y="210" fontSize="8" fill="var(--color-success)">identity</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## Key Takeaways
+
+- "Skip Connection" is a misleading name — nothing is skipped.
+- Every Transformer layer still performs its full computation.
+- The original input travels **alongside** the computation via an identity path.
+- During backpropagation, gradients flow as `1 + dF(x)/dx`.
+- The `+1` ensures strong gradient flow even through very deep networks.
+- Every Transformer block has **two** residual connections — one around Attention, one around FFN.
+
+---
+
+## What's Next?
+
+Residual connections solve gradient flow.
+
+But one more problem remains after each computation:
+
+> **After every major operation, the values may be on very different scales — some large, some tiny.**
+
+In the next lesson, we'll explore **Layer Normalization** — which ensures every layer receives a well-scaled, stable input.

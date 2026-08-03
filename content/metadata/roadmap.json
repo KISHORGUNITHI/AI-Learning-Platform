@@ -397,6 +397,17 @@
         "estimatedReadingTime": "15 min",
         "estimatedStudyTime": "35 min",
         "tags": ["Residual Connections", "Skip Connections", "Vanishing Gradients", "Transformer", "Deep Learning"]
+      },
+      {
+        "number": 25,
+        "title": "Residual Connections — What They Actually Skip",
+        "slug": "module-2/day-25-residual-connections-what-they-actually-skip",
+        "description": "Understand the biggest misconception about skip connections and how residual connections create an identity pathway.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "18 min",
+        "estimatedStudyTime": "40 min",
+        "tags": ["Residual Connections", "Skip Connections", "Vanishing Gradients", "Gradient Flow", "Transformer"]
       }
     ]
   },
