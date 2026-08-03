@@ -1,0 +1,227 @@
+---
+title: "Inside the Feed Forward Network"
+slug: "module-2/day-21-inside-the-feed-forward-network"
+description: "Open the Feed Forward Network and understand its architecture, dimensions, and why every token passes through the same neural network independently."
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "15 min"
+estimatedStudyTime: "35 min"
+tags:
+  - Feed Forward Network
+  - FFN
+  - Transformer
+  - Linear Layer
+  - Neural Network
+learningObjectives:
+  - Understand the architecture of the Feed Forward Network.
+  - Learn why every token uses the same FFN.
+  - Understand why tokens are processed independently.
+  - Visualize where the FFN sits inside a Transformer Block.
+prerequisites:
+  - topic: "Why Self-Attention Alone Isn't Enough"
+    slug: "module-2/day-20-why-self-attention-alone-isnt-enough"
+previous:
+  title: "Why Self-Attention Alone Isn't Enough"
+  slug: "module-2/day-20-why-self-attention-alone-isnt-enough"
+---
+
+> *"Attention lets tokens communicate. The Feed Forward Network lets every token think independently."*
+
+---
+
+## Quick Recap
+
+After Multi-Head Attention, every token is context-aware.
+
+<FlowDiagram title="Where We Are" steps={[
+  "Sentence",
+  "Multi-Head Attention",
+  "Context-aware Tokens",
+  "Feed Forward Network ← today"
+]} />
+
+---
+
+## Opening the Transformer Block
+
+<DiagramContainer caption="Today we open the second component of every Transformer block">
+  <svg viewBox="0 0 260 100" width="100%" style={{ maxWidth: '260px' }} aria-hidden="true">
+    <rect x="20" y="10" width="220" height="35" rx="6"
+      fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1" opacity="0.5"/>
+    <text x="130" y="32" textAnchor="middle" fontSize="11" fill="var(--color-text-tertiary)">Multi-Head Attention</text>
+    <rect x="20" y="55" width="220" height="35" rx="6"
+      fill="rgba(79,140,255,0.12)" stroke="var(--color-accent)" strokeWidth="2"/>
+    <text x="130" y="77" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-accent)">Feed Forward Network ◀</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## The Architecture
+
+The Feed Forward Network is a small neural network — no Queries, no Keys, no Values. Just two linear layers with an activation in between.
+
+<FlowDiagram title="FFN Architecture" steps={[
+  "Input  (768 dims)",
+  "Linear Layer 1  → expand",
+  "Activation Function (GELU / ReLU)",
+  "Linear Layer 2  → compress",
+  "Output  (768 dims)"
+]} />
+
+---
+
+## Visual Activity — FFN Pipeline
+
+Step through each stage of the FFN:
+
+<DiagramContainer caption="Data flows through two linear layers separated by a non-linear activation">
+  <svg viewBox="0 0 300 220" width="100%" style={{ maxWidth: '300px' }} aria-hidden="true">
+    {[
+      { label: 'Input',        y: 10,  color: 'var(--color-text-secondary)', bg: 'var(--color-surface-2)' },
+      { label: 'Linear 1',     y: 55,  color: 'var(--color-accent)',         bg: 'rgba(79,140,255,0.12)' },
+      { label: 'Activation',   y: 100, color: 'var(--color-warning)',        bg: 'rgba(245,158,11,0.12)' },
+      { label: 'Linear 2',     y: 145, color: 'var(--color-success)',        bg: 'rgba(52,211,153,0.12)' },
+      { label: 'Output',       y: 190, color: 'var(--color-text-secondary)', bg: 'var(--color-surface-2)' },
+    ].map((item, i, arr) => (
+      <g key={item.label}>
+        <rect x="60" y={item.y} width="180" height="30" rx="6"
+          fill={item.bg} stroke={item.color} strokeWidth="1.5"/>
+        <text x="150" y={item.y + 19} textAnchor="middle" fontSize="11" fontWeight="600" fill={item.color}>
+          {item.label}
+        </text>
+        {i < arr.length - 1 && (
+          <g>
+            <line x1="150" y1={item.y + 30} x2="150" y2={item.y + 42}
+              stroke="var(--color-border)" strokeWidth="1.5"/>
+            <polygon points="144,42 150,50 156,42"
+              fill="var(--color-border)" transform={`translate(0,${item.y + 3})`}/>
+          </g>
+        )}
+      </g>
+    ))}
+  </svg>
+</DiagramContainer>
+
+---
+
+## Every Token Uses the Same FFN
+
+GPT does **not** build a separate FFN for every token. One FFN is learned during training and reused for every token.
+
+<DiagramContainer caption="One shared FFN — every token uses it independently">
+  <svg viewBox="0 0 300 140" width="100%" style={{ maxWidth: '300px' }} aria-hidden="true">
+    {['Token 1','Token 2','Token 3'].map((t, i) => (
+      <g key={t}>
+        <rect x="10" y={15 + i*38} width="80" height="26" rx="5"
+          fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+        <text x="50" y={32 + i*38} textAnchor="middle" fontSize="10" fill="var(--color-text-secondary)">{t}</text>
+        <line x1="90" y1={28 + i*38} x2="140" y2="68"
+          stroke="var(--color-accent)" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.7"/>
+      </g>
+    ))}
+    {/* Shared FFN box */}
+    <rect x="140" y="44" width="80" height="48" rx="8"
+      fill="rgba(79,140,255,0.15)" stroke="var(--color-accent)" strokeWidth="2"/>
+    <text x="180" y="66" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-accent)">Shared</text>
+    <text x="180" y="82" textAnchor="middle" fontSize="11" fontWeight="700" fill="var(--color-accent)">FFN</text>
+    {/* Outputs */}
+    {['Out 1','Out 2','Out 3'].map((t, i) => (
+      <g key={t}>
+        <line x1="220" y1="68" x2="230" y2={28 + i*38}
+          stroke="var(--color-success)" strokeWidth="1.5" strokeDasharray="4 2" opacity="0.7"/>
+        <rect x="230" y={15 + i*38} width="60" height="26" rx="5"
+          fill="var(--color-success-bg)" stroke="var(--color-success)" strokeWidth="1"/>
+        <text x="260" y={32 + i*38} textAnchor="middle" fontSize="10" fill="var(--color-success-text)">{t}</text>
+      </g>
+    ))}
+    <text x="180" y="130" textAnchor="middle" fontSize="9" fontStyle="italic" fill="var(--color-text-tertiary)">
+      One network reused for every token
+    </text>
+  </svg>
+</DiagramContainer>
+
+---
+
+## Why Reuse the Same Network?
+
+<Comparison
+  title="Separate FFN per Token vs Shared FFN"
+  left={{
+    label: "❌ Separate FFN per Token",
+    points: [
+      "500 tokens → 500 different FFNs",
+      "Parameters explode",
+      "Memory usage unmanageable",
+      "Never done in practice",
+    ]
+  }}
+  right={{
+    label: "✅ One Shared FFN",
+    points: [
+      "One FFN learned during training",
+      "Same weights reused for all tokens",
+      "Dramatically fewer parameters",
+      "Still transforms every token",
+    ]
+  }}
+/>
+
+---
+
+## Tokens Do NOT Communicate Inside the FFN
+
+Inside Attention, tokens interact. Inside the FFN, that communication is finished — each token is processed independently.
+
+<Comparison
+  title="Attention vs FFN — Communication"
+  left={{
+    label: "Self-Attention",
+    points: [
+      "Token ↔ Token ↔ Token",
+      "Tokens exchange information",
+      "Context is gathered",
+    ]
+  }}
+  right={{
+    label: "Feed Forward Network",
+    points: [
+      "Token → FFN → Output (independently)",
+      "No interaction between tokens",
+      "Each token transformed on its own",
+    ]
+  }}
+/>
+
+---
+
+## Engineering Perspective
+
+The Transformer Block alternates between two jobs — communication then transformation — and repeats this pattern in every layer.
+
+<FlowDiagram title="The Transformer Rhythm" steps={[
+  "Attention  —  Communication",
+  "FFN  —  Transformation",
+  "Attention  —  Communication",
+  "FFN  —  Transformation",
+  "... × N Transformer Blocks",
+  "Representations become richer with each repetition"
+]} />
+
+---
+
+## Key Takeaways
+
+- The FFN is two Linear layers separated by an Activation function.
+- Every token passes through the **same** FFN.
+- Tokens do **not** communicate inside the FFN.
+- The FFN transforms each token independently after Attention.
+- Every Transformer Block alternates: communicate → transform.
+
+---
+
+## What's Next?
+
+Now we'll open the first Linear layer and answer one of the biggest questions in Transformer architecture:
+
+> **Why does GPT expand from 768 dimensions to 3072 dimensions?**

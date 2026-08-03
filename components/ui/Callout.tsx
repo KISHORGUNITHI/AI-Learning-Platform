@@ -26,16 +26,17 @@ export default function Callout({ children, accent, className }: CalloutProps) {
         borderLeft: `4px solid ${accent ?? 'var(--color-accent-primary)'}`,
       }}
     >
-      <p
+      <span
         className="text-lg font-medium leading-relaxed"
         style={{
           color: 'var(--color-text-primary)',
           fontStyle: 'italic',
           margin: 0,
+          display: 'block',
         }}
       >
         {children}
-      </p>
+      </span>
     </aside>
   );
 }

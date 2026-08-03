@@ -353,6 +353,17 @@
         "estimatedReadingTime": "12 min",
         "estimatedStudyTime": "30 min",
         "tags": ["Transformer", "Self Attention", "Feed Forward Network", "FFN"]
+      },
+      {
+        "number": 21,
+        "title": "Inside the Feed Forward Network",
+        "slug": "module-2/day-21-inside-the-feed-forward-network",
+        "description": "Open the Feed Forward Network and understand its architecture, dimensions, and why every token passes through the same neural network independently.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "15 min",
+        "estimatedStudyTime": "35 min",
+        "tags": ["Feed Forward Network", "FFN", "Transformer", "Linear Layer", "Neural Network"]
       }
     ]
   },
