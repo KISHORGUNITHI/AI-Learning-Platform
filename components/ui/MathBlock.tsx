@@ -12,13 +12,28 @@
  *   where **L** is the loss and **P** is the predicted probability.
  */
 
+import katex from 'katex';
+
 interface MathBlockProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  /** Equation formula passed as string (used by next-mdx-remote v6 compatibility preprocessor) */
+  formula?: string;
   /** Short label shown above the equation e.g. "Softmax Function" */
   title?: string;
 }
 
-export default function MathBlock({ children, title }: MathBlockProps) {
+export default function MathBlock({ children, formula, title }: MathBlockProps) {
+  let mathContent = children;
+
+  if (formula) {
+    const html = katex.renderToString(formula, {
+      displayMode: true,
+      throwOnError: false,
+      strict: 'ignore',
+    });
+    mathContent = <div dangerouslySetInnerHTML={{ __html: html }} />;
+  }
+
   return (
     <figure
       aria-label={title ?? 'Mathematical equation'}
@@ -65,7 +80,7 @@ export default function MathBlock({ children, title }: MathBlockProps) {
         /* Ensure KaTeX inside doesn't double-wrap */
         lineHeight: 1,
       }}>
-        {children}
+        {mathContent}
       </div>
     </figure>
   );

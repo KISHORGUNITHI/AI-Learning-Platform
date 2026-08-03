@@ -55,6 +55,51 @@ export function getArticleSlugs(): string[] {
   return files;
 }
 
+// ─── MDX preprocessor for v6 compatibility ───────────────────────────────────
+
+/**
+ * COMPATIBILITY SHIM (next-mdx-remote v6 Migration)
+ * 
+ * WHY IT EXISTS:
+ * In next-mdx-remote v6 (which uses MDX v3 under the hood), writing LaTeX display math 
+ * blocks (`$$...$$`) directly inside a JSX element (like <MathBlock>) causes Acorn parser errors. 
+ * Acorn treats curly braces `{}` and other LaTeX symbols as JavaScript expression blocks, 
+ * leading to compile-time build failures.
+ * 
+ * WHAT IT DOES:
+ * This shim intercepts the raw MDX content from files on disk and rewrites any inline
+ * `<MathBlock>$$formula$$</MathBlock>` elements to pass the formula as a safe JSX string attribute:
+ * `<MathBlock formula="formula" />`. Double quotes and backslashes are escaped to prevent 
+ * parsing issues.
+ * 
+ * DECOMMISSION CONDITIONS:
+ * This preprocessor shim can be removed in the future if:
+ * 1. The MDX parser / compiler officially supports ignoring LaTeX braces inside JSX children, OR
+ * 2. All MDX lessons are migrated to explicitly use the `formula` prop:
+ *    `<MathBlock title="Example" formula="x^2 + y^2 = z^2" />`
+ */
+function preprocessMdx(content: string): string {
+  // COMPATIBILITY FEATURE FLAG:
+  // If DISABLE_MDX_MATHBLOCK_SHIM is set to 'true' in the environment,
+  // bypass this compatibility preprocessor shim.
+  if (process.env.DISABLE_MDX_MATHBLOCK_SHIM === 'true') {
+    return content;
+  }
+
+  return content.replace(
+    /<MathBlock([^>]*?)>\s*\$\$([\s\S]*?)\$\$\s*<\/MathBlock>/g,
+    (_, attrs, formula) => {
+      // Escape backslashes for JS/TS parser inside JSX string literal double quotes
+      // and escape any double quotes inside the formula
+      const escapedFormula = formula
+        .trim()
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"');
+      return `<MathBlock${attrs} formula="${escapedFormula}" />`;
+    }
+  );
+}
+
 // ─── Article access ───────────────────────────────────────────────────────────
 
 export function getArticleBySlug(slug: string): {
@@ -72,7 +117,7 @@ export function getArticleBySlug(slug: string): {
     computedReadingTime: Math.ceil(minutes),
   };
 
-  return { metadata, content };
+  return { metadata, content: preprocessMdx(content) };
 }
 
 export function getAllArticles(): ArticleMetadata[] {
