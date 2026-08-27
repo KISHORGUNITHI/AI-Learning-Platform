@@ -1,0 +1,913 @@
+---
+title: "Day 26: Layer Normalization — Stabilizing Every Transformer Layer"
+description: "Understand why Transformer activations become unstable, how Layer Normalization stabilizes them, why learnable γ and β are needed, and why modern GPT-style models use Pre-LayerNorm."
+slug: "module-2/day-26-layer-normalization"
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "25 min"
+estimatedStudyTime: "50 min"
+tags:
+  - Layer Normalization
+  - LayerNorm
+  - Pre-LN
+  - Post-LN
+  - Gamma
+  - Beta
+  - Transformer
+  - Training Stability
+  - LLM Internals
+learningObjectives:
+  - Understand why activations can become numerically unstable in deep Transformer networks.
+  - Understand what Layer Normalization actually normalizes.
+  - Calculate mean, variance, and normalized activations for a token.
+  - Understand why normalization alone is too restrictive.
+  - Understand the role of learnable γ (gamma) and β (beta).
+  - Understand why γ and β are vectors rather than single scalars.
+  - Understand the difference between Post-LayerNorm and Pre-LayerNorm.
+  - Understand why modern GPT-style models generally use Pre-LayerNorm.
+prerequisites:
+  - topic: "Residual Connections"
+    slug: "module-2/day-25-residual-connections-what-they-actually-skip"
+previous:
+  title: "Residual Connections — What They Actually Skip"
+  slug: "module-2/day-25-residual-connections-what-they-actually-skip"
+next:
+  title: "Transformer Block — Putting Everything Together"
+  slug: "module-2/day-27-transformer-block-putting-everything-together"
+---
+
+> *"LayerNorm does not erase meaning. It rescales the conversation so every layer can hear it clearly."*
+
+---
+
+## Learning Goals
+
+By the end of this lesson you will understand:
+
+- why activations can drift to extreme scales in deep Transformers
+- exactly what LayerNorm computes, step by step
+- why a normalized representation alone is not enough
+- what the learnable parameters γ and β actually do
+- how γ and β are discovered through training
+- the difference between Post-LayerNorm and Pre-LayerNorm
+- why modern GPT-style models prefer Pre-LayerNorm
+
+---
+
+# The Problem
+
+Transformers are deep. GPT-3 has 96 layers. GPT-4 is estimated to have even more. Every Transformer block performs Multi-Head Attention, adds a residual connection, runs a Feed-Forward Network, and adds another residual connection.
+
+At each step, vectors are transformed, combined, and passed forward. With enough layers, the values inside those vectors can drift — some dimensions grow very large, others shrink toward zero, and the overall scale becomes unpredictable.
+
+This is not a theoretical concern. It is something researchers observed while training early deep networks, and it is the problem LayerNorm was designed to address.
+
+---
+
+# Let's Go Inside GPT
+
+A token starts its journey as an embedding vector.
+
+After Multi-Head Attention + residual addition, a token's hidden representation might look like this:
+
+<TokenMapping
+  title="A Token's Representation After Early Layers"
+  fromLabel="Dimension"
+  toLabel="Value"
+  items={[
+    { from: "dim 0", to: "0.8"  },
+    { from: "dim 1", to: "-0.3" },
+    { from: "dim 2", to: "1.2"  },
+    { from: "dim 3", to: "-0.5" },
+  ]}
+/>
+
+Comfortable values. The computations downstream can work with these easily.
+
+Now follow the same token through many layers of attention, FFN, and residual additions. Each layer adds new signal on top of existing signal. The values accumulate.
+
+<FlowDiagram title="How Values Grow Through Many Layers" steps={[
+  "Input:  [0.8, -0.3, 1.2, -0.5]",
+  "Layer 3 + residual:  [4.2, -1.1, 7.3, -2.8]",
+  "Layer 12 + residual: [45, -18, 120, -33]",
+  "Layer 24 + residual: [700, -1000, 430, -820]"
+]} />
+
+The values at layer 24 are not wrong in any mathematical sense. They might encode extremely valid and useful information. But their scale has grown uncontrolled.
+
+---
+
+# Why Are Extreme Values a Problem?
+
+Think of it as a factory floor analogy.
+
+You have machines that are calibrated to receive inputs roughly between −2 and +2. They function well in that range — their internal computations stay numerically stable, their outputs are predictable, and adjustments during calibration (training) are precise.
+
+<Comparison
+  title="Machine B Receives Different Inputs"
+  left={{
+    label: "Machine A — Comfortable",
+    accent: "var(--color-success)",
+    points: [
+      "Input: [0.5, -1.2, 1.7]",
+      "Values are in the expected range",
+      "Internal computations stay stable",
+      "Calibration adjustments are precise",
+    ]
+  }}
+  right={{
+    label: "Machine B — Extreme Scale",
+    accent: "var(--color-warning)",
+    points: [
+      "Input: [500, 900, -700]",
+      "Values are far outside expected range",
+      "Internal computations become difficult",
+      "Calibration adjustments lose precision",
+    ]
+  }}
+/>
+
+Machine B can still operate — the information is not destroyed. But handling inputs at extreme scale makes its job harder. Gradients during training become harder to control, and the model converges more slowly or not at all.
+
+Now apply this to a Transformer. Every sublayer is a kind of machine. If its input has drifted to extreme scale, computation becomes less stable and training becomes less reliable.
+
+---
+
+# The Communication Analogy
+
+Here is another way to feel this intuitively.
+
+Imagine a conversation at normal volume. Both speakers hear each other clearly. Information flows without friction.
+
+Now imagine the same conversation, but one person alternates between whispering and shouting unpredictably. The words are still there — the information is technically present — but communication has become much harder.
+
+Neural network activations work the same way. The representations carry information regardless of scale. But when activations are wildly inconsistent in magnitude — sometimes very small, sometimes very large — the downstream computations that consume them become less stable.
+
+**The information still exists. The problem is consistency of scale.**
+
+---
+
+# The Question LayerNorm Asks
+
+Layer Normalization asks one simple question before passing a token's representation to the next computation:
+
+> *"Can I bring these values to a stable, consistent scale — without destroying the relative structure they encode?"*
+
+The answer is yes. And the mechanism is straightforward.
+
+---
+
+# What Exactly Is Being Normalized?
+
+This is a critical point.
+
+LayerNorm normalizes **across the hidden dimensions of a single token**.
+
+For a token with a 768-dimensional representation, LayerNorm computes the mean and variance of those 768 numbers and normalizes accordingly. It does this independently for each token — it does not mix information across the batch or across positions.
+
+<TokenMapping
+  title="What LayerNorm Operates On"
+  fromLabel="Scope"
+  toLabel="What Is Normalized"
+  items={[
+    { from: "One token, all 768 dims",  to: "← LayerNorm normalizes this"  },
+    { from: "All tokens, one dim",      to: "← BatchNorm normalizes this"  },
+    { from: "Across positions",         to: "← LayerNorm does NOT do this" },
+    { from: "Across the batch",         to: "← LayerNorm does NOT do this" },
+  ]}
+/>
+
+Every token is treated independently. The normalization is computed fresh for each token from its own hidden dimensions.
+
+---
+
+# Step 1 — Compute the Mean
+
+Take a simple example. A token has four hidden dimensions:
+
+$$x = [2,\ 4,\ 6,\ 8]$$
+
+The mean is:
+
+<MathBlock title="Step 1 — Mean">
+  $$\mu = \frac{1}{d} \sum_{i=1}^{d} x_i = \frac{2+4+6+8}{4} = 5$$
+</MathBlock>
+
+where **d** is the number of hidden dimensions and **μ** is the mean across those dimensions.
+
+---
+
+# Step 2 — Subtract the Mean
+
+Center the values around zero:
+
+<MathBlock title="Step 2 — Center">
+  $$x - \mu = [2-5,\ 4-5,\ 6-5,\ 8-5] = [-3,\ -1,\ 1,\ 3]$$
+</MathBlock>
+
+The representation is now centered at zero. The relative structure is preserved — the differences between values are exactly the same as before. The smallest value is still the smallest. The largest is still the largest.
+
+---
+
+# Step 3 — Compute the Standard Deviation
+
+Measure how spread out the values are:
+
+<MathBlock title="Step 3 — Standard Deviation">
+  $$\sigma = \sqrt{\frac{1}{d}\sum_{i=1}^{d}(x_i - \mu)^2} = \sqrt{\frac{9+1+1+9}{4}} = \sqrt{5} \approx 2.24$$
+</MathBlock>
+
+---
+
+# Step 4 — Divide by the Standard Deviation
+
+Scale the centered values so they have unit variance:
+
+<MathBlock title="Step 4 — Normalize">
+  $$\hat{x} = \frac{x - \mu}{\sigma} \approx \frac{[-3,\ -1,\ 1,\ 3]}{2.24} \approx [-1.34,\ -0.45,\ 0.45,\ 1.34]$$
+</MathBlock>
+
+The normalized representation has approximately mean = 0 and variance = 1.
+
+<TokenMapping
+  title="Normalization Step by Step"
+  fromLabel="After Step"
+  toLabel="Values"
+  items={[
+    { from: "Original x",             to: "[2, 4, 6, 8]"                    },
+    { from: "Subtract mean (μ = 5)",  to: "[-3, -1, 1, 3]"                  },
+    { from: "Divide by σ (≈ 2.24)",   to: "[-1.34, -0.45, 0.45, 1.34]"      },
+    { from: "Final: mean ≈ 0, var ≈ 1", to: "✓ Stable scale"                },
+  ]}
+/>
+
+---
+
+# The Core Formula
+
+Putting it all together, the normalization formula is:
+
+<MathBlock title="LayerNorm — Normalization Step">
+  $$\hat{x}_i = \frac{x_i - \mu}{\sqrt{\sigma^2 + \varepsilon}}$$
+</MathBlock>
+
+Where:
+- **x_i** is the i-th value in the token's hidden representation
+- **μ** is the mean across all hidden dimensions for this token
+- **σ²** is the variance across all hidden dimensions for this token
+- **ε** (epsilon) is a tiny constant (e.g. 1e-5) added for numerical safety — it prevents division by zero if the variance happens to be exactly zero
+- **x̂_i** is the normalized output
+
+---
+
+# What Did Normalization Do?
+
+Look at what changed and what did not:
+
+<Comparison
+  title="Before and After Normalization"
+  left={{
+    label: "What Changed",
+    accent: "var(--color-accent)",
+    points: [
+      "Mean is now ≈ 0",
+      "Variance is now ≈ 1",
+      "Scale is consistent and predictable",
+      "Extreme values are brought into a stable range",
+    ]
+  }}
+  right={{
+    label: "What Did NOT Change",
+    accent: "var(--color-success)",
+    points: [
+      "Relative ordering is preserved",
+      "Smallest value is still smallest",
+      "Largest value is still largest",
+      "The relative differences between values are the same",
+    ]
+  }}
+/>
+
+Normalization does not erase which dimension was dominant. It simply re-expresses the same structure on a consistent scale.
+
+---
+
+# Did We Lose the Meaning?
+
+This is a fair concern. If we rescale everything, do we lose the information that was encoded in those large values?
+
+The answer requires careful thought.
+
+The **absolute scale** of the values before normalization carries some information — specifically, it tells us about the magnitude of what came before. After normalization, that absolute scale is removed.
+
+But what remains is the **relative structure**: which dimensions are high relative to others, which are low, how they relate. For most of what a Transformer needs to compute in the next layer, this relative structure is what matters.
+
+The model learns to encode information in the shape of the representation, not just in its raw magnitude.
+
+<KeyInsight title="What Normalization Preserves">
+Normalization standardizes the scale while preserving the relative structure of the representation. The downstream computations care mostly about how dimensions relate to each other — not about the absolute magnitude. That is what makes normalization effective without being destructive.
+</KeyInsight>
+
+---
+
+# But Researchers Found Another Problem
+
+After normalization, every token's representation has approximately mean = 0 and variance = 1.
+
+This is stable. But it is also **rigid**.
+
+The model might have learned — through thousands of training steps — that for a certain type of token, the useful representation should have a larger spread, or be centered slightly above zero. Forcing every token's representation to exactly mean = 0, variance = 1 before every computation removes that flexibility.
+
+**Normalization alone is too restrictive.** The model cannot express that it prefers a different scale for different contexts.
+
+---
+
+# Introducing γ and β
+
+The solution is to let the model learn to adjust the scale and center after normalization.
+
+Two learnable parameters are introduced:
+
+- **γ (gamma)** — a scale parameter
+- **β (beta)** — a shift parameter
+
+Together they form an **affine transformation** applied after normalization:
+
+<MathBlock title="Full LayerNorm — With Learnable Parameters">
+  $$y_i = \gamma_i \cdot \hat{x}_i + \beta_i$$
+</MathBlock>
+
+Or written out in full:
+
+<MathBlock title="LayerNorm — Complete Formula">
+  $$y_i = \gamma_i \cdot \frac{x_i - \mu}{\sqrt{\sigma^2 + \varepsilon}} + \beta_i$$
+</MathBlock>
+
+Where **y_i** is the final LayerNorm output for dimension i.
+
+---
+
+# Why Do We Need the Scale Knob?
+
+Suppose after normalization a token's representation is:
+
+$$\hat{x} = [-1,\ 0,\ 1]$$
+
+With γ = 1 and β = 0, the output is unchanged:
+
+$$y = 1 \times [-1,\ 0,\ 1] + 0 = [-1,\ 0,\ 1]$$
+
+During training, the model discovers through gradient descent that a larger spread is more useful for the downstream computation. The optimizer updates γ toward 2:
+
+$$y = 2 \times [-1,\ 0,\ 1] + 0 = [-2,\ 0,\ 2]$$
+
+The scale knob lets the model restore a spread it finds useful — but now it is a *learned and controlled* spread, not a runaway drift from 30 layers of accumulated additions.
+
+---
+
+# Why Do We Need β?
+
+Suppose the model finds it useful for the representation to be centered around 3 rather than 0. With β = 3:
+
+$$y = 2 \times [-1,\ 0,\ 1] + 3 = [1,\ 3,\ 5]$$
+
+<TokenMapping
+  title="γ and β in Action"
+  fromLabel="State"
+  toLabel="Values"
+  items={[
+    { from: "After normalization (x̂)",     to: "[-1, 0, 1]"   },
+    { from: "After × γ=1, +β=0 (default)", to: "[-1, 0, 1]"   },
+    { from: "After × γ=2, +β=3 (learned)", to: "[1, 3, 5]"    },
+  ]}
+/>
+
+The β parameter lets the model shift the center of the representation to wherever it learns is most useful.
+
+---
+
+# The Beautiful Idea
+
+Normalization and the affine step together give the model the best of both worlds:
+
+<Comparison
+  title="What Each Step Contributes"
+  left={{
+    label: "Normalization (x̂)",
+    accent: "var(--color-accent)",
+    points: [
+      "Removes runaway scale",
+      "Brings representation to mean=0, var=1",
+      "Makes downstream computation stable",
+      "Cannot be bypassed or grown uncontrolled",
+    ]
+  }}
+  right={{
+    label: "Affine step (γ · x̂ + β)",
+    accent: "var(--color-success)",
+    points: [
+      "Restores representational freedom",
+      "Model chooses the useful scale",
+      "Model chooses the useful center",
+      "Parameters learned through training",
+    ]
+  }}
+/>
+
+---
+
+# Important: LayerNorm Does NOT Force the Final Output to Mean 0 and Variance 1
+
+This is a common misconception worth addressing directly.
+
+The **normalization step** produces x̂ with approximately mean = 0 and variance = 1.
+
+But γ and β immediately transform x̂ into the final output **y**. If γ ≠ 1 or β ≠ 0, the output y will generally have a different mean and variance.
+
+<KeyInsight title="The Final LayerNorm Output">
+LayerNorm normalizes first, then applies a learned affine transformation. The final output does NOT necessarily have mean = 0 or variance = 1. The model learns the mean and scale it actually needs through γ and β.
+</KeyInsight>
+
+---
+
+# γ and β Are Learned Parameters
+
+Where do γ and β come from? They are trainable parameters, just like the weight matrices in Attention and the FFN.
+
+At initialization:
+
+$$\gamma = 1, \quad \beta = 0$$
+
+This means LayerNorm starts as pure normalization — the identity affine transformation leaves x̂ unchanged. As training proceeds, the optimizer updates γ and β alongside all the other parameters:
+
+<FlowDiagram title="How γ and β Are Learned" steps={[
+  "Initialize: γ = 1, β = 0",
+  "Forward pass → compute output y",
+  "Compute loss",
+  "Backpropagation → compute gradients ∂L/∂γ and ∂L/∂β",
+  "Gradient descent → update γ and β",
+  "Repeat until γ and β encode useful scale and shift"
+]} />
+
+---
+
+# Gradient Descent Doesn't Decide γ = 2 by Itself
+
+Here is an important subtlety.
+
+When we said "the model learns γ = 2", we did not mean that gradient descent looks at the task and decides "I need a scale of 2." It has no such awareness.
+
+What happens is simpler and more mechanical:
+
+The optimizer observes that increasing γ slightly reduces the loss. It does so. Over thousands of steps, γ drifts toward whatever value consistently produces better predictions. The final value of γ = 2 (or whatever it becomes) is simply the value that was most useful for the task, discovered through pure optimization.
+
+<Tip title="Optimization, Not Reasoning">
+The model does not reason about what γ should be. It just follows gradients. The useful values of γ and β emerge from millions of parameter updates, not from any explicit decision.
+</Tip>
+
+---
+
+# γ and β Are Not Single Numbers
+
+In a real Transformer, γ and β are not scalars. They are **vectors**.
+
+If the hidden dimension is 768, then:
+
+$$\gamma = [\gamma_1,\ \gamma_2,\ \ldots,\ \gamma_{768}]$$
+$$\beta = [\beta_1,\ \beta_2,\ \ldots,\ \beta_{768}]$$
+
+Each hidden dimension gets its own independent scale and shift.
+
+<TokenMapping
+  title="Per-Dimension Scale and Shift (d = 768)"
+  fromLabel="Dimension"
+  toLabel="Its own γ and β"
+  items={[
+    { from: "dim 0",      to: "γ₀, β₀"        },
+    { from: "dim 1",      to: "γ₁, β₁"        },
+    { from: "dim 2",      to: "γ₂, β₂"        },
+    { from: "...",        to: "..."            },
+    { from: "dim 767",    to: "γ₇₆₇, β₇₆₇"   },
+  ]}
+/>
+
+This means the LayerNorm in one Transformer block with d = 768 has 768 + 768 = **1,536 learnable parameters** just for γ and β.
+
+---
+
+# Think of γ and β as 768 Pairs of Knobs
+
+Each pair of knobs controls one dimension of the representation:
+
+- the first knob (γ) says how spread out that dimension should be
+- the second knob (β) says where that dimension should be centered
+
+The model learns all 768 pairs simultaneously through training. Some dimensions may end up with γ close to 1 and β close to 0 — meaning normalization was already optimal for them. Others may end up with very different values.
+
+<DiagramContainer caption="768 pairs of (γ, β) knobs — one per hidden dimension — each learned independently through training">
+  <svg viewBox="0 0 300 130" width="100%" style={{ maxWidth: '380px' }} aria-hidden="true">
+    {/* Knob pairs */}
+    {[0, 1, 2, 5, 6, 7].map((i, idx) => {
+      const x = 20 + idx * 44;
+      const isDots = idx === 3;
+      if (isDots) return (
+        <text key="dots" x={x + 8} y="65" fontSize="14" fill="var(--color-text-tertiary)" textAnchor="middle">···</text>
+      );
+      return (
+        <g key={i}>
+          {/* γ knob */}
+          <circle cx={x + 12} cy="42" r="13" fill="var(--color-surface-2)" stroke="var(--color-accent)" strokeWidth="1.5"/>
+          <text x={x + 12} y="46" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--color-accent)">γ{i}</text>
+          {/* β knob */}
+          <circle cx={x + 12} cy="88" r="13" fill="var(--color-surface-2)" stroke="var(--color-accent-secondary)" strokeWidth="1.5"/>
+          <text x={x + 12} y="92" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--color-accent-secondary)">β{i}</text>
+          {/* dim label */}
+          <text x={x + 12} y="118" textAnchor="middle" fontSize="7" fill="var(--color-text-tertiary)">d{i}</text>
+        </g>
+      );
+    })}
+    {/* Dots for the gap */}
+    <text x="152" y="65" fontSize="14" fill="var(--color-text-tertiary)" textAnchor="middle">···</text>
+    {/* Legend */}
+    <circle cx="14" cy="12" r="5" fill="none" stroke="var(--color-accent)" strokeWidth="1.5"/>
+    <text x="22" y="16" fontSize="8" fill="var(--color-accent)">γ = scale</text>
+    <circle cx="90" cy="12" r="5" fill="none" stroke="var(--color-accent-secondary)" strokeWidth="1.5"/>
+    <text x="98" y="16" fontSize="8" fill="var(--color-accent-secondary)">β = shift</text>
+  </svg>
+</DiagramContainer>
+
+---
+
+# Full LayerNorm Pipeline
+
+Here is the complete computation from input to output:
+
+<FlowDiagram title="LayerNorm — Complete Pipeline" steps={[
+  "Input x  (token's hidden representation)",
+  "Compute mean μ across all d dimensions",
+  "Compute variance σ² across all d dimensions",
+  "Normalize:  x̂ = (x − μ) / √(σ² + ε)",
+  "Scale:      x̂ × γ",
+  "Shift:      + β",
+  "Output y  (stable, learned-scale representation)"
+]} />
+
+All of this happens independently for **every token** at **every LayerNorm** in the network. A single forward pass through GPT-3 involves 96 blocks × 2 LayerNorms per block = **192 independent LayerNorm computations** per token.
+
+---
+
+# Why LayerNorm Works Well With Residual Connections
+
+In Day 25 we learned about residual connections: `y = x + F(x)`.
+
+It is worth comparing the two mechanisms side by side, because they are complementary — not competing.
+
+<TokenMapping
+  title="Residual Connections vs Layer Normalization"
+  fromLabel="Mechanism"
+  toLabel="Problem It Solves"
+  items={[
+    { from: "Residual:  x + F(x)",          to: "Information & gradient highway"    },
+    { from: "LayerNorm: γ · norm(x) + β",   to: "Numerical & optimization stability" },
+    { from: "Both together",                to: "Deep Transformers that actually train" },
+  ]}
+/>
+
+Residual connections ensure gradients flow freely backward through the network and that information is not overwritten. LayerNorm ensures the values entering each computation are on a stable scale. They solve different problems and work together.
+
+---
+
+# Post-LayerNorm
+
+The original Transformer paper (Vaswani et al., 2017) placed LayerNorm **after** the residual addition. This is called **Post-LayerNorm** (Post-LN):
+
+<MathBlock title="Post-LayerNorm">
+  $$y = \operatorname{LayerNorm}(x + F(x))$$
+</MathBlock>
+
+<FlowDiagram title="Post-LayerNorm Architecture" steps={[
+  "Input x",
+  "Sublayer computation F(x)  ← Attention or FFN",
+  "Residual addition:  x + F(x)",
+  "LayerNorm( x + F(x) )",
+  "Output → next sublayer"
+]} />
+
+In Post-LN, normalization happens **after** the residual addition. The sum `x + F(x)` is normalized before being passed forward.
+
+---
+
+# The Gradient-Flow Problem
+
+Post-LN has a subtle issue with gradient flow in very deep networks.
+
+During backpropagation, the gradient must travel backward through the LayerNorm operation. LayerNorm is differentiable — it does not destroy gradients. But it does add another transformation into the backward path.
+
+In very deep networks (96+ layers), stacking many Post-LN blocks means the gradient accumulates these transformations. Researchers observed that this made very deep Post-LN Transformers harder to train — they often required careful warm-up schedules and were more sensitive to hyperparameters.
+
+<Warning title="Post-LN Is Not Broken — It Is Harder to Scale">
+Post-LN works well for shallow and moderate-depth Transformers. The challenge appears specifically in very deep networks where gradient flow across many layers becomes more delicate.
+</Warning>
+
+---
+
+# Pre-LayerNorm
+
+Modern GPT-style Transformers use a different placement: **Pre-LayerNorm** (Pre-LN), where normalization happens **before** the sublayer computation:
+
+<MathBlock title="Pre-LayerNorm">
+  $$y = x + F(\operatorname{LayerNorm}(x))$$
+</MathBlock>
+
+<FlowDiagram title="Pre-LayerNorm Architecture (Modern GPT)" steps={[
+  "Input x",
+  "LayerNorm(x)  ← normalize before computing",
+  "Sublayer computation F( LayerNorm(x) )  ← Attention or FFN",
+  "Residual addition:  x + F( LayerNorm(x) )",
+  "Output → next sublayer"
+]} />
+
+In Pre-LN, the original `x` travels through the residual path **completely untouched**. The transformation branch receives a normalized version of x, but the identity path from the residual addition is clean.
+
+---
+
+# Post-LN vs Pre-LN
+
+<Comparison
+  title="Post-LN vs Pre-LN"
+  left={{
+    label: "Post-LayerNorm",
+    accent: "var(--color-warning)",
+    points: [
+      "y = LayerNorm(x + F(x))",
+      "Normalization after residual addition",
+      "Gradient path goes through LayerNorm",
+      "Works well for shallower models",
+      "Used in original 2017 Transformer paper",
+    ]
+  }}
+  right={{
+    label: "Pre-LayerNorm",
+    accent: "var(--color-success)",
+    points: [
+      "y = x + F(LayerNorm(x))",
+      "Normalization before sublayer",
+      "Residual path is a clean identity",
+      "More reliable gradient flow in deep models",
+      "Used in GPT-2, GPT-3, and most modern LLMs",
+    ]
+  }}
+/>
+
+---
+
+# The Highway Analogy
+
+From Day 25, residual connections create a gradient highway — a direct path from output back to early layers.
+
+The difference between Post-LN and Pre-LN is whether that highway has a toll booth:
+
+<DiagramContainer caption="Post-LN: gradient travels through LayerNorm after the merge point — Pre-LN: the residual highway is a clean direct path, with LayerNorm only on the transformation branch">
+  <svg viewBox="0 0 320 220" width="100%" style={{ maxWidth: '440px' }} aria-hidden="true">
+    {/* POST-LN */}
+    <text x="70" y="16" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--color-warning)" letterSpacing="0.1em">POST-LN</text>
+    {/* input */}
+    <rect x="30" y="20" width="80" height="20" rx="4" fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+    <text x="70" y="34" textAnchor="middle" fontSize="8" fill="var(--color-text-secondary)">Input x</text>
+    {/* split */}
+    <line x1="70" y1="40" x2="70" y2="52" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="70" y1="52" x2="20" y2="52" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="20" y1="52" x2="20" y2="110" stroke="var(--color-accent)" strokeWidth="2"/>
+    {/* F(x) box */}
+    <line x1="70" y1="52" x2="70" y2="64" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="30" y="64" width="80" height="20" rx="4" fill="rgba(139,92,246,0.1)" stroke="var(--color-accent)" strokeWidth="1"/>
+    <text x="70" y="78" textAnchor="middle" fontSize="8" fill="var(--color-accent)">F(x)</text>
+    <line x1="70" y1="84" x2="70" y2="110" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="20" y1="110" x2="56" y2="110" stroke="var(--color-accent)" strokeWidth="2"/>
+    {/* add */}
+    <circle cx="70" cy="110" r="10" fill="var(--color-surface-2)" stroke="var(--color-success)" strokeWidth="1.5"/>
+    <text x="70" y="115" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-success)">+</text>
+    {/* LN after add */}
+    <line x1="70" y1="120" x2="70" y2="132" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="25" y="132" width="90" height="20" rx="4" fill="rgba(245,158,11,0.15)" stroke="var(--color-warning)" strokeWidth="1.5"/>
+    <text x="70" y="146" textAnchor="middle" fontSize="8" fontWeight="600" fill="var(--color-warning)">LayerNorm ← toll</text>
+    <line x1="70" y1="152" x2="70" y2="166" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="30" y="166" width="80" height="20" rx="4" fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+    <text x="70" y="180" textAnchor="middle" fontSize="8" fill="var(--color-text-secondary)">Output</text>
+
+    {/* Divider */}
+    <line x1="160" y1="10" x2="160" y2="205" stroke="var(--color-border)" strokeWidth="1" strokeDasharray="4 3"/>
+
+    {/* PRE-LN */}
+    <text x="245" y="16" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--color-success)" letterSpacing="0.1em">PRE-LN</text>
+    {/* input */}
+    <rect x="205" y="20" width="80" height="20" rx="4" fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+    <text x="245" y="34" textAnchor="middle" fontSize="8" fill="var(--color-text-secondary)">Input x</text>
+    {/* split */}
+    <line x1="245" y1="40" x2="245" y2="52" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="245" y1="52" x2="195" y2="52" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="195" y1="52" x2="195" y2="150" stroke="var(--color-success)" strokeWidth="2.5"/>
+    <text x="178" y="105" fontSize="8" fontWeight="700" fill="var(--color-success)" textAnchor="middle">clean</text>
+    {/* LN before F */}
+    <line x1="245" y1="52" x2="245" y2="64" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="200" y="64" width="90" height="20" rx="4" fill="rgba(245,158,11,0.1)" stroke="var(--color-warning)" strokeWidth="1"/>
+    <text x="245" y="78" textAnchor="middle" fontSize="8" fill="var(--color-warning)">LayerNorm(x)</text>
+    {/* F box */}
+    <line x1="245" y1="84" x2="245" y2="96" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="205" y="96" width="80" height="20" rx="4" fill="rgba(139,92,246,0.1)" stroke="var(--color-accent)" strokeWidth="1"/>
+    <text x="245" y="110" textAnchor="middle" fontSize="8" fill="var(--color-accent)">F( LN(x) )</text>
+    <line x1="245" y1="116" x2="245" y2="150" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <line x1="195" y1="150" x2="231" y2="150" stroke="var(--color-success)" strokeWidth="2.5"/>
+    {/* add */}
+    <circle cx="245" cy="150" r="10" fill="var(--color-surface-2)" stroke="var(--color-success)" strokeWidth="1.5"/>
+    <text x="245" y="155" textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-success)">+</text>
+    <line x1="245" y1="160" x2="245" y2="174" stroke="var(--color-border)" strokeWidth="1.5"/>
+    <rect x="205" y="174" width="80" height="20" rx="4" fill="var(--color-surface-2)" stroke="var(--color-border)" strokeWidth="1"/>
+    <text x="245" y="188" textAnchor="middle" fontSize="8" fill="var(--color-text-secondary)">Output</text>
+  </svg>
+</DiagramContainer>
+
+In Post-LN, every gradient traveling backward through the residual highway must pass through LayerNorm after the merge point.
+
+In Pre-LN, the residual addition happens **after** the transformation. The identity path `x` flows directly to the addition node — clean and unmodified. The gradient traveling back through the identity path does not encounter LayerNorm at all.
+
+---
+
+# Why Did Researchers Move Toward Pre-LN?
+
+As Transformers grew deeper, the training dynamics of Post-LN became more fragile. Models required:
+
+- careful learning rate warm-up schedules
+- more conservative hyperparameter tuning
+- greater sensitivity to initialization
+
+Pre-LN models were observed to be more stable during early training, tolerate higher learning rates, and require less careful warm-up. For very deep models — GPT-2 (48 layers), GPT-3 (96 layers) — this stability difference became meaningful in practice.
+
+<Tip title="Pre-LN Is the Practical Choice for Deep Models">
+Pre-LN does not theoretically prevent all training instability. It reduces the sensitivity of gradient flow in very deep stacks, making the training process more robust. For models with tens to hundreds of layers, this matters significantly.
+</Tip>
+
+---
+
+# One Important Connection
+
+Compare the equations from the last two lessons:
+
+<TokenMapping
+  title="Two Stabilizing Mechanisms Side by Side"
+  fromLabel="Mechanism"
+  toLabel="Equation"
+  items={[
+    { from: "Residual connection",  to: "y = x + F(x)"                        },
+    { from: "LayerNorm (affine)",   to: "y = γ · norm(x) + β"                 },
+    { from: "Pre-LN sublayer",      to: "y = x + F(LayerNorm(x))"             },
+  ]}
+/>
+
+They look structurally similar — both involve an identity term and a transformation term. But they solve completely different problems.
+
+---
+
+# LayerNorm + Residual = Two Different Jobs
+
+<Comparison
+  title="What Each Mechanism Does"
+  left={{
+    label: "Residual Connection",
+    accent: "var(--color-accent)",
+    points: [
+      "Adds x to F(x)",
+      "Creates an identity path for information",
+      "Prevents gradient vanishing backward",
+      "Ensures original representation is not overwritten",
+    ]
+  }}
+  right={{
+    label: "Layer Normalization",
+    accent: "var(--color-success)",
+    points: [
+      "Normalizes the hidden representation",
+      "Controls activation scale",
+      "Makes downstream computation stable",
+      "γ and β restore representational flexibility",
+    ]
+  }}
+/>
+
+Neither mechanism replaces the other. In a complete Transformer block, both are present and both are necessary.
+
+---
+
+# A Deeper Insight
+
+Think about what the Transformer block is actually learning to do.
+
+With residual connections, the block does not replace its input — it **adds an update** to it:
+
+$$\text{output} = \underbrace{x}_{\text{original}} + \underbrace{F(\operatorname{LayerNorm}(x))}_{\text{learned update}}$$
+
+The model is not saying "here is a completely new representation." It is saying "here is the original representation, refined by what I learned to add to it."
+
+LayerNorm ensures that the input to F is always stably scaled before computing the update. The residual ensures the original information survives alongside the update.
+
+<KeyInsight title="The Block as a Refinement Machine">
+Every Transformer block learns an update to the current representation — not a replacement. The residual connection preserves what was already known. LayerNorm ensures the update is computed from a stable, well-scaled input. Together they make each block an incremental refinement rather than a destructive transformation.
+</KeyInsight>
+
+---
+
+# What Actually Happens to a Token?
+
+Let's trace a single token through one complete Pre-LN Transformer block:
+
+<FlowDiagram title="One Token Through One Pre-LN Block" steps={[
+  "Token enters as x  (e.g. 768-dim vector)",
+  "LayerNorm₁(x) → stable-scale copy for Attention",
+  "Multi-Head Attention computes F₁(LayerNorm₁(x))",
+  "Residual:  x₁ = x + F₁(LayerNorm₁(x))",
+  "LayerNorm₂(x₁) → stable-scale copy for FFN",
+  "Feed Forward Network computes F₂(LayerNorm₂(x₁))",
+  "Residual:  x₂ = x₁ + F₂(LayerNorm₂(x₁))",
+  "x₂ exits the block → enters the next block"
+]} />
+
+Every block contains **two** LayerNorms — one before Attention, one before the FFN. Each adds 2 × 768 = 1,536 learnable parameters. For GPT-3 with 96 blocks, that is 96 × 2 × 1,536 ≈ **295,000 LayerNorm parameters** out of ~175 billion total — a small but important set.
+
+---
+
+# The Complete Picture
+
+<FlowDiagram title="LayerNorm — What Each Part Contributes" steps={[
+  "Input x  (may have drifted to extreme scale)",
+  "Normalize → mean=0, var=1  (stability)",
+  "× γ  (learned scale — model chooses spread)",
+  "+ β  (learned shift — model chooses center)",
+  "Output y  (stable AND representationally flexible)"
+]} />
+
+---
+
+# One More Important Realization
+
+LayerNorm is **differentiable**. Gradients flow through it during backpropagation. It does not break the backward pass — it is simply another differentiable function in the computation graph, like the linear layers or the activation functions.
+
+This means the gradient of the loss can flow backward through LayerNorm and update γ and β, just as it updates weight matrices elsewhere. LayerNorm participates fully in the learning process.
+
+What LayerNorm does **not** do is completely eliminate the possibility of unstable training. It improves numerical stability and makes optimization more tractable. Combined with residual connections, careful initialization, and the right optimizer, it supports the training of networks that would otherwise be practically impossible to train.
+
+---
+
+# Key Takeaways
+
+- Activations in deep Transformers can drift to extreme scales through accumulated residual additions.
+- LayerNorm normalizes each token's representation **across its own hidden dimensions** — independently of other tokens and the batch.
+- Normalization brings the representation to approximately mean = 0 and variance = 1.
+- The core formula is: x̂ = (x − μ) / √(σ² + ε)
+- Normalization alone is too rigid — it forces a fixed scale and center regardless of what the model has learned to prefer.
+- Learnable γ and β (scale and shift vectors) restore representational flexibility after normalization.
+- γ and β are vectors of size d — each hidden dimension gets its own independent pair of parameters.
+- The final LayerNorm output does NOT necessarily have mean = 0 or variance = 1.
+- γ and β start at 1 and 0 respectively, then evolve through gradient descent during training.
+- Post-LN (original Transformer) places LayerNorm after the residual addition: `y = LN(x + F(x))`.
+- Pre-LN (modern GPT) places LayerNorm before the sublayer: `y = x + F(LN(x))`.
+- Pre-LN provides a cleaner gradient path through the residual highway, supporting more reliable training of very deep models.
+- Residual connections and LayerNorm solve different problems and are both necessary in a complete Transformer block.
+
+---
+
+## Questions That Changed My Understanding
+
+**Q: Does LayerNorm normalize across tokens or within a token?**
+
+Within a single token — across its hidden dimensions. Each token is normalized independently. LayerNorm has no knowledge of other tokens in the sequence or other examples in the batch.
+
+**Q: If normalization removes scale information, doesn't the model lose something?**
+
+The absolute scale is removed, but the relative structure — which dimensions are high or low relative to each other — is preserved. The model encodes meaning in the shape of the representation. For the computations that follow (Attention, FFN), relative structure is what matters. Absolute magnitude would just be noise from accumulated additions.
+
+**Q: Why do γ and β need to be per-dimension? Why not just one γ and one β?**
+
+Different hidden dimensions encode qualitatively different kinds of information. The model may need dimension 42 at a different scale than dimension 317. A single global γ would force all dimensions to the same spread, which is almost as rigid as pure normalization. Per-dimension parameters give the model the granularity it needs.
+
+**Q: Pre-LN keeps the residual path clean — but doesn't that mean the input to F(x) is always normalized, even when that's not ideal?**
+
+Yes — in Pre-LN, every sublayer always receives a normalized input. This is a deliberate trade: you give up the ability to pass non-normalized signal into F(x) in exchange for cleaner gradient flow through the identity path. In practice, the γ and β parameters inside LayerNorm give the model enough flexibility to compensate, and the training stability benefits outweigh the constraint.
+
+**Q: Is LayerNorm the only way to normalize? What about BatchNorm?**
+
+BatchNorm normalizes across the batch dimension — it uses statistics computed over multiple training examples. This works well in computer vision where batch sizes are large and inputs are images. For language, batches have variable lengths and the sequence position matters — per-example normalization (LayerNorm) is a much better fit. LayerNorm became the standard for Transformers precisely because it does not depend on batch statistics.
+
+---
+
+## What's Next?
+
+We now have all the pieces:
+
+- **Embeddings** — tokens become vectors
+- **Positional Encoding** — vectors know their position
+- **Multi-Head Attention** — tokens gather context from each other
+- **Feed-Forward Network** — each token processes its representation independently
+- **Residual Connections** — information and gradient highway
+- **Layer Normalization** — stable scale at every sublayer
+
+In the next lesson, we put all of these together and see the **complete Transformer Block** — understanding exactly how these components are arranged and why the specific design works so well for language.
