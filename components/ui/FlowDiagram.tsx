@@ -54,7 +54,7 @@ export default function FlowDiagram({ steps, title, accent }: FlowDiagramProps) 
         minWidth: '100%',
         gap: 0,
       }}>
-        {steps.map((step, i) => (
+        {(steps ?? []).map((step, i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
             {/* Step box */}
             <div style={{

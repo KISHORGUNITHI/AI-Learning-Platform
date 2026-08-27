@@ -85,6 +85,7 @@ export default async function ArticlePage({
               source={content}
               components={mdxComponents}
               options={{
+                blockJS: false,
                 mdxOptions: {
                   remarkPlugins: [remarkMath],
                   rehypePlugins: [rehypeKatex],

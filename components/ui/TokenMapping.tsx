@@ -74,7 +74,7 @@ export default function TokenMapping({
 
       {/* Rows */}
       <div style={{ padding: '0.5rem 0' }}>
-        {items.map((item, i) => (
+        {(items ?? []).map((item, i) => (
           <div key={i} style={{
             display: 'flex',
             alignItems: 'center',

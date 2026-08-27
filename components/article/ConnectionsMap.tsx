@@ -30,7 +30,7 @@ export default function ConnectionsMap({ connections, className }: ConnectionsMa
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         {connections.map((conn, i) => {
-          const style = TYPE_STYLES[conn.type];
+          const style = TYPE_STYLES[conn.type] ?? TYPE_STYLES.current;
           const isCurrent = conn.type === 'current';
 
           const card = (

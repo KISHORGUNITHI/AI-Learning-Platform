@@ -32,8 +32,8 @@ interface ComparisonSide {
 }
 
 interface ComparisonProps {
-  left: ComparisonSide;
-  right: ComparisonSide;
+  left?: ComparisonSide;
+  right?: ComparisonSide;
   title?: string;
 }
 
@@ -43,49 +43,52 @@ const ICONS = {
 };
 
 export default function Comparison({ left, right, title }: ComparisonProps) {
-  const leftAccent  = left.accent  ?? 'var(--color-error)';
-  const rightAccent = right.accent ?? 'var(--color-success)';
+  const leftAccent  = left?.accent  ?? 'var(--color-error)';
+  const rightAccent = right?.accent ?? 'var(--color-success)';
 
-  const Card = ({ side, accent, icon }: { side: ComparisonSide; accent: string; icon: string }) => (
-    <div style={{
-      flex: 1,
-      padding: '1.25rem 1.375rem',
-      background: 'var(--color-surface-2)',
-      borderRadius: 'var(--radius-lg)',
-      border: `1px solid ${accent}33`,
-    }}>
-      {/* Label */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: '1.25rem', height: '1.25rem', borderRadius: '50%',
-          fontSize: '0.65rem', fontWeight: 700,
-          background: `${accent}22`,
-          color: accent,
-          flexShrink: 0,
-        }}>
-          {icon}
-        </span>
-        <span style={{ fontWeight: 700, fontSize: '0.875rem', color: accent }}>
-          {side.label}
-        </span>
-      </div>
-
-      {/* Points */}
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-        {side.points.map((pt, i) => (
-          <li key={i} style={{
-            display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
-            fontSize: '0.875rem', lineHeight: 1.6,
-            color: 'var(--color-text-secondary)',
+  const Card = ({ side, accent, icon }: { side?: ComparisonSide; accent: string; icon: string }) => {
+    if (!side) return null;
+    return (
+      <div style={{
+        flex: 1,
+        padding: '1.25rem 1.375rem',
+        background: 'var(--color-surface-2)',
+        borderRadius: 'var(--radius-lg)',
+        border: `1px solid ${accent}33`,
+      }}>
+        {/* Label */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: '1.25rem', height: '1.25rem', borderRadius: '50%',
+            fontSize: '0.65rem', fontWeight: 700,
+            background: `${accent}22`,
+            color: accent,
+            flexShrink: 0,
           }}>
-            <span style={{ color: accent, flexShrink: 0, marginTop: '0.1rem', fontSize: '0.75rem' }}>—</span>
-            {pt}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+            {icon}
+          </span>
+          <span style={{ fontWeight: 700, fontSize: '0.875rem', color: accent }}>
+            {side.label}
+          </span>
+        </div>
+
+        {/* Points */}
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+          {(side.points ?? []).map((pt, i) => (
+            <li key={i} style={{
+              display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+              fontSize: '0.875rem', lineHeight: 1.6,
+              color: 'var(--color-text-secondary)',
+            }}>
+              <span style={{ color: accent, flexShrink: 0, marginTop: '0.1rem', fontSize: '0.75rem' }}>—</span>
+              {pt}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
 
   return (
     <figure style={{ margin: '2rem 0' }} aria-label={title ?? 'Comparison'}>
@@ -107,8 +110,8 @@ export default function Comparison({ left, right, title }: ComparisonProps) {
         gap: '0.75rem',
         flexWrap: 'wrap',
       }}>
-        <Card side={left}  accent={leftAccent}  icon={ICONS.left}  />
-        <Card side={right} accent={rightAccent} icon={ICONS.right} />
+        {left && <Card side={left}  accent={leftAccent}  icon={ICONS.left}  />}
+        {right && <Card side={right} accent={rightAccent} icon={ICONS.right} />}
       </div>
     </figure>
   );
