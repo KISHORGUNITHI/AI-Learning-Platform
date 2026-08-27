@@ -408,6 +408,17 @@
         "estimatedReadingTime": "18 min",
         "estimatedStudyTime": "40 min",
         "tags": ["Residual Connections", "Skip Connections", "Vanishing Gradients", "Gradient Flow", "Transformer"]
+      },
+      {
+        "number": 26,
+        "title": "Layer Normalization — Stabilizing Every Transformer Layer",
+        "slug": "module-2/day-26-layer-normalization",
+        "description": "Understand why Transformer activations become unstable, how Layer Normalization stabilizes them, why learnable γ and β are needed, and why modern GPT-style models use Pre-LayerNorm.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "25 min",
+        "estimatedStudyTime": "50 min",
+        "tags": ["Layer Normalization", "LayerNorm", "Pre-LN", "Post-LN", "Gamma", "Beta", "Transformer", "Training Stability", "LLM Internals"]
       }
     ]
   },
