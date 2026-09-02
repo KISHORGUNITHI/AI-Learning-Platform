@@ -419,6 +419,17 @@
         "estimatedReadingTime": "25 min",
         "estimatedStudyTime": "50 min",
         "tags": ["Layer Normalization", "LayerNorm", "Pre-LN", "Post-LN", "Gamma", "Beta", "Transformer", "Training Stability", "LLM Internals"]
+      },
+      {
+        "number": 27,
+        "title": "Causal Masking — How GPT Prevents Itself From Cheating",
+        "slug": "module-2/day-27-causal-masking",
+        "description": "Understand how causal masking prevents GPT from looking at future tokens during autoregressive training and connects training to generation.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": ["Causal Masking", "Causal Attention", "Decoder Masking", "Attention Mask", "Softmax", "Autoregressive Generation", "Transformer", "GPT"]
       }
     ]
   },

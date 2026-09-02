@@ -38,6 +38,8 @@ import ParallelHeadsVisualizer from '@/components/ui/ParallelHeadsVisualizer';
 import ConcatenationVisualizer from '@/components/ui/ConcatenationVisualizer';
 import FFNPipelineVisualizer from '@/components/ui/FFNPipelineVisualizer';
 import FFNNeuronVisualizer from '@/components/ui/FFNNeuronVisualizer';
+import CausalMaskVisualizer from '@/components/ui/CausalMaskVisualizer';
+import AttentionMatrix from '@/components/ui/AttentionMatrix';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -65,6 +67,8 @@ export {
   ConcatenationVisualizer,
   FFNPipelineVisualizer,
   FFNNeuronVisualizer,
+  CausalMaskVisualizer,
+  AttentionMatrix,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -288,4 +292,6 @@ export const mdxComponents = {
   ConcatenationVisualizer,
   FFNPipelineVisualizer,
   FFNNeuronVisualizer,
+  CausalMaskVisualizer,
+  AttentionMatrix,
 };

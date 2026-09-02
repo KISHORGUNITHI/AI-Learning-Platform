@@ -12,3 +12,6 @@ export { default as TokenMapping } from './TokenMapping';
 export { default as Comparison } from './Comparison';
 export { default as MathBlock } from './MathBlock';
 export { default as FunctionPlot } from './FunctionPlot';
+export { default as CausalMaskVisualizer } from './CausalMaskVisualizer';
+export { default as AttentionMatrix } from './AttentionMatrix';
+
