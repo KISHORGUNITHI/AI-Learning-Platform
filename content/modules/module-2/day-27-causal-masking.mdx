@@ -93,8 +93,20 @@ In standard bidirectional self-attention (such as in BERT or an encoder block), 
   ]}
 />
 
+<AttentionMatrix
+  title="Full Bidirectional Attention Grid"
+  queryLabel="Query Token"
+  keyLabel="Key Token"
+  columns={["I", "love", "AI"]}
+  rows={[
+    { label: "I",    values: ["✓", "✓", "✓"] },
+    { label: "love", values: ["✓", "✓", "✓"] },
+    { label: "AI",   values: ["✓", "✓", "✓"] },
+  ]}
+  caption="Without masking, every token attends to all positions — allowing future target tokens to leak directly into current predictions."
+/>
 
-Notice the critical flaw: when the model computes the representation for `"I"` to predict `"love"`, and `"AI"` are already present in its attention window.
+Notice the critical flaw: when the model computes the representation for `"I"` to predict `"love"`, `"love"` and `"AI"` are already present in its attention window.
 
 <Comparison
   title="Full Bidirectional Attention vs Next-Token Training"
@@ -155,6 +167,19 @@ Masking does not discard tokens — it blocks attention pathways.
 # The Causal Rule
 
 For the sequence `["I", "love", "AI"]`, the valid attention pattern is strictly lower-triangular:
+
+<AttentionMatrix
+  title="Causal (Lower-Triangular) Attention Grid"
+  queryLabel="Query Token"
+  keyLabel="Key Token"
+  columns={["I (pos 1)", "love (pos 2)", "AI (pos 3)"]}
+  rows={[
+    { label: "I (pos 1)",    values: ["✓", "✗", "✗"] },
+    { label: "love (pos 2)", values: ["✓", "✓", "✗"] },
+    { label: "AI (pos 3)",   values: ["✓", "✓", "✓"] },
+  ]}
+  caption="Lower-triangular causal rule: a token attends only to itself and preceding tokens (j ≤ i). Future positions (j > i) are blocked (✗)."
+/>
 
 Let's examine each row:
 
@@ -286,27 +311,48 @@ Let's examine the full $3 \times 3$ score matrix before and after causal masking
 
 ### 1. Raw Scaled Scores ($QK^T / \sqrt{d_k}$)
 
-| Query \ Key | I | love | AI |
-| :--- | :---: | :---: | :---: |
-| **I** | 2.0 | 5.0 | 4.0 |
-| **love** | 1.0 | 3.0 | 4.5 |
-| **AI** | 2.0 | 4.0 | 8.0 |
+<AttentionMatrix
+  title="1. Raw Scaled Attention Scores (QKᵀ / √dₖ)"
+  queryLabel="Query (i)"
+  keyLabel="Key (j)"
+  columns={["I", "love", "AI"]}
+  rows={[
+    { label: "I",    values: [2.0, 5.0, 4.0] },
+    { label: "love", values: [1.0, 3.0, 4.5] },
+    { label: "AI",   values: [2.0, 4.0, 8.0] },
+  ]}
+  caption="Raw attention dot products scaled by √dₖ before any masking is applied."
+/>
 
 ### 2. After Applying Causal Mask ($+ M$)
 
-| Query \ Key | I | love | AI |
-| :--- | :---: | :---: | :---: |
-| **I** | 2.0 | **$-\infty$** | **$-\infty$** |
-| **love** | 1.0 | 3.0 | **$-\infty$** |
-| **AI** | 2.0 | 4.0 | 8.0 |
+<AttentionMatrix
+  title="2. Masked Attention Scores (After Causal Mask + M)"
+  queryLabel="Query (i)"
+  keyLabel="Key (j)"
+  columns={["I", "love", "AI"]}
+  rows={[
+    { label: "I",    values: [2.0, "-∞", "-∞"] },
+    { label: "love", values: [1.0, 3.0, "-∞"] },
+    { label: "AI",   values: [2.0, 4.0, 8.0] },
+  ]}
+  caption="Future positions (j > i) are replaced with -∞, creating the lower-triangular causal barrier."
+/>
 
 ### 3. After Softmax (Attention Weights Matrix)
 
-| Query \ Key | I | love | AI | Row Sum |
-| :--- | :---: | :---: | :---: | :---: |
-| **I** | 1.00 (100%) | 0.00 (0%) | 0.00 (0%) | **1.00** |
-| **love** | 0.12 (12%) | 0.88 (88%) | 0.00 (0%) | **1.00** |
-| **AI** | 0.00 (0%) | 0.02 (2%) | 0.98 (98%) | **1.00** |
+<AttentionMatrix
+  title="3. Attention Weight Matrix (After Softmax)"
+  queryLabel="Query (i)"
+  keyLabel="Key (j)"
+  columns={["I", "love", "AI", "Row Sum"]}
+  rows={[
+    { label: "I",    values: ["1.00 (100%)", "0.00 (0%)", "0.00 (0%)", "1.00"] },
+    { label: "love", values: ["0.12 (12%)", "0.88 (88%)", "0.00 (0%)", "1.00"] },
+    { label: "AI",   values: ["0.00 (0%)", "0.02 (2%)", "0.98 (98%)", "1.00"] },
+  ]}
+  caption="Softmax maps -∞ to 0.00 (0% probability). Every row sums to exactly 1.00."
+/>
 
 - **First row (`"I"`):** Can only attend to token 1. Gets 100% attention on `"I"`.
 - **Second row (`"love"`):** Can attend to `"I"` and `"love"`. Distributes attention between them; `"AI"` gets 0%.
