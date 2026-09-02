@@ -1,0 +1,611 @@
+---
+title: "Day 27: Causal Masking — How GPT Prevents Itself From Cheating"
+description: "Understand how causal masking prevents GPT from looking at future tokens during autoregressive training and connects training to generation."
+slug: "module-2/day-27-causal-masking"
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Causal Masking
+  - Causal Attention
+  - Decoder Masking
+  - Attention Mask
+  - Softmax
+  - Autoregressive Generation
+  - Transformer
+  - GPT
+learningObjectives:
+  - Understand why GPT cannot look at future tokens while predicting the next token.
+  - Understand how causal masking restricts attention.
+  - Understand why future positions receive -∞ before Softmax.
+  - Understand why masked positions receive zero attention probability.
+  - Understand the difference between training and inference.
+  - Understand how causal masking enables autoregressive generation.
+prerequisites:
+  - topic: "Layer Normalization"
+    slug: "module-2/day-26-layer-normalization"
+previous:
+  title: "Layer Normalization"
+  slug: "module-2/day-26-layer-normalization"
+---
+
+> *"GPT can see the whole training sequence — but causal masking makes every position behave as if the future does not exist."*
+
+---
+
+# Causal Masking — How GPT Prevents Itself From Cheating
+
+## Learning Goals
+
+By the end of this lesson, the learner should understand:
+
+- Why future information must be hidden during autoregressive training.
+- What causal masking actually does to the attention matrix.
+- Exactly where masking occurs in the self-attention pipeline.
+- Why $-\infty$ is used as the masking value.
+- How Softmax converts masked positions into zero attention probability.
+- Why training and inference behave differently despite sharing the same architecture.
+
+---
+
+# The Problem
+
+GPT is trained using a simple objective: **Next-Token Prediction**.
+
+Given a sequence of tokens, the model's job is to predict what word comes next at every single step.
+
+Consider the training sentence:
+
+```text
+I → love → AI
+```
+
+During training, this sentence creates two distinct prediction tasks:
+
+<FlowDiagram title="Next-Token Prediction Tasks" steps={[
+  "Given: [ I ] → Predict: love",
+  "Given: [ I, love ] → Predict: AI"
+]} />
+
+Now ask the central question:
+
+> **If the complete sentence `"I love AI"` is fed into the Transformer all at once during training, what stops GPT from simply looking ahead at the answer?**
+
+In ordinary self-attention, every token compares itself to every other token in the sequence. If token 1 (`"I"`) is allowed to compute attention with token 2 (`"love"`) and token 3 (`"AI"`), it can trivially read the future target tokens from the input embeddings.
+
+This is known as **future-token information leakage**. If the model can look ahead, training collapses: the network simply copies the next token rather than learning real semantic and syntactic relationships.
+
+---
+
+# What Would Happen Without Masking?
+
+In standard bidirectional self-attention (such as in BERT or an encoder block), attention is unconstrained. Every token attends freely to all positions:
+
+<TokenMapping
+  title="Unmasked Attention Connections (Bidirectional)"
+  fromLabel="Token Position"
+  toLabel="Can Attend To"
+  items={[
+    { from: "Token 1: \"I\"",    to: "I ✓  |  love ✓  |  AI ✓  (Leaks future!)" },
+    { from: "Token 2: \"love\"", to: "I ✓  |  love ✓  |  AI ✓  (Leaks future!)" },
+    { from: "Token 3: \"AI\"",   to: "I ✓  |  love ✓  |  AI ✓  (Allowed)"        },
+  ]}
+/>
+
+
+Notice the critical flaw: when the model computes the representation for `"I"` to predict `"love"`, and `"AI"` are already present in its attention window.
+
+<Comparison
+  title="Full Bidirectional Attention vs Next-Token Training"
+  left={{
+    label: "Without Masking (Cheating ✗)",
+    points: [
+      "Token 1 attends to Tokens 2 and 3",
+      "Model reads the ground truth answer directly",
+      "No actual language modeling learned",
+      "Fails completely during real-world inference",
+    ]
+  }}
+  right={{
+    label: "What GPT Requires (Causal Constraint ✓)",
+    points: [
+      "Token 1 must only see Token 1",
+      "Token 2 must only see Tokens 1 and 2",
+      "Future tokens must remain invisible",
+      "Matches the conditions of autoregressive generation",
+    ]
+  }}
+/>
+
+---
+
+# The Key Insight
+
+To train GPT on complete sequences while enforcing strict next-token prediction, we must enforce a fundamental rule:
+
+> **A token may attend to itself and previous tokens, but it cannot attend to future tokens.**
+
+It is essential to clarify what this operation actually does:
+
+<Comparison
+  title="What Masking Is vs What It Is Not"
+  left={{
+    label: "Misconception ✗",
+    points: [
+      "Masking deletes tokens from the sequence",
+      "Future tokens are removed from memory",
+      "The input sequence is split into separate sub-arrays",
+    ]
+  }}
+  right={{
+    label: "Reality ✓",
+    points: [
+      "Future tokens remain in the sequence",
+      "Only attention connections to future tokens are blocked",
+      "All tokens are processed simultaneously in one matrix",
+    ]
+  }}
+/>
+
+Masking does not discard tokens — it blocks attention pathways.
+
+---
+
+# The Causal Rule
+
+For the sequence `["I", "love", "AI"]`, the valid attention pattern is strictly lower-triangular:
+
+Let's examine each row:
+
+1. **Row 1 (`"I"`):** Position 1 can only attend to position 1 (`"I"`). Positions 2 and 3 are in the future, so connections to `"love"` and `"AI"` are blocked ($\boldsymbol{\times}$).
+2. **Row 2 (`"love"`):** Position 2 can attend to position 1 (`"I"`) and position 2 (`"love"`). Position 3 is in the future, so `"AI"` is blocked ($\boldsymbol{\times}$).
+3. **Row 3 (`"AI"`):** Position 3 can attend to positions 1, 2, and 3. All tokens up to position 3 are in the past or present, so all connections are allowed ($\checkmark$).
+
+Because valid connections form the main diagonal and all entries below it, this is known as a **lower-triangular attention mask**.
+
+---
+
+# Why Is It Called Causal?
+
+In physics and signal processing, a system is **causal** if its output depends solely on current and past inputs, never on future inputs.
+
+```text
+Past ─────────────────────────► Present
+                                  │
+                                  ▼
+                              Prediction
+```
+
+Future information cannot flow backward in time into the current prediction. Because language generation flows chronologically from left to right, autoregressive Transformers use **causal attention** (also referred to as *decoder masking* or *autoregressive masking*).
+
+---
+
+# Interactive Causal Mask Visualizer
+
+Explore how the attention matrix transforms across each stage of computation:
+
+<CausalMaskVisualizer />
+
+---
+
+# How Is the Mask Actually Applied?
+
+Let's trace exactly where causal masking fits inside the Self-Attention pipeline:
+
+<FlowDiagram title="Masked Self-Attention Pipeline" steps={[
+  "1. QKᵀ / √dₖ",
+  "2. Scaled Attention Scores  (e.g., [2, 5, 4])",
+  "3. Causal Mask Applied  (Future scores replaced with -∞)",
+  "4. Masked Scores  (e.g., [2, -∞, -∞])",
+  "5. Softmax  (Probabilities: e^(-∞) → 0)",
+  "6. Attention Weights  (e.g., [1.0, 0.0, 0.0])",
+  "7. Attention Weights × V → Contextual Representation"
+]} />
+
+> **Key Architectural Rule:**
+> The causal mask is applied **AFTER** attention scores are calculated ($QK^T / \sqrt{d_k}$) and **BEFORE** Softmax is applied.
+
+---
+
+# Attention Scores Are Not Probabilities
+
+Recall that computing:
+
+$$\text{Scores} = \frac{QK^T}{\sqrt{d_k}}$$
+
+produces raw, unnormalized scalar values. They can be positive, negative, or zero, and they do not sum to 1.
+
+Softmax is the mathematical function responsible for converting these arbitrary scores into a valid probability distribution. Therefore, to ensure that a future token receives **zero attention probability**, we must modify its raw score before Softmax runs.
+
+---
+
+# How Do We Block a Future Token?
+
+Suppose the first token (`"I"`) computes raw attention scores against all three tokens:
+
+```text
+Before Masking:  [ 2.0,  5.0,  4.0 ]
+                   ↑     ↑     ↑
+                   I    love   AI
+```
+
+If we pass `[2.0, 5.0, 4.0]` directly to Softmax, token 2 (`"love"`) will receive the largest attention weight.
+
+To block attention to `"love"` and `"AI"`, we overwrite their scores with $-\infty$:
+
+```text
+After Masking:   [ 2.0,  -∞,   -∞ ]
+                   ↑     ↑     ↑
+                   I    love   AI
+```
+
+The future tokens are not deleted from the sequence. Their attention scores are mathematically altered so that Softmax guarantees them zero weight.
+
+---
+
+# Why $-\infty$?
+
+Recall the definition of the Softmax function for position $i$:
+
+<MathBlock title="The Softmax Function">
+  $$\operatorname{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j} e^{x_j}}$$
+</MathBlock>
+
+When an input value approaches negative infinity:
+
+$$e^{-\infty} = \lim_{x \to -\infty} e^x = 0$$
+
+Let's evaluate Softmax on `[2.0, -∞, -∞]`:
+
+1. Exponentiate each element:
+   - $e^{2.0} \approx 7.389$
+   - $e^{-\infty} = 0$
+   - $e^{-\infty} = 0$
+2. Sum the exponentials:
+   $$\Sigma = 7.389 + 0 + 0 = 7.389$$
+3. Normalize each element:
+   - $\text{Position 1: } \frac{7.389}{7.389} = 1.0 \quad (100\%)$
+   - $\text{Position 2: } \frac{0}{7.389} = 0.0 \quad (0\%)$
+   - $\text{Position 3: } \frac{0}{7.389} = 0.0 \quad (0\%)$
+
+<FlowDiagram title="The -∞ to Zero Probability Mechanism" steps={[
+  "Future Position (j > i)",
+  "Attention Score replaced with -∞",
+  "Softmax Exponentiation: e^(-∞) → 0",
+  "Normalized Attention Weight = 0.00 (0% probability)"
+]} />
+
+Using $-\infty$ guarantees that masked positions receive exactly zero attention, while allowed positions share 100% of the attention mass naturally.
+
+---
+
+# The Complete Causal Attention Matrix
+
+Let's examine the full $3 \times 3$ score matrix before and after causal masking for `"I love AI"`:
+
+### 1. Raw Scaled Scores ($QK^T / \sqrt{d_k}$)
+
+| Query \ Key | I | love | AI |
+| :--- | :---: | :---: | :---: |
+| **I** | 2.0 | 5.0 | 4.0 |
+| **love** | 1.0 | 3.0 | 4.5 |
+| **AI** | 2.0 | 4.0 | 8.0 |
+
+### 2. After Applying Causal Mask ($+ M$)
+
+| Query \ Key | I | love | AI |
+| :--- | :---: | :---: | :---: |
+| **I** | 2.0 | **$-\infty$** | **$-\infty$** |
+| **love** | 1.0 | 3.0 | **$-\infty$** |
+| **AI** | 2.0 | 4.0 | 8.0 |
+
+### 3. After Softmax (Attention Weights Matrix)
+
+| Query \ Key | I | love | AI | Row Sum |
+| :--- | :---: | :---: | :---: | :---: |
+| **I** | 1.00 (100%) | 0.00 (0%) | 0.00 (0%) | **1.00** |
+| **love** | 0.12 (12%) | 0.88 (88%) | 0.00 (0%) | **1.00** |
+| **AI** | 0.00 (0%) | 0.02 (2%) | 0.98 (98%) | **1.00** |
+
+- **First row (`"I"`):** Can only attend to token 1. Gets 100% attention on `"I"`.
+- **Second row (`"love"`):** Can attend to `"I"` and `"love"`. Distributes attention between them; `"AI"` gets 0%.
+- **Third row (`"AI"`):** Can attend to all three tokens. Distributes attention across all available context.
+
+---
+
+# Mathematics
+
+Formally, given an attention score matrix $S \in \mathbb{R}^{n \times n}$ where $S = \frac{QK^T}{\sqrt{d_k}}$:
+
+<MathBlock title="Causal Attention Score Masking">
+  $$S_{ij}^{\text{masked}} = \begin{cases} S_{ij}, & j \leq i \\ -\infty, & j > i \end{cases}$$
+</MathBlock>
+
+where:
+- $i$ is the index of the query token (the current position making the prediction),
+- $j$ is the index of the key token (the position being attended to),
+- $j > i$ denotes any token located in the future relative to position $i$.
+
+In vectorized implementation, this is expressed as adding a mask matrix $M$:
+
+<MathBlock title="Complete Masked Self-Attention">
+  $$\operatorname{Attention}(Q,K,V) = \operatorname{softmax}\left( \frac{QK^T}{\sqrt{d_k}} + M \right)V$$
+</MathBlock>
+
+where $M$ is an upper-triangular matrix:
+
+$$M_{ij} = \begin{cases} 0, & j \leq i \\ -\infty, & j > i \end{cases}$$
+
+In PyTorch, $-\infty$ is typically represented as `-torch.inf` or `-1e9` (a large negative float) to prevent numerical `NaN` issues.
+
+---
+
+# Worked Example — "I love AI"
+
+Let's step through the computation row by row for the sequence `["I", "love", "AI"]`:
+
+<TokenMapping
+  title="Causal Attention Visibility by Position"
+  fromLabel="Position"
+  toLabel="Allowed Attention Context"
+  items={[
+    { from: "Token 1: \"I\"",    to: "I: ✓  |  love: ✗  |  AI: ✗" },
+    { from: "Token 2: \"love\"", to: "I: ✓  |  love: ✓  |  AI: ✗" },
+    { from: "Token 3: \"AI\"",   to: "I: ✓  |  love: ✓  |  AI: ✓" },
+  ]}
+/>
+
+### Row 1: `"I"` (Position 1)
+- Masked Scores: `[2.0, -∞, -∞]`
+- Apply Softmax:
+  $$\operatorname{softmax}([2.0, -\infty, -\infty]) = [1.0, 0.0, 0.0]$$
+- Context Vector $Z_1 = 1.0 \cdot V_{\text{I}} + 0 \cdot V_{\text{love}} + 0 \cdot V_{\text{AI}} = V_{\text{I}}$
+
+### Row 2: `"love"` (Position 2)
+- Masked Scores: `[1.0, 3.0, -∞]`
+- Apply Softmax:
+  - $e^1 \approx 2.718$, $e^3 \approx 20.086$, $e^{-\infty} = 0$
+  - $\Sigma = 22.804$
+  - Weights: `[2.718 / 22.804, 20.086 / 22.804, 0] = [0.119, 0.881, 0.0]`
+- Future token `"AI"` receives exactly **zero** attention.
+
+### Row 3: `"AI"` (Position 3)
+- Masked Scores: `[2.0, 4.0, 8.0]`
+- No positions masked because position 3 has no future tokens in this sequence.
+- All tokens contribute according to their scaled dot-product relevance.
+
+---
+
+# What the Mask Actually Does
+
+<Comparison
+  title="The Crucial Distinction"
+  left={{
+    label: "Misconception ✗",
+    points: [
+      "Future tokens are deleted from memory",
+      "The sequence is chopped into smaller chunks",
+      "Softmax receives fewer inputs at earlier positions",
+    ]
+  }}
+  right={{
+    label: "Reality ✓",
+    points: [
+      "Future tokens remain fully intact in the sequence",
+      "The full N × N attention matrix is always computed",
+      "Scores for future positions are replaced with -∞",
+      "Softmax converts -∞ into 0 probability",
+    ]
+  }}
+/>
+
+---
+
+# Training vs Inference
+
+A common point of confusion is why causal masking is needed during training if generation happens one token at a time during inference.
+
+<Comparison
+  title="Training vs Inference Execution"
+  left={{
+    label: "During Training (Parallel with Mask)",
+    points: [
+      "The complete sequence is available upfront",
+      "All N token positions are processed simultaneously in parallel",
+      "Causal masking prevents future tokens from leaking into earlier positions",
+      "Model learns N prediction tasks in a single forward pass",
+    ]
+  }}
+  right={{
+    label: "During Inference (Sequential Generation)",
+    points: [
+      "Future tokens do not exist yet",
+      "The model predicts one new token at position t + 1",
+      "The new token is appended to the prompt",
+      "The process repeats autoregressively",
+    ]
+  }}
+/>
+
+### During Training
+
+Given the full sequence `"I love AI"`:
+- Position 1 (`"I"`) $\to$ predicts `"love"`
+- Position 2 (`"I love"`) $\to$ predicts `"AI"`
+
+Because GPUs excel at large matrix operations, we pass the entire sentence at once. Causal masking ensures that position 1 computes its loss without seeing `"love"`, and position 2 computes its loss without seeing `"AI"`, allowing **all positions to train in parallel**.
+
+### During Inference
+
+When generating text from a prompt:
+
+```text
+Prompt: "I"
+  ↓
+Model predicts: "love"
+  ↓
+Prompt becomes: "I love"
+  ↓
+Model predicts: "AI"
+  ↓
+Prompt becomes: "I love AI"
+  ↓
+Model predicts: "<EOS>" (End of Sequence)
+```
+
+At inference time, future tokens genuinely do not exist. Causal masking is maintained so that newly generated tokens only attend backward to the prompt and previously generated tokens.
+
+---
+
+# Why Generation Is Sequential
+
+<TokenMapping
+  title="Computation Mode Comparison"
+  fromLabel="Phase"
+  toLabel="Mechanism"
+  items={[
+    { from: "Training Phase",  to: "Parallel across all positions via Causal Mask" },
+    { from: "Inference Phase", to: "Sequential (Autoregressive) token-by-token generation" },
+  ]}
+/>
+
+Training is fast and parallel because the full text is known in advance and causal masking prevents cheating.
+
+Generation must be sequential because **token $t+1$ depends on the model's own output at token $t$**. You cannot predict token 50 before token 49 has been sampled.
+
+---
+
+# The Complete GPT Generation Pipeline
+
+Let's look at the entire end-to-end pathway from raw prompt text to generated output:
+
+<FlowDiagram title="From Prompt to Next Token" steps={[
+  "1. Raw Text",
+  "2. Tokenizer",
+  "3. Token IDs",
+  "4. Embeddings",
+  "5. Positional Information",
+  "6. Transformer Block",
+  "7. LayerNorm",
+  "8. Attention",
+  "9. Causal Mask",
+  "10. Residual",
+  "11. FFN",
+  "12. Hidden Representation",
+  "13. Output Projection",
+  "14. Logits",
+  "15. Softmax",
+  "16. Next Token",
+  "17. Repeat"
+]} />
+
+GPT repeats this complete cycle once for every token it produces.
+
+---
+
+# One Important Realization
+
+> **GPT can process the complete training sequence all at once, but causal masking makes every position behave as though the future does not exist.**
+
+This elegant mechanism bridges the gap between parallel GPU training and sequential text generation.
+
+---
+
+# Common Misconceptions
+
+<Comparison
+  title="Corrections to Common Misconceptions"
+  left={{
+    label: "False Belief ✗",
+    points: [
+      "Causal masking removes future tokens from the input",
+      "Attention scores are probabilities",
+      "-∞ means the model stores infinite numbers in memory",
+      "Causal masking is only needed during inference",
+      "GPT generates the whole sentence at once during inference",
+    ]
+  }}
+  right={{
+    label: "Technical Reality ✓",
+    points: [
+      "Tokens stay in memory; only attention weights to them become 0",
+      "Scores are unbounded numbers; Softmax creates probabilities",
+      "-∞ is a sentinel float (e.g. -1e9) that yields eˣ = 0 in Softmax",
+      "Masking is crucial during training to prevent answer leakage",
+      "Inference is autoregressive — each new token is generated one by one",
+    ]
+  }}
+/>
+
+---
+
+# Key Takeaways
+
+- **Causal masking prevents future-token information leakage** during autoregressive training.
+- A token can attend to itself and previous tokens, but **never to future tokens**.
+- Masking is applied **after attention scores are calculated ($QK^T / \sqrt{d_k}$) and before Softmax**.
+- Future positions in the attention score matrix are replaced with **$-\infty$**.
+- Softmax converts $-\infty$ into **exactly $0.00$ (0%) attention probability** because $e^{-\infty} = 0$.
+- Future tokens are **not deleted**; their attention connections are merely blocked.
+- The causal mask matrix has a distinctive **lower-triangular** structure.
+- **Training is parallel** across all positions because causal masking enforces step-by-step visibility simultaneously.
+- **Generation is sequential (autoregressive)** because each newly generated token depends on all previous tokens.
+
+---
+
+## Questions That Changed My Understanding
+
+**Q: If GPT sees the whole sentence during training, how does it avoid cheating?**
+
+GPT processes the full sentence through the Transformer simultaneously, but before attention weights are computed, a causal mask replaces all future attention scores with $-\infty$. Because Softmax maps $-\infty$ to zero probability, each token position is strictly prevented from gathering information from any subsequent token.
+
+**Q: Does causal masking remove future tokens?**
+
+No. All tokens remain in the sequence and are processed through the network. Masking only blocks the attention connections from earlier queries to future keys. The tokens themselves are never deleted.
+
+**Q: Why is masking applied before Softmax rather than after?**
+
+If you applied the mask after Softmax by setting future probabilities to 0, the remaining probabilities in each row would no longer sum to 1. By setting raw scores to $-\infty$ *before* Softmax, the Softmax denominator naturally normalizes over only the allowed past and present positions, guaranteeing a valid probability distribution that sums to 1.
+
+**Q: Why do we use $-\infty$ instead of 0 for masking?**
+
+If you set an attention score to 0, Softmax calculates $e^0 = 1$, which results in a positive, non-zero attention weight. To make the probability exactly zero, we need $e^x = 0$, which occurs when $x = -\infty$.
+
+**Q: Why does $-\infty$ become zero probability?**
+
+The Softmax formula computes $e^{x_i} / \sum e^{x_j}$. In the limit as $x_i \to -\infty$, the numerator $e^{x_i} \to 0$. Since the denominator remains positive (from the allowed positions), $0 / \text{positive} = 0$.
+
+**Q: Why is the mask triangular?**
+
+Because at position 1 you can see 1 token, at position 2 you can see 2 tokens, and at position $n$ you can see $n$ tokens. The number of visible tokens increases linearly with position, creating a diagonal boundary that forms a lower-triangular matrix.
+
+**Q: Why can training be parallel while generation is sequential?**
+
+During training, the ground truth sequence is known in advance. Causal masking allows every position to compute its prediction and loss at the same time without leaking future answers. During generation, future tokens do not yet exist, so each new token must be predicted and sampled before it can serve as context for the next token.
+
+**Q: Why is causal masking needed during training if future tokens don't exist during inference?**
+
+If we didn't mask during training, the model would learn to rely on future tokens to make its predictions. During inference, when future tokens are absent, the model's learned strategy would fail completely. Causal masking forces the model during training to operate under the exact same causal constraints it will face during inference.
+
+---
+
+## What's Next?
+
+We now understand how GPT prevents itself from looking into the future during training while processing entire sequences in parallel.
+
+If GPT can only use the information available up to the current position, how does it turn this mechanism into actual text generation, one token at a time?
+
+```text
+Prompt
+  ↓
+Predict next token
+  ↓
+Append token
+  ↓
+Predict next token
+  ↓
+Repeat...
+```
+
+In the next lesson, **Autoregressive Generation**, we will explore how GPT samples from its output probabilities, controls creativity via temperature and top-$p$, and generates coherent text step by step.
