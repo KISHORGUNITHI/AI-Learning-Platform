@@ -430,6 +430,23 @@
         "estimatedReadingTime": "20 min",
         "estimatedStudyTime": "45 min",
         "tags": ["Causal Masking", "Causal Attention", "Decoder Masking", "Attention Mask", "Softmax", "Autoregressive Generation", "Transformer", "GPT"]
+      },
+      {
+        "number": 28,
+        "title": "Why One Transformer Block Isn't Enough",
+        "slug": "module-2/day-28-transformer-depth",
+        "description": "Understand why GPT stacks many Transformer blocks, how hidden representations evolve layer by layer, and why deeper models build progressively richer representations.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "20 min",
+        "estimatedStudyTime": "45 min",
+        "tags": [
+          "Transformer Blocks",
+          "Hidden States",
+          "Representation Learning",
+          "Model Depth",
+          "GPT Architecture"
+        ]
       }
     ]
   },

@@ -1,0 +1,643 @@
+---
+title: "Day 28: Why One Transformer Block Isn't Enough"
+description: "Understand why GPT stacks many Transformer blocks, how hidden representations evolve layer by layer, and why deeper models build progressively richer representations."
+slug: "module-2/day-28-transformer-depth"
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "20 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Transformer Blocks
+  - Hidden States
+  - Representation Learning
+  - Model Depth
+  - GPT Architecture
+learningObjectives:
+  - Understand why GPT uses many Transformer blocks instead of one giant block.
+  - Understand what happens to a token representation as it moves through the stack.
+  - Understand what a hidden state represents inside a Transformer.
+  - Understand how representations evolve from early layers to late layers.
+  - Understand why stacking Transformer blocks increases representational depth.
+  - Understand why tensor shape can remain constant while its information becomes richer.
+prerequisites:
+  - topic: "Causal Masking"
+    slug: "module-2/day-27-causal-masking"
+previous:
+  title: "Causal Masking"
+  slug: "module-2/day-27-causal-masking"
+next:
+  title: "How LLMs Are Trained"
+  slug: "module-3/day-1-how-llms-are-trained"
+---
+
+> *"One Transformer block performs one stage of refinement. Stacking many blocks allows representations to become progressively richer."*
+
+---
+
+# Why One Transformer Block Isn't Enough
+
+## Learning Goals
+
+By the end of this lesson, you should be able to answer:
+
+- Why does GPT need many Transformer blocks?
+- What happens to a token representation as it moves upward through the stack?
+- What is a hidden state?
+- Why does each layer produce a better representation rather than creating a new token?
+- Why do different layers learn different kinds of information?
+- Why does stacking help the model build richer contextual representations?
+- Why can the tensor shape stay constant while the information inside it changes?
+
+---
+
+# The Question
+
+We already know what happens inside one individual Transformer block:
+
+<FlowDiagram
+  title="Inside One Transformer Block"
+  steps={[
+    "Input Tensor [S × D]",
+    "Pre-Layer Normalization",
+    "Causal Multi-Head Attention",
+    "Residual Connection (+ Input)",
+    "Pre-Layer Normalization",
+    "Feed-Forward Network (FFN)",
+    "Residual Connection (+ MHA Output)",
+    "Output Hidden State [S × D]"
+  ]}
+/>
+
+So a natural question arises:
+
+> **If one Transformer block already performs multi-head attention, non-linear feed-forward expansion, residual connections, and layer normalization, why does GPT repeat this block 12, 24, 48, 96, or more times?**
+
+The central answer:
+
+<KeyInsight title="The Core Insight on Depth">
+One Transformer block performs <strong>one single stage of transformation and refinement</strong>. Stacking many blocks allows the representation to be progressively transformed, composed, and enriched.
+</KeyInsight>
+
+---
+
+# Imagine a Human Reading a Paragraph
+
+Suppose someone asks you to read a challenging paragraph once and immediately explain its deepest themes.
+
+- **Reading once** may give you the basic dictionary meaning of words and surface facts.
+- **Reading again** helps you notice structural connections, pronoun references, and clause relationships.
+- **Repeated refinement** produces a rich, coherent understanding of nuance, subtext, and overarching intent.
+
+<FlowDiagram
+  title="The Refinement Process"
+  steps={[
+    "Read Once → Extract basic word meanings & surface tokens",
+    "Read Again → Notice grammatical links & entity relationships",
+    "Repeated Refinement → Synthesize intent, abstract nuance & prediction context"
+  ]}
+/>
+
+A deep Transformer operates on a related engineering principle: **each block receives the representation produced by the previous block and refines it further**.
+
+---
+
+# The Key Idea: Stacking
+
+A Transformer **does not** repeatedly create new tokens at each layer.
+
+Instead:
+
+> **The same token positions are repeatedly transformed and enriched with increasingly sophisticated contextual information.**
+
+Here is how information flows vertically through the network:
+
+<TransformerStackVisualizer
+  title="Vertical Information Flow Across Stacked Transformer Blocks"
+  caption="Tokens enter as initial embeddings. Each block refines the representation, preserving tensor shape until the final hidden state projects to logits."
+/>
+
+Each block receives the previous block's output tensor as its own input:
+
+$$H_0 = \text{Embedding}(X) + \text{PositionalEncoding}$$
+$$H_1 = \text{TransformerBlock}_1(H_0)$$
+$$H_2 = \text{TransformerBlock}_2(H_1)$$
+$$H_N = \text{TransformerBlock}_N(H_{N-1})$$
+
+---
+
+# Why Not Build One Giant Block?
+
+A common engineering question is: *Why not just make one gigantic block with a single massive Attention layer and a huge FFN with 1,000,000 neurons instead of stacking 96 separate blocks?*
+
+<Comparison
+  title="One Giant Block vs Stacking Multiple Blocks"
+  left={{
+    label: "One Giant Shallow Block",
+    accent: "var(--color-error)",
+    points: [
+      "Single step of attention routing — cannot perform multi-step relational reasoning",
+      "Features can only interact once before producing the final output",
+      "High parameter count without sequential compute depth",
+      "Cannot build hierarchical abstractions (syntax before semantics)"
+    ]
+  }}
+  right={{
+    label: "Deep Stacked Blocks (GPT)",
+    accent: "var(--color-success)",
+    points: [
+      "Sequential refinement: each layer's output feeds the next layer's attention",
+      "Enables composition of functions: f(g(h(x))) creates exponential representational capacity",
+      "Hierarchical abstraction: early layers resolve local syntax, late layers resolve discourse meaning",
+      "Gradient flow is stabilized via residual streams across depth"
+    ]
+  }}
+/>
+
+Sequential refinement is inherently iterative: **one computation produces intermediate features that serve as the necessary foundation for subsequent, higher-order computations**.
+
+---
+
+# What Actually Changes From Block to Block?
+
+A common misconception is:
+
+> *"If the architecture of every Transformer block is identical, isn't the model just repeating the exact same calculation over and over?"*
+
+**No.**
+
+While the structural blueprint (Attention $\to$ Add $\to$ Norm $\to$ FFN $\to$ Add $\to$ Norm) is identical across blocks:
+
+<KeyInsight title="Distinct Learned Parameters">
+Each Transformer block has its own completely independent set of learned parameters:
+$$\text{Block}_1 \neq \text{Block}_2 \neq \text{Block}_3 \dots \neq \text{Block}_N$$
+Each layer possesses its own $W_Q, W_K, W_V, W_O, W_1, W_2, \gamma, \beta$. Therefore, every layer performs a uniquely trained mathematical transformation on the hidden states it receives.
+</KeyInsight>
+
+---
+
+# The Tensor Shape Stays the Same
+
+This is one of the most foundational principles of modern Transformer engineering.
+
+Suppose we process a sequence of 4 tokens with an embedding hidden dimension of 768:
+
+$$\text{Sequence Length } S = 4$$
+$$\text{Hidden Dimension } D = 768$$
+
+The tensor shape entering and exiting every block is:
+
+$$\text{Shape} = [4 \times 768]$$
+
+<ShapeVsRepresentationVisualizer
+  title="Shape Invariance vs Representation Evolution"
+  caption="Dimensions stay fixed at [4 × 768] for seamless tensor passing, while representation content evolves from R₀ to R_N."
+/>
+
+<MathBlock
+  title="Tensor Shape Compatibility Through the Stack"
+  formula="H_0 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_1} H_1 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_2} H_2 \in \mathbb{R}^{4 \times 768} \xrightarrow{\dots} H_N \in \mathbb{R}^{4 \times 768}"
+  caption="Constant tensor dimensions ensure the output of any block can serve directly as the input to the subsequent block without reshaping."
+/>
+
+---
+
+# The Student Analogy
+
+Imagine a student who begins studying a textbook on mathematics:
+
+- When the student starts reading, they possess initial basic vocabulary.
+- After studying 12 chapters, their understanding of mathematics has deepened enormously.
+- **Yet the student has not physically grown 12 times larger or gained additional heads.**
+
+Similarly:
+
+> **A Transformer hidden state keeps the exact same dimensional footprint ($[S \times 768]$), while the information density, relational depth, and contextual nuance encoded in its numbers expand dramatically.**
+
+---
+
+# What Is a Hidden State?
+
+Inside neural networks, intermediate representations are called **hidden states**.
+
+<KeyInsight title="Definition: Hidden State">
+A <strong>hidden state</strong> is an intermediate continuous numerical vector produced inside the model that encapsulates what the network currently understands and represents about a token at that specific stage of processing.
+</KeyInsight>
+
+For a sequence of tokens, the complete hidden state at any layer is a 2D matrix (or 3D batch tensor):
+
+$$\text{Hidden State Matrix } H \in \mathbb{R}^{\text{sequence\_length} \times \text{hidden\_size}}$$
+
+<HiddenStateTensorVisualizer
+  title="Interactive Hidden State Tensor Inspection [4 × 768]"
+  caption="Each row represents one token in the sequence. Each column is a continuous feature coordinate. Explore how activations change across layers."
+/>
+
+Each row $i$ is a 768-dimensional continuous vector:
+
+$$\mathbf{h}_i = [d_0, d_1, d_2, \dots, d_{767}]$$
+
+<Warning title="No Single Dimension Holds One Human Concept">
+Never assume that dimension $d_{42}$ represents "is it an animal" and dimension $d_{99}$ represents "is it blue". The representation is <strong>distributed</strong> across all 768 coordinates simultaneously.
+</Warning>
+
+---
+
+# Where Do Hidden States Exist?
+
+Hidden states exist at every boundary between layers:
+
+- $H_0$: After embedding lookup and positional encoding addition
+- $H_1$: Output of Transformer Block 1
+- $H_2$: Output of Transformer Block 2
+- $H_3$: Output of Transformer Block 3
+- $\dots$
+- $H_N$: Output of Final Transformer Block $N$ (Final Hidden State)
+
+### Training vs Inference: Activation Memory
+
+How are these hidden states handled during training compared to text generation?
+
+<Comparison
+  title="Hidden State Memory: Training vs Inference"
+  left={{
+    label: "Training Pass (Backpropagation)",
+    accent: "var(--color-warning)",
+    points: [
+      "All intermediate activations (H₀, H₁, H₂, ... H_N) must be stored in GPU VRAM",
+      "Backpropagation requires intermediate states to calculate chain-rule gradients ∂L/∂W",
+      "Consumes massive GPU memory (requires activation checkpointing for large models)",
+      "Both forward pass and backward pass are executed"
+    ]
+  }}
+  right={{
+    label: "Inference Pass (Generation)",
+    accent: "var(--color-success)",
+    points: [
+      "No backpropagation or gradient calculation occurs",
+      "Intermediate activations can be immediately overwritten/freed as computation moves upward",
+      "Only the current layer's working buffer and KV-Cache need to be stored",
+      "Significantly lower memory overhead per token generated"
+    ]
+  }}
+/>
+
+---
+
+# One Token's Journey Through the Stack
+
+Let us trace what happens to a single token—for example, the word `"bank"` in the sentence:
+
+```text
+"The customer deposited money into the bank"
+```
+
+<TokenEvolutionVisualizer
+  title="Evolution of the Token 'bank' Through 12 Layers"
+  caption="Track the same token position (Index 3) as its 768-dimensional numerical state transforms from lexical ambiguity to complete contextual resolution."
+/>
+
+---
+
+# After Transformer Block 1
+
+At the input layer, `"bank"` only possesses its static dictionary embedding. It could refer to a river bank or a financial institution.
+
+After passing through **Transformer Block 1**:
+- Multi-Head Attention allows `"bank"` to attend to its immediate local neighbors (`"the"`, `"into"`).
+- The residual connection preserves its baseline word identity while adding local context.
+- The output vector $\mathbf{h}_1$ is still positioned at index 3 with 768 floats, but it now represents a localized phrase unit.
+
+---
+
+# After Transformer Block 2
+
+Block 2 receives $\mathbf{h}_1$ as its input:
+- Attention heads in Block 2 connect `"bank"` to the transitive verb `"deposited"` and noun `"money"`.
+- The Feed-Forward Network non-linearly suppresses features related to rivers and geographical slopes, amplifying financial institution features.
+- The representation is now structurally bound to the predicate of the sentence.
+
+---
+
+# After Many Blocks
+
+As the token representation continues through Blocks 3, 4, 5, up to Block $N$:
+- It integrates discourse-level intent, sentence structure, and tone.
+- By the final block, the vector for `"bank"` is no longer a generic dictionary lookup—it is a hyper-specific, context-saturated representation ready to inform subsequent predictions.
+
+---
+
+# Representation Evolution
+
+Empirical research on deep language models reveals that layers exhibit distinct representation tendencies:
+
+<LayerHierarchyVisualizer
+  title="Layer Hierarchy: Early → Middle → Late Representations"
+  caption="Different depths in the Transformer stack specialize in distinct linguistic and semantic transformations."
+/>
+
+## Early Layers
+Early layers (e.g., Layers 1–4) focus on low-level, local, and surface patterns:
+- Subword assembly and spelling features
+- Punctuation cues and sentence delimiters
+- Immediate n-gram and phrase-level pairings
+
+## Middle Layers
+Middle layers (e.g., Layers 5–8) build structured linguistic relationships:
+- Part-of-speech roles and grammatical syntax
+- Subject-verb agreements across long spans
+- Coreference resolution (e.g., resolving `"it"` to the appropriate prior noun)
+
+## Late Layers
+Late layers (e.g., Layers 9–12+) synthesize high-level semantic abstractions:
+- Topic, discourse intent, and world knowledge
+- Complex reasoning patterns
+- Final feature alignment for next-token vocabulary projection
+
+<Tip title="Conceptual Progression, Not Rigid Hardware Partitions">
+This division is a continuous <strong>emergent tendency</strong> learned through optimization, not a set of rigid boundaries hardcoded into the network architecture.
+</Tip>
+
+---
+
+# Visualizing Representation Evolution
+
+Here is the essential mental model to remember:
+
+```text
+Token Position: Index 3 ("bank") — NEVER CHANGES
+Tensor Shape:   [1 × 768]        — NEVER CHANGES
+
+R₀:  [ 0.12, -0.45,  0.88, ... ] → Static dictionary embedding
+R₁:  [ 0.28, -0.12,  0.64, ... ] → Local phrase context ("into the bank")
+R₄:  [ 0.55,  0.34,  0.18, ... ] → Syntactic role (prepositional object of "deposited")
+R₈:  [ 0.72,  0.68, -0.31, ... ] → Financial institution semantic resolution
+R₁₂: [ 0.89,  0.84, -0.52, ... ] → Final contextual state ready for LM Head prediction
+```
+
+<KeyInsight title="Representation Evolution Summary">
+Same token position + Same tensor dimension + Progressively richer contextual synthesis.
+</KeyInsight>
+
+---
+
+# The Model Does Not Create New Tokens Inside the Blocks
+
+A frequent beginner confusion is imagining that Block 1 produces a new token, Block 2 produces another token, and so on.
+
+<Comparison
+  title="Token Generation vs Hidden Transformation"
+  left={{
+    label: "Misconception ✗",
+    points: [
+      "Each Transformer block outputs a new word or token",
+      "Intermediate layers write partial sentences into memory",
+      "The sequence grows longer as it moves upward"
+    ]
+  }}
+  right={{
+    label: "Reality ✓",
+    points: [
+      "All tokens remain in their exact sequence positions from input to output",
+      "Intermediate blocks only transform continuous numerical hidden states",
+      "Only the final hidden state after the last block is projected to vocabulary logits"
+    ]
+  }}
+/>
+
+The actual generation of a new token happens **only once per forward pass**, after the final layer's representation is projected through the output vocabulary head.
+
+---
+
+# Why Depth Matters
+
+Consider evaluating an arithmetic expression with nested operations:
+
+$$5 \times (7 + 3) - 10$$
+
+To solve this, you naturally break the computation into sequential stages:
+
+<FlowDiagram
+  title="Sequential Composition of Operations"
+  steps={[
+    "Step 1: Evaluate inner parenthesis → (7 + 3) = 10",
+    "Step 2: Multiply by factor → 5 × 10 = 50",
+    "Step 3: Subtract offset → 50 - 10 = 40 (Final Answer)"
+  ]}
+/>
+
+While language processing is far more complex than simple arithmetic, the core principle is identical: **complex cognitive and semantic transformations cannot be resolved in a single flat step**.
+
+Depth provides the sequential computational budget required for iterative refinement.
+
+---
+
+# Why Stacking Increases Model Capacity
+
+Each block applies a parameterized non-linear transformation:
+
+$$H_l = \mathcal{T}_l(H_{l-1}; \theta_l)$$
+
+When we stack $N$ blocks, the overall network computes a deep composition of functions:
+
+$$H_N = (\mathcal{T}_N \circ \mathcal{T}_{N-1} \circ \dots \circ \mathcal{T}_2 \circ \mathcal{T}_1)(H_0)$$
+
+Because each $\theta_l$ contains independent learned weights:
+- The function space expressible by $N$ composed blocks is exponentially richer than a single block.
+- Residual connections guarantee that gradients can flow directly from $\mathcal{T}_N$ back to $\mathcal{T}_1$ without vanishing during backpropagation.
+
+---
+
+# Who Decides How Many Blocks GPT Has?
+
+The number of Transformer blocks is an **architectural hyperparameter** chosen by the AI model architect prior to training.
+
+The architect balances:
+- **Depth ($N$ blocks)**: Determines sequential reasoning and representational capacity.
+- **Width ($D$ hidden dimension)**: Determines how much information each vector can hold.
+- **Attention Heads ($H$)**: Determines how many independent relationships can be attended to simultaneously.
+- **Compute and Memory Budget**: Deeper models require more GPU memory, FLOPs, and training time.
+
+### Examples Across Real GPT Architectures
+
+| Model | Stack Depth ($N$ Blocks) | Hidden Size ($D$) | Attention Heads | Total Parameters |
+| :--- | :--- | :--- | :--- | :--- |
+| **GPT-2 Small** | 12 blocks | 768 | 12 heads | 117 Million |
+| **GPT-2 Medium** | 24 blocks | 1024 | 16 heads | 345 Million |
+| **GPT-2 Large** | 36 blocks | 1280 | 20 heads | 774 Million |
+| **GPT-2 XL** | 48 blocks | 1600 | 25 heads | 1.5 Billion |
+| **GPT-3** | 96 blocks | 12,288 | 96 heads | 175 Billion |
+
+<Tip title="Takeaway on Model Size">
+Do not memorize these numbers. Understand that model depth is an architectural choice that determines how many sequential refinement stages representations pass through.
+</Tip>
+
+---
+
+# The Engineering View
+
+From an engineering perspective, the Transformer stack is a clean, modular pipeline:
+
+<FlowDiagram
+  title="The Engineering Pipeline"
+  steps={[
+    "Input Tensor [S × D]",
+    "Block 1 (Own Weights) → [S × D]",
+    "Block 2 (Own Weights) → [S × D]",
+    "Block 3 (Own Weights) → [S × D]",
+    "... Blocks 4 to N-1 (Repeated Refinement) → [S × D]",
+    "Block N (Own Weights) → Final Hidden State [S × D]",
+    "Final LayerNorm → [S × D]",
+    "Vocab Projection (W_vocab) → Logits [S × V]",
+    "Softmax on Last Token → Next-Token Probability Distribution"
+  ]}
+/>
+
+<KeyInsight title="Stability + Evolution">
+Tensor shape stays stable; representation content evolves continuously.
+</KeyInsight>
+
+---
+
+# Shape vs Representation
+
+Keep these two concepts clearly separated in your mental model:
+
+<Comparison
+  title="Shape vs Representation"
+  left={{
+    label: "Tensor Shape (Fixed Framework)",
+    accent: "var(--color-accent)",
+    points: [
+      "The geometric dimensions of the data array: [batch × seq_len × hidden_size]",
+      "Remains constant from layer to layer (e.g., [4 × 768])",
+      "Enables standardized matrix multiplications and residual additions",
+      "Does not change when the token representation becomes smarter"
+    ]
+  }}
+  right={{
+    label: "Representation (Dynamic Meaning)",
+    accent: "var(--color-success)",
+    points: [
+      "The specific floating-point values inside each tensor cell",
+      "Mutates after every single attention and FFN operation",
+      "Evolves from raw lexical tokens (R₀) to synthesized contextual intelligence (R_N)",
+      "Carries the actual learned semantics and prediction signals"
+    ]
+  }}
+/>
+
+---
+
+# One Complete Picture
+
+Here is the complete end-to-end journey of tokens through a deep Transformer:
+
+<TransformerStackVisualizer
+  title="The Full End-to-End Deep Transformer Stack"
+  caption="From discrete token IDs through N stacked blocks of contextual refinement to the final vocabulary projection."
+/>
+
+Every single block performs another stage of transformation on the existing representation, passing an enriched hidden state upward until it reaches the output head.
+
+---
+
+# One More Important Insight
+
+A single Transformer block does not need to "understand everything" on its own.
+
+Instead:
+
+> **The model distributes computation across depth. Early computation builds useful local building blocks. Middle computation constructs relational networks. Late computation synthesizes those networks into abstract understanding.**
+
+The intelligence of a deep Transformer is not located inside any single block. It **emerges from the composition of many stacked transformations**.
+
+---
+
+# Common Misconceptions
+
+<Comparison
+  title="Common Misconceptions About Transformer Depth"
+  left={{
+    label: "Misconception ✗",
+    points: [
+      "Every Transformer block outputs a new word",
+      "The tensor dimensions grow larger after every layer",
+      "All blocks share the same parameters and do identical work",
+      "The first layer understands the text and later layers just copy it",
+      "A hidden state is only produced at the very end of the model"
+    ]
+  }}
+  right={{
+    label: "Engineering Reality ✓",
+    points: [
+      "Tokens stay in their slots; only their hidden vectors are transformed",
+      "Hidden state dimensions remain constant [S × D] throughout the stack",
+      "Each block has its own independent weights and learned transformations",
+      "Representations are progressively refined and enriched across depth",
+      "Hidden states exist at every layer boundary; H_N is the final hidden state"
+    ]
+  }}
+/>
+
+---
+
+# Key Takeaways
+
+- **GPT stacks many Transformer blocks** because one stage of transformation is not enough for complex multi-step computation.
+- **Each block receives the previous block's representation** and passes an enriched hidden state upward.
+- **Each block has its own independent learned parameters** ($W_Q, W_K, W_V, W_O, W_1, W_2, \gamma, \beta$).
+- **Transformer blocks refine representations rather than creating new tokens**.
+- **A hidden state is an intermediate representation** inside the model that captures what the network currently represents about the input.
+- **A token's representation can evolve substantially** from the embedding layer to the final layer (same token position, increasingly rich vector).
+- **Early, middle, and late layers show different learned representations** (local surface patterns $\to$ syntax $\to$ semantics & prediction).
+- **Tensor shape remains constant ($[S \times D]$)** while the information encoded in the tensor becomes progressively richer.
+- **Model depth is an architectural choice** (e.g., GPT-2 Small: 12 blocks, GPT-2 Medium: 24 blocks, GPT-3: 96 blocks).
+- **The final hidden state $H_N$ is passed to the output projection** to produce vocabulary logits for next-token prediction.
+
+---
+
+## Questions That Changed My Understanding
+
+**Q: If one Transformer block already has Attention and FFN, why isn't one enough?**
+
+A single block performs one stage of refinement. Stacking multiple blocks allows representations to become progressively richer through sequential compositions of non-linear transformations ($f(g(h(x)))$).
+
+**Q: Does every block create a new token?**
+
+No. The tokens remain in their exact sequence positions from input to output. Transformer blocks only transform continuous numerical hidden representations.
+
+**Q: What actually changes from one block to the next?**
+
+The numerical values inside the hidden state tensor change continuously as each layer's attention and feed-forward networks apply their own learned parameters.
+
+**Q: What is a hidden state?**
+
+A hidden state is an intermediate representation produced inside the model that captures what the model currently represents about the input. For a sequence, it is a tensor of shape `[sequence_length × hidden_size]`.
+
+**Q: Why can the tensor shape remain constant while the representation changes?**
+
+Tensor shape defines the geometric container (`[4 × 768]`), which stays compatible so the output of one block can directly feed into the next. The numbers inside the container mutate and become contextually richer.
+
+**Q: Why might early and late layers represent different kinds of information?**
+
+Early layers attend to local, surface features (spelling, word identity, punctuation). Middle layers build structured syntactic dependencies (grammar, subject-object roles). Late layers synthesize high-level semantics, discourse intent, and prediction-relevant features.
+
+**Q: Who decides how many Transformer blocks a GPT model should have?**
+
+The AI model architect decides the number of blocks as an architectural choice, balancing representational capacity, compute budget, and training stability.
+
+**Q: Why does stacking increase the model's representational capacity?**
+
+Each block contributes independent learned parameters and sequential refinement steps, allowing the network to express exponentially richer functions than a single shallow transformation.
+
+---
+
+## What's Next?
+
+We now know why Transformer blocks are stacked, how hidden states evolve through depth, and how the final hidden state is produced.
+
+The next step is to explore the complete training loop:
+
+> **Module 3: LLM Internals — How LLMs Are Trained**
+
+We will open the pre-training engine, examine the next-token loss surface, and understand the scale that enables modern large language models!

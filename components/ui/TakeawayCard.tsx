@@ -6,7 +6,7 @@ interface TakeawayCardProps {
   className?: string;
 }
 
-export default function TakeawayCard({ takeaways, className }: TakeawayCardProps) {
+export default function TakeawayCard({ takeaways = [], className }: TakeawayCardProps) {
   return (
     <div
       className={cn('rounded-xl p-6 my-10', className)}
