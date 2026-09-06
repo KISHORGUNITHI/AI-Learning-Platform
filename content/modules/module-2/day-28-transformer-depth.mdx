@@ -469,20 +469,6 @@ The architect balances:
 - **Attention Heads (H)**: Determines how many independent relationship subspaces can be attended to simultaneously.
 - **Compute and Memory Budget**: Deeper and wider models require substantially more GPU memory, FLOPs, and training time.
 
-### Examples Across Real GPT Architectures
-
-| Model | Depth (N) | Hidden Dimension (D) | Attention Heads (H) | Total Parameters |
-| :--- | :--- | :--- | :--- | :--- |
-| **GPT-2 Small** | 12 blocks | 768 | 12 heads | 117 Million |
-| **GPT-2 Medium** | 24 blocks | 1,024 | 16 heads | 345 Million |
-| **GPT-2 Large** | 36 blocks | 1,280 | 20 heads | 774 Million |
-| **GPT-2 XL** | 48 blocks | 1,600 | 25 heads | 1.5 Billion |
-| **GPT-3** | 96 blocks | 12,288 | 96 heads | 175 Billion |
-
-<Tip title="Takeaway on Model Size">
-Do not memorize these numbers. Understand that model depth is an architectural choice that determines how many sequential refinement stages representations pass through.
-</Tip>
-
 ---
 
 # The Engineering View
