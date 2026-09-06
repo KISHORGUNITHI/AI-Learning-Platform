@@ -118,10 +118,19 @@ Here is how information flows vertically through the network:
 
 Each block receives the previous block's output tensor as its own input:
 
-$$H_0 = \text{Embedding}(X) + \text{PositionalEncoding}$$
-$$H_1 = \text{TransformerBlock}_1(H_0)$$
-$$H_2 = \text{TransformerBlock}_2(H_1)$$
-$$H_N = \text{TransformerBlock}_N(H_{N-1})$$
+<MathBlock title="Layer-by-Layer Transformations">
+
+$$
+\begin{aligned}
+H_0 &= \text{Embedding}(X) + \text{PositionalEncoding} \\
+H_1 &= \text{TransformerBlock}_1(H_0) \\
+H_2 &= \text{TransformerBlock}_2(H_1) \\
+&\;\;\vdots \\
+H_N &= \text{TransformerBlock}_N(H_{N-1})
+\end{aligned}
+$$
+
+</MathBlock>
 
 ---
 
@@ -193,11 +202,11 @@ $$\text{Shape} = [4 \times 768]$$
   caption="Dimensions stay fixed at [4 × 768] for seamless tensor passing, while representation content evolves from R₀ to R_N."
 />
 
-<MathBlock
-  title="Tensor Shape Compatibility Through the Stack"
-  formula="H_0 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_1} H_1 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_2} H_2 \in \mathbb{R}^{4 \times 768} \xrightarrow{\dots} H_N \in \mathbb{R}^{4 \times 768}"
-  caption="Constant tensor dimensions ensure the output of any block can serve directly as the input to the subsequent block without reshaping."
-/>
+<MathBlock title="Tensor Shape Compatibility Through the Stack">
+
+$$H_0 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_1} H_1 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_2} H_2 \in \mathbb{R}^{4 \times 768} \xrightarrow{\dots} H_N \in \mathbb{R}^{4 \times 768}$$
+
+</MathBlock>
 
 ---
 
@@ -525,19 +534,6 @@ Keep these two concepts clearly separated in your mental model:
     ]
   }}
 />
-
----
-
-# One Complete Picture
-
-Here is the complete end-to-end journey of tokens through a deep Transformer:
-
-<TransformerStackVisualizer
-  title="The Full End-to-End Deep Transformer Stack"
-  caption="From discrete token IDs through N stacked blocks of contextual refinement to the final vocabulary projection."
-/>
-
-Every single block performs another stage of transformation on the existing representation, passing an enriched hidden state upward until it reaches the output head.
 
 ---
 
