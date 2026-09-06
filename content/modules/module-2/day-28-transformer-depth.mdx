@@ -464,19 +464,19 @@ Because each $\theta_l$ contains independent learned weights:
 The number of Transformer blocks is an **architectural hyperparameter** chosen by the AI model architect prior to training.
 
 The architect balances:
-- **Depth (N Blocks)**: Determines sequential reasoning and representational capacity.
-- **Width (d_model Hidden Dimension)**: Determines how much information each vector can hold.
-- **Attention Heads (H)**: Determines how many independent relationships can be attended to simultaneously.
-- **Compute and Memory Budget**: Deeper models require more GPU memory, FLOPs, and training time.
+- **Depth (N)**: Determines sequential reasoning capacity and how many refinement stages representations pass through.
+- **Hidden Dimension (D)**: Determines vector width and how much contextual information each token embedding can store.
+- **Attention Heads (H)**: Determines how many independent relationship subspaces can be attended to simultaneously.
+- **Compute and Memory Budget**: Deeper and wider models require substantially more GPU memory, FLOPs, and training time.
 
 ### Examples Across Real GPT Architectures
 
-| Model | Stack Depth (N Blocks) | Hidden Size (d_model) | Attention Heads | Total Parameters |
+| Model | Depth (N) | Hidden Dimension (D) | Attention Heads (H) | Total Parameters |
 | :--- | :--- | :--- | :--- | :--- |
 | **GPT-2 Small** | 12 blocks | 768 | 12 heads | 117 Million |
-| **GPT-2 Medium** | 24 blocks | 1024 | 16 heads | 345 Million |
-| **GPT-2 Large** | 36 blocks | 1280 | 20 heads | 774 Million |
-| **GPT-2 XL** | 48 blocks | 1600 | 25 heads | 1.5 Billion |
+| **GPT-2 Medium** | 24 blocks | 1,024 | 16 heads | 345 Million |
+| **GPT-2 Large** | 36 blocks | 1,280 | 20 heads | 774 Million |
+| **GPT-2 XL** | 48 blocks | 1,600 | 25 heads | 1.5 Billion |
 | **GPT-3** | 96 blocks | 12,288 | 96 heads | 175 Billion |
 
 <Tip title="Takeaway on Model Size">
@@ -635,8 +635,4 @@ Each block contributes independent learned parameters and sequential refinement 
 
 We now know why Transformer blocks are stacked, how hidden states evolve through depth, and how the final hidden state is produced.
 
-The next step is to explore the complete training loop:
-
-> **Module 3: LLM Internals — How LLMs Are Trained**
-
-We will open the pre-training engine, examine the next-token loss surface, and understand the scale that enables modern large language models!
+The next step is to make model speak out...
