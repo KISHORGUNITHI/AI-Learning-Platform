@@ -293,7 +293,7 @@ export default function LayerHierarchyVisualizer({
             lineHeight: 1.6,
           }}
         >
-          <strong>⚠️ Note on Conceptual Progression:</strong> This early $\to$ middle $\to$ late hierarchy is an empirical tendency observed across trained models, <em>not</em> a hardcoded programming rule. All Transformer blocks share the same mathematical architecture; the specialization emerges naturally through gradient descent.
+          <strong>⚠️ Note on Conceptual Progression:</strong> This early → middle → late hierarchy is an empirical tendency observed across trained models, <em>not</em> a hardcoded programming rule. All Transformer blocks share the same mathematical architecture; the specialization emerges naturally through gradient descent.
         </div>
       </div>
 

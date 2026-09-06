@@ -464,14 +464,14 @@ Because each $\theta_l$ contains independent learned weights:
 The number of Transformer blocks is an **architectural hyperparameter** chosen by the AI model architect prior to training.
 
 The architect balances:
-- **Depth ($N$ blocks)**: Determines sequential reasoning and representational capacity.
-- **Width ($D$ hidden dimension)**: Determines how much information each vector can hold.
-- **Attention Heads ($H$)**: Determines how many independent relationships can be attended to simultaneously.
+- **Depth (N Blocks)**: Determines sequential reasoning and representational capacity.
+- **Width (d_model Hidden Dimension)**: Determines how much information each vector can hold.
+- **Attention Heads (H)**: Determines how many independent relationships can be attended to simultaneously.
 - **Compute and Memory Budget**: Deeper models require more GPU memory, FLOPs, and training time.
 
 ### Examples Across Real GPT Architectures
 
-| Model | Stack Depth ($N$ Blocks) | Hidden Size ($D$) | Attention Heads | Total Parameters |
+| Model | Stack Depth (N Blocks) | Hidden Size (d_model) | Attention Heads | Total Parameters |
 | :--- | :--- | :--- | :--- | :--- |
 | **GPT-2 Small** | 12 blocks | 768 | 12 heads | 117 Million |
 | **GPT-2 Medium** | 24 blocks | 1024 | 16 heads | 345 Million |
@@ -588,8 +588,8 @@ The intelligence of a deep Transformer is not located inside any single block. I
 - **Transformer blocks refine representations rather than creating new tokens**.
 - **A hidden state is an intermediate representation** inside the model that captures what the network currently represents about the input.
 - **A token's representation can evolve substantially** from the embedding layer to the final layer (same token position, increasingly rich vector).
-- **Early, middle, and late layers show different learned representations** (local surface patterns $\to$ syntax $\to$ semantics & prediction).
-- **Tensor shape remains constant ($[S \times D]$)** while the information encoded in the tensor becomes progressively richer.
+- **Early, middle, and late layers show different learned representations** (local surface patterns → syntax → semantics & prediction).
+- **Tensor shape remains constant ([S × D])** while the information encoded in the tensor becomes progressively richer.
 - **Model depth is an architectural choice** (e.g., GPT-2 Small: 12 blocks, GPT-2 Medium: 24 blocks, GPT-3: 96 blocks).
 - **The final hidden state $H_N$ is passed to the output projection** to produce vocabulary logits for next-token prediction.
 
