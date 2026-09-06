@@ -202,7 +202,10 @@ $$\text{Shape} = [4 \times 768]$$
   caption="Dimensions stay fixed at [4 × 768] for seamless tensor passing, while representation content evolves from R₀ to R_N."
 />
 
-<MathBlock title="Tensor Shape Compatibility Through the Stack">
+<MathBlock
+  title="Tensor Shape Compatibility Through the Stack"
+  caption="Constant tensor dimensions ensure the output of any block can serve directly as the input to the subsequent block without reshaping."
+>
 
 $$H_0 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_1} H_1 \in \mathbb{R}^{4 \times 768} \xrightarrow{\text{Block}_2} H_2 \in \mathbb{R}^{4 \times 768} \xrightarrow{\dots} H_N \in \mathbb{R}^{4 \times 768}$$
 
