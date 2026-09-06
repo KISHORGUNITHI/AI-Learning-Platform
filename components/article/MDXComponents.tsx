@@ -40,6 +40,11 @@ import FFNPipelineVisualizer from '@/components/ui/FFNPipelineVisualizer';
 import FFNNeuronVisualizer from '@/components/ui/FFNNeuronVisualizer';
 import CausalMaskVisualizer from '@/components/ui/CausalMaskVisualizer';
 import AttentionMatrix from '@/components/ui/AttentionMatrix';
+import TransformerStackVisualizer from '@/components/ui/TransformerStackVisualizer';
+import TokenEvolutionVisualizer from '@/components/ui/TokenEvolutionVisualizer';
+import HiddenStateTensorVisualizer from '@/components/ui/HiddenStateTensorVisualizer';
+import ShapeVsRepresentationVisualizer from '@/components/ui/ShapeVsRepresentationVisualizer';
+import LayerHierarchyVisualizer from '@/components/ui/LayerHierarchyVisualizer';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -69,6 +74,11 @@ export {
   FFNNeuronVisualizer,
   CausalMaskVisualizer,
   AttentionMatrix,
+  TransformerStackVisualizer,
+  TokenEvolutionVisualizer,
+  HiddenStateTensorVisualizer,
+  ShapeVsRepresentationVisualizer,
+  LayerHierarchyVisualizer,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -294,4 +304,9 @@ export const mdxComponents = {
   FFNNeuronVisualizer,
   CausalMaskVisualizer,
   AttentionMatrix,
+  TransformerStackVisualizer,
+  TokenEvolutionVisualizer,
+  HiddenStateTensorVisualizer,
+  ShapeVsRepresentationVisualizer,
+  LayerHierarchyVisualizer,
 };

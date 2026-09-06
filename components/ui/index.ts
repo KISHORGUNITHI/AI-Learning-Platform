@@ -14,4 +14,9 @@ export { default as MathBlock } from './MathBlock';
 export { default as FunctionPlot } from './FunctionPlot';
 export { default as CausalMaskVisualizer } from './CausalMaskVisualizer';
 export { default as AttentionMatrix } from './AttentionMatrix';
+export { default as TransformerStackVisualizer } from './TransformerStackVisualizer';
+export { default as TokenEvolutionVisualizer } from './TokenEvolutionVisualizer';
+export { default as HiddenStateTensorVisualizer } from './HiddenStateTensorVisualizer';
+export { default as ShapeVsRepresentationVisualizer } from './ShapeVsRepresentationVisualizer';
+export { default as LayerHierarchyVisualizer } from './LayerHierarchyVisualizer';
 
