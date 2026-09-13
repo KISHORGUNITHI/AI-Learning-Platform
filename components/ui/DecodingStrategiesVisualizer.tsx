@@ -155,7 +155,7 @@ export default function DecodingStrategiesVisualizer({
           {(['greedy', 'temperature', 'topk', 'topp', 'comparison'] as const).map((tab) => {
             const labels = {
               greedy: 'Greedy',
-              temperature: 'Temperature ($T$)',
+              temperature: 'Temperature (T)',
               topk: 'Top-K',
               topp: 'Top-P (Nucleus)',
               comparison: 'Comparison Matrix',
@@ -295,7 +295,7 @@ export default function DecodingStrategiesVisualizer({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <div>
                   <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>
-                    Temperature Parameter ($T$)
+                    Temperature Parameter (T)
                   </span>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-accent)' }}>
                     T = {temperature.toFixed(2)}
@@ -574,7 +574,7 @@ export default function DecodingStrategiesVisualizer({
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <div>
                   <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-tertiary)', fontWeight: 700 }}>
-                    Cumulative Probability Threshold ($P$)
+                    Cumulative Probability Threshold (P)
                   </span>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.35rem', fontWeight: 800, color: '#ec4899' }}>
                     P = {topP.toFixed(2)} ({Math.round(topP * 100)}%)
@@ -709,7 +709,7 @@ export default function DecodingStrategiesVisualizer({
                 lineHeight: 1.6,
               }}
             >
-              <strong style={{ color: 'var(--color-text-primary)' }}>Why Top-P Adapts Dynamically:</strong> Unlike Top-K (which keeps a static number of candidates), Top-P dynamically expands or contracts the candidate pool based on model confidence. When confident, only 1–2 tokens are needed to reach $P=0.90$; when uncertain, the candidate set expands to 5+ tokens automatically!
+              <strong style={{ color: 'var(--color-text-primary)' }}>Why Top-P Adapts Dynamically:</strong> Unlike Top-K (which keeps a static number of candidates), Top-P dynamically expands or contracts the candidate pool based on model confidence. When confident, only 1–2 tokens are needed to reach P = 0.90; when uncertain, the candidate set expands to 5+ tokens automatically!
             </div>
           </div>
         )}
@@ -731,10 +731,10 @@ export default function DecodingStrategiesVisualizer({
 
             <div style={{ padding: '1.25rem', borderRadius: 'var(--radius-xl)', background: 'var(--color-surface-2)', border: '1px solid var(--color-border)' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#a855f7', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
-                2. Temperature ($T$)
+                2. Temperature (T)
               </div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: '0 0 0.75rem' }}>
-                Scales logits $z/T$ before Softmax. Controls distribution sharpness vs entropy.
+                Scales logits z/T before Softmax. Controls distribution sharpness vs entropy.
               </p>
               <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-tertiary)' }}>
                 Best for: Creativity tuning.
@@ -746,7 +746,7 @@ export default function DecodingStrategiesVisualizer({
                 3. Top-K Sampling
               </div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: '0 0 0.75rem' }}>
-                Truncates distribution to a <strong>fixed number $K$</strong> of highest probability tokens.
+                Truncates distribution to a <strong>fixed number K</strong> of highest probability tokens.
               </p>
               <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-tertiary)' }}>
                 Best for: Pruning bad tail tokens.
@@ -758,7 +758,7 @@ export default function DecodingStrategiesVisualizer({
                 4. Top-P (Nucleus)
               </div>
               <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: '0 0 0.75rem' }}>
-                Dynamic candidate set accumulating up to <strong>cumulative threshold $P$</strong>.
+                Dynamic candidate set accumulating up to <strong>cumulative threshold P</strong>.
               </p>
               <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-text-tertiary)' }}>
                 Best for: Modern generation defaults.

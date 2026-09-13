@@ -95,7 +95,7 @@ export default function WeightTyingVisualizer({
               transition: 'all 150ms ease',
             }}
           >
-            Tied Weights ($W = E^T$)
+            Tied Weights (W = Eᵀ)
           </button>
           <button
             type="button"
@@ -112,7 +112,7 @@ export default function WeightTyingVisualizer({
               transition: 'all 150ms ease',
             }}
           >
-            Separate Weights ($W \neq E$)
+            Separate Weights (W ≠ E)
           </button>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function WeightTyingVisualizer({
                     border: '1px solid rgba(56, 189, 248, 0.25)',
                   }}
                 >
-                  Matrix $E$
+                  Matrix E
                 </span>
               </div>
 
@@ -187,7 +187,7 @@ export default function WeightTyingVisualizer({
                 color: 'var(--color-text-tertiary)',
               }}
             >
-              Token ID #9552 ("AI") → Row Vector in $E$
+              Token ID #9552 ("AI") → Row Vector in E
             </div>
           </div>
 

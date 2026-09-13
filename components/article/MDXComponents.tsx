@@ -50,6 +50,7 @@ import VocabularyLogitsVisualizer from '@/components/ui/VocabularyLogitsVisualiz
 import WeightTyingVisualizer from '@/components/ui/WeightTyingVisualizer';
 import DecodingStrategiesVisualizer from '@/components/ui/DecodingStrategiesVisualizer';
 import LLMSpeakingPipeline from '@/components/ui/LLMSpeakingPipeline';
+import LogitToProbTable from '@/components/ui/LogitToProbTable';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -89,6 +90,7 @@ export {
   WeightTyingVisualizer,
   DecodingStrategiesVisualizer,
   LLMSpeakingPipeline,
+  LogitToProbTable,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -324,4 +326,5 @@ export const mdxComponents = {
   WeightTyingVisualizer,
   DecodingStrategiesVisualizer,
   LLMSpeakingPipeline,
+  LogitToProbTable,
 };
