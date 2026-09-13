@@ -19,4 +19,8 @@ export { default as TokenEvolutionVisualizer } from './TokenEvolutionVisualizer'
 export { default as HiddenStateTensorVisualizer } from './HiddenStateTensorVisualizer';
 export { default as ShapeVsRepresentationVisualizer } from './ShapeVsRepresentationVisualizer';
 export { default as LayerHierarchyVisualizer } from './LayerHierarchyVisualizer';
-
+export { default as OutputProjectionVisualizer } from './OutputProjectionVisualizer';
+export { default as VocabularyLogitsVisualizer } from './VocabularyLogitsVisualizer';
+export { default as WeightTyingVisualizer } from './WeightTyingVisualizer';
+export { default as DecodingStrategiesVisualizer } from './DecodingStrategiesVisualizer';
+export { default as LLMSpeakingPipeline } from './LLMSpeakingPipeline';

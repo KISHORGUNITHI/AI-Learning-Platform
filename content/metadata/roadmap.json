@@ -447,6 +447,28 @@
           "Model Depth",
           "GPT Architecture"
         ]
+      },
+      {
+        "number": 29,
+        "title": "How an LLM Turns Hidden States into Words",
+        "slug": "module-2/day-29-llm-speaking",
+        "description": "Understand how GPT transforms its final hidden state into vocabulary logits, probabilities, and the next token it generates.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "22 min",
+        "estimatedStudyTime": "45 min",
+        "tags": [
+          "Output Projection",
+          "Logits",
+          "Softmax",
+          "Weight Tying",
+          "Decoding Strategies",
+          "Temperature",
+          "Top-K Sampling",
+          "Top-P Nucleus Sampling",
+          "Autoregressive Generation",
+          "LLM Speaking"
+        ]
       }
     ]
   },

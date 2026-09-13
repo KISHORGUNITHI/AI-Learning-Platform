@@ -1,0 +1,636 @@
+---
+title: "Day 29: How an LLM Turns Hidden States into Words"
+description: "Understand how GPT transforms its final hidden state into vocabulary logits, probabilities, and the next token it generates."
+slug: "module-2/day-29-llm-speaking"
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "22 min"
+estimatedStudyTime: "45 min"
+tags:
+  - Output Projection
+  - Logits
+  - Softmax
+  - Weight Tying
+  - Decoding Strategies
+  - Temperature
+  - Top-K Sampling
+  - Top-P Nucleus Sampling
+  - Autoregressive Generation
+  - LLM Speaking
+learningObjectives:
+  - Understand why the final hidden state is not directly the answer.
+  - Understand how the output projection matrix projects a 768-d hidden state into 50,000 vocabulary logits.
+  - Understand what logits represent as raw, unconstrained compatibility scores.
+  - Understand why Softmax is applied after logits to create a valid probability distribution.
+  - Understand how weight tying reuses the input embedding matrix as the transposed output head (W_out = E^T).
+  - Understand the mechanics, advantages, and tradeoffs of Greedy Decoding, Temperature, Top-K, and Top-P sampling.
+  - Understand the complete autoregressive speaking loop from hidden state to generated token and context appending.
+prerequisites:
+  - topic: "Why One Transformer Block Isn't Enough"
+    slug: "module-2/day-28-transformer-depth"
+previous:
+  title: "Why One Transformer Block Isn't Enough"
+  slug: "module-2/day-28-transformer-depth"
+---
+
+> *"The Transformer builds the representation. The output head translates that representation into vocabulary scores. Decoding turns those scores into the token we actually see."*
+
+---
+
+# How an LLM Turns Hidden States into Words
+
+## Learning Goals
+
+By the end of this lesson, you should be able to answer:
+
+- Why the final hidden state is not directly the answer.
+- How the output projection matrix converts a continuous hidden vector into vocabulary scores.
+- What logits represent and why they are unbounded compatibility scores.
+- Why Softmax is applied after logits rather than directly outputting probabilities.
+- How weight tying reuses the input embedding matrix as the output projection head ($W_{\text{out}} = E^T$).
+- How GPT chooses the next token among Greedy Decoding, Temperature, Top-K, and Top-P sampling.
+- How the generated token is appended to the context in the autoregressive speaking loop.
+
+---
+
+# The Moment GPT Has to Speak
+
+Suppose GPT has processed the prompt sequence:
+
+```text
+"I love"
+```
+
+After passing through all 12, 24, 48, or 96 stacked Transformer blocks, GPT has refined the sequence and produced a **final hidden state tensor** $[S \times D]$. For the final token position ($t=2$), the model produces a single vector:
+
+<MathBlock title="Final Hidden State Vector" caption="A 768-dimensional continuous mathematical vector produced at the final position">
+$$h_{\text{last}} \in \mathbb{R}^{1 \times 768}$$
+</MathBlock>
+
+<InfoCard title="The Moment of Generation">
+At this exact moment, GPT has completed all self-attention, feed-forward non-linear transformations, residual additions, and layer normalizations. But what the model holds in memory is a <strong>mathematical list of 768 floating-point numbers</strong>. It does not yet hold a human-readable word like <code>"AI"</code>.
+</InfoCard>
+
+---
+
+# Why Isn't the Final Hidden State the Answer?
+
+A common beginner misconception is that the Transformer outputs a word directly. But neural networks operate strictly in continuous geometric vector spaces.
+
+<Comparison
+  title="Hidden State vs Output Word"
+  left={{
+    label: "Final Hidden State",
+    points: [
+      "A continuous vector of 768 numbers: [0.88, 0.62, -0.20, ...]",
+      "Encodes abstract semantic, syntactic, and contextual information",
+      "Lives in internal mathematical feature space",
+      "Cannot be directly printed to a human screen",
+    ]
+  }}
+  right={{
+    label: "Generated Word / Token",
+    points: [
+      "A discrete symbol in a human vocabulary: 'AI'",
+      "Has a specific vocabulary integer ID: #9552",
+      "Lives in human language dictionary",
+      "Directly readable and displayable",
+    ]
+  }}
+/>
+
+There is no magical hardcoded mapping from an arbitrary vector $\mathbb{R}^{768} \to \text{"AI"}$.
+
+Instead, GPT must compare its internal hidden representation against **every single word in its entire vocabulary** to measure how compatible that hidden thought is with each possible word.
+
+---
+
+# Hidden State → Vocabulary
+
+To bridge internal thoughts and human vocabulary, GPT uses a linear transformation called the **Output Projection** (also known as the *Language Modeling Head* or *Unembedding Layer*).
+
+<FlowDiagram
+  title="From Internal Vectors to Vocabulary Scores"
+  steps={[
+    "Input Context: 'I love'",
+    "Stacked Transformer Depth (Layers 1..N)",
+    "Final Hidden State Vector [1 × 768]",
+    "Output Projection Matrix [768 × 50,000]",
+    "50,000 Raw Vocabulary Logits [1 × 50,000]",
+    "Softmax Normalization → Probabilities",
+    "Decoding Selection → Next Token 'AI'"
+  ]}
+/>
+
+---
+
+# The Output Projection Matrix
+
+Suppose our GPT model has:
+
+- **Hidden dimension ($d_{\text{model}}$):** $768$
+- **Vocabulary size ($V$):** $50,000$ tokens
+
+The final hidden state $h_{\text{last}}$ has shape $[1 \times 768]$.
+
+The Output Projection matrix $W_{\text{out}}$ has shape $[768 \times 50,000]$.
+
+When we multiply them:
+
+<MathBlock title="Output Projection Matrix Multiplication" caption="Projects 768 feature dimensions into 50,000 vocabulary scores">
+$$\underbrace{h_{\text{last}}}_{[1 \times 768]} \times \underbrace{W_{\text{out}}}_{[768 \times 50,000]} = \underbrace{z}_{[1 \times 50,000]}$$
+</MathBlock>
+
+<OutputProjectionVisualizer />
+
+The inner dimension $768$ matches and collapses, producing a 1D tensor of shape $[1 \times 50,000]$ containing **one raw compatibility score for every single word in the vocabulary**.
+
+---
+
+# One Score for Every Vocabulary Token
+
+Let us look closely at what the resulting $[1 \times 50,000]$ vector actually contains.
+
+Every slot in this vector corresponds to a specific token in the tokenizer dictionary:
+
+- Position `0` $\to$ Score for `"<|endoftext|>"`
+- Position `4831` $\to$ Score for `"computer"`
+- Position `9552` $\to$ Score for `"AI"`
+- Position `18240` $\to$ Score for `"dog"`
+- Position `31824` $\to$ Score for `"pizza"`
+- ... up to token `49,999`
+
+---
+
+# What Is a Logit?
+
+Those $50,000$ raw numerical scores are called **logits**.
+
+<KeyInsight title="Definition: Logit">
+A <strong>logit</strong> ($z_i$) is the unconstrained, unnormalized compatibility score between the model's final hidden state $h$ and vocabulary token $i$.
+</KeyInsight>
+
+For example, after processing `"I love"`:
+
+```text
+AI         → +12.4
+learning   → +8.7
+computer   → +4.1
+pizza      → +2.0
+dog        → -1.2
+```
+
+<VocabularyLogitsVisualizer />
+
+Logits have three crucial properties:
+
+1. **Unbounded:** They can be positive, negative, zero, large ($+50$), or small ($-100$).
+2. **Relative:** A higher logit means the model finds that token more compatible with the context.
+3. **NOT Probabilities:** Logits do not sum to $1.0$ and are not percentages.
+
+---
+
+# Where Do the Logits Come From?
+
+Why does matrix multiplication produce compatibility scores?
+
+Because the Output Projection matrix $W_{\text{out}}$ can be viewed as $50,000$ separate column vectors:
+
+<MathBlock title="Output Projection as 50,000 Token Vectors" caption="Each column represents a vocabulary token in 768-dimensional feature space">
+$$W_{\text{out}} = \begin{bmatrix} | & | & & | \\ w_0 & w_1 & \cdots & w_{49999} \\ | & | & & | \end{bmatrix}, \quad w_i \in \mathbb{R}^{768}$$
+</MathBlock>
+
+When the hidden vector $h \in \mathbb{R}^{1 \times 768}$ multiplies $W_{\text{out}}$, the score for token $i$ is simply the **vector dot product**:
+
+<MathBlock title="Logit as Vector Dot Product" caption="Measuring geometric alignment between hidden state and token representation">
+$$z_i = h \cdot w_i = \sum_{k=1}^{768} h_k \cdot w_{i,k}$$
+</MathBlock>
+
+---
+
+# The Output Projection Is Like a Classifier
+
+This reveals a fundamental architectural insight:
+
+> **The Output Projection is literally a 50,000-class linear classifier.**
+
+Just as a computer vision model might classify an image into $1,000$ ImageNet classes by multiplying a feature vector by a classification weight matrix, a Language Model classifies the current context into **50,000 vocabulary classes**!
+
+---
+
+# Dot Products Create Compatibility Scores
+
+Remember what a dot product measures geometrically:
+
+- If $h$ and $w_{\text{AI}}$ point in nearly the same direction in 768-dimensional space, their dot product is **large and positive** ($z_{\text{AI}} = +12.4$).
+- If $h$ and $w_{\text{computer}}$ share some features but differ in others, their dot product is **moderately positive** ($z_{\text{computer}} = +4.1$).
+- If $h$ and $w_{\text{dog}}$ have opposing features, their dot product is **negative** ($z_{\text{dog}} = -1.2$).
+
+---
+
+# The Important Symmetry: Feature Space ↔ Vocabulary
+
+Notice the remarkable symmetry at the two ends of a Transformer:
+
+```text
+INPUT (Day 2):
+Token ID #9552 ("AI") ──[ Embedding Matrix E ]──> 768-d Vector
+
+OUTPUT (Day 29):
+768-d Vector ──[ Projection Matrix W_out ]──> Score for #9552 ("AI")
+```
+
+- At the **input**, we mapped from discrete token IDs into continuous feature space ($V \to \mathbb{R}^{768}$).
+- At the **output**, we map from continuous feature space back into discrete vocabulary scores ($\mathbb{R}^{768} \to V$).
+
+This leads to one of the most elegant engineering techniques in deep learning.
+
+---
+
+# Weight Tying
+
+Since the Input Embedding Matrix $E$ has shape $[50,000 \times 768]$ and the Output Projection Matrix $W_{\text{out}}$ has shape $[768 \times 50,000]$, their dimensions are exact transposes of each other!
+
+Instead of allocating two separate matrices of $50,000 \times 768 = 38,400,000$ parameters each, we can share the same weights:
+
+<MathBlock title="Weight Tying Formula" caption="The output projection matrix is set to the transpose of the input embedding matrix">
+$$W_{\text{out}} = E^T$$
+</MathBlock>
+
+<WeightTyingVisualizer />
+
+---
+
+# Why Does Weight Tying Make Sense?
+
+Weight tying is both an engineering optimization and a semantic principle:
+
+1. **Parameter Savings:** In a model with $V=50,000$ and $d=768$, storing two separate matrices requires $2 \times 38.4\text{M} = 76.8\text{M}$ parameters. Weight tying cuts this in half, saving **38.4 million parameters**!
+2. **Semantic Consistency:** If vector $e_{\text{AI}}$ represents the concept *"AI"* at the input, taking the dot product $h \cdot e_{\text{AI}}$ at the output directly asks: *"How similar is the model's current thought to the concept 'AI'?"*
+
+<InfoCard title="Architectural Note">
+Weight tying was popularized by Press & Wolf (2017) and used in GPT-2, RoBERTa, ALBERT, and many modern open models (like Gemma). While not all modern LLMs tie weights (some very large models maintain separate matrices for extra expressive capacity), it remains a cornerstone architectural concept.
+</InfoCard>
+
+---
+
+# Logits Are Still Not Probabilities
+
+Even with logits computed, we cannot directly sample a token yet.
+
+Suppose our logits are:
+
+```text
+AI         → 12.0
+computer   → 4.0
+pizza      → 2.0
+dog        → -1.0
+```
+
+- These numbers do not sum to $1.0$ (their sum is $17.0$).
+- Negative scores (like $-1.0$) cannot represent probabilities.
+- A score of $12.0$ cannot be treated as $1200\%$.
+
+---
+
+# Why Not Directly Output Probabilities?
+
+Why doesn't the neural network output probabilities directly from the projection layer?
+
+Because constraining intermediate matrix multiplications to strictly produce positive numbers summing to $1.0$ would destroy gradient flow during backpropagation.
+
+By allowing the network to output unconstrained real numbers ($-\infty, +\infty$), the model has maximum freedom to adjust weights during gradient descent. The probability constraint is applied only as a final post-processing step.
+
+---
+
+# Softmax Revisited
+
+To convert unbounded logits $z_1, z_2, \dots, z_V$ into a valid probability distribution $P_1, P_2, \dots, P_V$, we apply the **Softmax function**:
+
+<MathBlock title="Softmax Probability Distribution" caption="Converts real-valued logits into normalized probabilities summing to 1.0">
+$$P_i = \frac{e^{z_i}}{\sum_{j=1}^{V} e^{z_j}}$$
+</MathBlock>
+
+Softmax performs two critical operations:
+
+1. **Exponentiation ($e^{z_i}$):** Turns every number strictly positive ($e^{-1.0} \approx 0.368, e^{12.0} \approx 162,754$).
+2. **Normalization ($\sum e^{z_j}$):** Divides each value by the sum of all exponentiated values so the resulting numbers strictly sum to **1.00 (100%)**.
+
+---
+
+# From Logits to Probabilities
+
+Let us trace the numbers for our example:
+
+| Token | Raw Logit ($z_i$) | Exponent ($e^{z_i}$) | Probability ($P_i$) |
+| :--- | :--- | :--- | :--- |
+| **AI** | **+12.0** | $162,754.8$ | **89.0%** ($0.890$) |
+| **computer** | **+4.0** | $54.6$ | **8.0%** ($0.080$) |
+| **pizza** | **+2.0** | $7.4$ | **2.0%** ($0.020$) |
+| **dog** | **-1.0** | $0.37$ | **1.0%** ($0.010$) |
+| **Total** | — | $\mathbf{162,817.2}$ | $\mathbf{1.000\ (100.0\%)}$ |
+
+Now GPT possesses a valid probability distribution over every word in the dictionary!
+
+---
+
+# Now GPT Has a Choice
+
+We must emphasize a vital distinction:
+
+<KeyInsight title="Softmax vs Decoding">
+<strong>Softmax does NOT choose the token.</strong> Softmax creates the probability distribution; the <strong>decoding strategy</strong> determines how the next token is selected from that distribution.
+</KeyInsight>
+
+---
+
+# Choosing the Next Token
+
+How should GPT pick a single word from this probability distribution?
+
+There are four primary decoding strategies:
+
+```text
+Next-Token Decoding Strategies
+├── 1. Greedy Decoding (Argmax)
+├── 2. Temperature Scaling
+├── 3. Top-K Sampling
+└── 4. Top-P (Nucleus) Sampling
+```
+
+<DecodingStrategiesVisualizer />
+
+---
+
+# 1. Greedy Decoding
+
+The simplest possible strategy:
+
+> **Always choose the single token with the highest probability ($t = \operatorname{argmax}_i P_i$).**
+
+In our example:
+- `P("AI") = 0.89` $\to$ **Selected!**
+
+---
+
+# Greedy Decoding: Advantages and Disadvantages
+
+<Comparison
+  title="Greedy Decoding Tradeoffs"
+  left={{
+    label: "Advantages",
+    accent: "var(--color-success)",
+    points: [
+      "100% deterministic and reproducible",
+      "Fastest possible decoding (no random sampling)",
+      "Excellent for mathematics, code, and exact factual retrieval",
+    ]
+  }}
+  right={{
+    label: "Disadvantages",
+    accent: "var(--color-error)",
+    points: [
+      "Gets trapped in repetitive loops ('the the the...')",
+      "Lacks stylistic variety and creative nuance",
+      "Myopic: Choosing the best immediate token may lead to a worse overall sentence",
+    ]
+  }}
+/>
+
+---
+
+# 2. Temperature
+
+Temperature ($T$) scales the logits before applying Softmax:
+
+<MathBlock title="Temperature-Scaled Softmax" caption="Divides logits by temperature parameter T before exponentiation">
+$$P_i = \frac{e^{z_i / T}}{\sum_{j=1}^{V} e^{z_j / T}}$$
+</MathBlock>
+
+<DecodingStrategiesVisualizer defaultTab="temperature" />
+
+---
+
+# Low Temperature ($T < 1.0$)
+
+When $T = 0.2$:
+
+- Logits are divided by $0.2$, which multiplies them by $5$ ($12 \to 60, 4 \to 20$).
+- The gap between the top score and other scores grows exponentially.
+- The distribution becomes **extremely sharp and peaked**.
+- As $T \to 0$, temperature sampling becomes identical to Greedy Decoding.
+
+---
+
+# High Temperature ($T > 1.0$)
+
+When $T = 1.5$ or $T = 2.0$:
+
+- Logits are divided by large numbers, shrinking differences toward zero.
+- The distribution becomes **flatter and closer to uniform**.
+- Less likely tokens receive a higher chance of being sampled, producing more surprising and creative text.
+
+---
+
+# 3. Top-K Sampling
+
+In Top-K sampling, the model sorts all vocabulary tokens by probability and keeps strictly the **top $K$ highest candidates**. All other tokens are truncated to probability zero, and the remaining $K$ tokens are renormalized.
+
+<DecodingStrategiesVisualizer defaultTab="topk" />
+
+Suppose $K = 3$:
+- **Kept:** `"AI"`, `"computer"`, `"pizza"`
+- **Discarded:** `"dog"`, `"table"`, `"car"`, and all other 49,994 tokens.
+
+---
+
+# Why Top-K?
+
+Top-K completely eliminates the **bizarre long-tail tokens**. Without Top-K, a token with $P = 0.0001$ might occasionally get sampled, causing the LLM to output nonsensical words in the middle of a fluent sentence.
+
+However, Top-K has a major limitation: **$K$ is fixed**.
+- In a predictable context (*"The capital of France is [Paris]"*), $K=50$ is far too generous and might include bad candidates.
+- In an open-ended context (*"The story begins in a [forest/castle/village/city/galaxy...]"*), $K=3$ is too narrow and stifles natural vocabulary.
+
+---
+
+# 4. Top-P Sampling (Nucleus Sampling)
+
+To solve the fixed-$K$ dilemma, Holtzman et al. (2019) introduced **Top-P (Nucleus) Sampling**.
+
+Instead of fixing the candidate count, Top-P keeps adding the most probable tokens until their **cumulative probability reaches threshold $P$** (e.g., $P = 0.90$):
+
+<MathBlock title="Nucleus Candidate Condition" caption="Smallest candidate subset whose cumulative probability reaches P">
+$$\sum_{i \in \text{Nucleus}} P_i \ge P$$
+</MathBlock>
+
+<DecodingStrategiesVisualizer defaultTab="topp" />
+
+In our example:
+```text
+AI         = 0.50 (Cumulative = 0.50)
+computer   = 0.25 (Cumulative = 0.75)
+pizza      = 0.15 (Cumulative = 0.90)  <-- Threshold P = 0.90 reached!
+─────────────────────────────────────
+dog        = 0.05 (Discarded)
+table      = 0.03 (Discarded)
+```
+
+---
+
+# Top-K vs Top-P
+
+<Comparison
+  title="Top-K vs Top-P Nucleus Sampling"
+  left={{
+    label: "Top-K Sampling",
+    points: [
+      "Fixed candidate pool size (e.g. always K=50)",
+      "Cannot adapt to model confidence",
+      "May include nonsense in confident contexts or truncate valid choices in open contexts",
+    ]
+  }}
+  right={{
+    label: "Top-P (Nucleus) Sampling",
+    points: [
+      "Dynamic candidate pool size",
+      "Expands when model is uncertain; shrinks to 1 token when model is confident",
+      "Standard default in modern LLM generation systems",
+    ]
+  }}
+/>
+
+---
+
+# The Complete Next-Token Pipeline
+
+Now let us trace the entire chain from internal mathematics to emitted text:
+
+<MathBlock title="The Next-Token Mathematical Pipeline" caption="Every stage from hidden state to generated token">
+$$h_{\text{last}} \xrightarrow[\times W_{\text{out}}]{\text{Projection}} z \xrightarrow[\operatorname{softmax}(\cdot / T)]{\text{Probabilities}} P(w) \xrightarrow[\text{Top-P / Top-K}]{\text{Decoding}} \text{Token } t_{\text{next}}$$
+</MathBlock>
+
+---
+
+# The Complete GPT Speaking Loop
+
+Here is the master hero visual showing how GPT generates text step by step:
+
+<LLMSpeakingPipeline />
+
+---
+
+# Why LLMs Speak One Token at a Time
+
+Why does an LLM generate one token at a time rather than outputting the entire paragraph in a single forward pass?
+
+Because human language is **contextually dependent**:
+
+> Every word you choose depends on the words that came immediately before it.
+
+When GPT generates the word `"AI"`, that new word alters the semantic meaning of the entire sentence. To decide what word should come *after* `"AI"`, the model must run another full forward pass with `"AI"` included in its context!
+
+---
+
+# One Complete Picture
+
+The complete cycle of autoregressive text generation is:
+
+<FlowDiagram
+  title="The Autoregressive Generation Cycle"
+  steps={[
+    "Context: 'I love'",
+    "Transformer Stack → Final Hidden State [1 × 768]",
+    "Output Projection [768 × 50,000] → Logits",
+    "Softmax Normalization → Probabilities",
+    "Decoding Strategy → Token 'AI'",
+    "Append Token → New Context: 'I love AI'",
+    "Feed Back to Step 1 & Repeat!"
+  ]}
+/>
+
+---
+
+# The Most Important Realization
+
+<KeyInsight title="The Core Takeaway of Day 29">
+The Transformer does not speak English, Python, or Spanish. It builds continuous numerical representations in a high-dimensional geometric space. The output projection translates that representation into 50,000 vocabulary scores. Softmax normalizes those scores into probabilities. And decoding selects the token you see on your screen.
+</KeyInsight>
+
+---
+
+# Common Misconceptions
+
+<Warning title="Misconception 1: 'Softmax picks the next word.'">
+Softmax only calculates a probability distribution across the vocabulary. It is the decoding strategy (Greedy, Top-P, Temperature) that determines how the next word is selected.
+</Warning>
+
+<Warning title="Misconception 2: 'Logits are percentages.'">
+Logits are unconstrained real numbers ($-\infty, +\infty$). They can be negative or greater than 1. They only represent relative compatibility scores.
+</Warning>
+
+<Warning title="Misconception 3: 'Temperature adds random noise to the model.'">
+Temperature divides the logits ($z/T$) before Softmax, mathematically changing the entropy and sharpness of the probability curve.
+</Warning>
+
+---
+
+# Key Takeaways
+
+<TakeawayCard title="Summary of Day 29 Core Principles">
+<ul>
+  <li><strong>Final Hidden State:</strong> The internal continuous vector ($h \in \mathbb{R}^{768}$) capturing the context of the prompt.</li>
+  <li><strong>Output Projection:</strong> Linear transformation ($W_{\text{out}} \in \mathbb{R}^{768 \times 50000}$) projecting the hidden vector into 50,000 vocabulary compatibility scores.</li>
+  <li><strong>Logits:</strong> Unbounded raw prediction scores produced by vector dot products ($h \cdot w_i$).</li>
+  <li><strong>Softmax:</strong> Exponentiates and normalizes logits into probabilities summing strictly to 1.0.</li>
+  <li><strong>Weight Tying:</strong> Engineering technique setting $W_{\text{out}} = E^T$, saving 50% parameter budget on embedding/head weights.</li>
+  <li><strong>Greedy Decoding:</strong> Selects the highest probability token; deterministic and fast.</li>
+  <li><strong>Temperature ($T$):</strong> Controls distribution concentration ($z/T$); low $T$ is sharp, high $T$ is flat.</li>
+  <li><strong>Top-K & Top-P:</strong> Truncates improbable tail tokens to ensure coherent, high-quality generation.</li>
+  <li><strong>Autoregressive Loop:</strong> Appends the chosen token to the prompt context and repeats for the next token.</li>
+</ul>
+</TakeawayCard>
+
+---
+
+## Questions That Changed My Understanding
+
+**Q: Why isn't the final hidden state itself the answer?**
+
+The hidden state is a mathematical point in $\mathbb{R}^{768}$. It has no text encoding. It must be compared against the vocabulary to find which human token aligns with that geometric location.
+
+**Q: How does a `1 × 768` vector become `1 × 50,000` vocabulary scores?**
+
+Through matrix multiplication with the Output Projection matrix: $[1 \times 768] \times [768 \times 50,000] = [1 \times 50,000]$. The inner dimension 768 cancels out, yielding one dot-product score per dictionary token.
+
+**Q: What exactly is a logit?**
+
+A logit is a raw, unbounded dot-product score measuring how well the current hidden state matches a token's learned representation.
+
+**Q: Why do we need Softmax after logits?**
+
+Logits can be negative and do not sum to 1.0. Softmax exponentiates and normalizes them into a mathematical probability distribution from which we can sample.
+
+**Q: What does weight tying mean?**
+
+Weight tying reuses the input embedding matrix as the transposed output projection matrix ($W_{\text{out}} = E^T$), saving tens of millions of parameters and enforcing semantic symmetry.
+
+**Q: What is the difference between Top-K and Top-P?**
+
+Top-K keeps a static number $K$ of candidates. Top-P keeps a dynamic candidate pool that accumulates up to cumulative probability threshold $P$, automatically adapting to model confidence.
+
+---
+
+## What's Next?
+
+We have now completed the deep study of every individual component inside the Transformer architecture:
+- Embeddings & Positional Encodings
+- Multi-Head Self-Attention & Causal Masking
+- Feed-Forward Networks & Non-linearities
+- Residual Connections & Layer Normalization
+- Transformer Depth & Stacked Hidden States
+- Output Projections, Logits, Softmax & Decoding
+
+### Day 30 — The Complete GPT Walkthrough
+
+In our next lesson, we will put **everything from Phase 1 and Phase 2 together** and trace a single input sentence from raw text all the way through the complete GPT forward pass to generated output in one master unified walkthrough!
