@@ -221,7 +221,7 @@ export default function OutputProjectionVisualizer({
                 </span>
               </div>
               <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                Targeting next token at position $t=2$
+                Targeting next token at position t = 2
               </span>
             </div>
 
@@ -251,7 +251,7 @@ export default function OutputProjectionVisualizer({
                 }}
               >
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-accent)', letterSpacing: '0.08em', marginBottom: '0.375rem' }}>
-                  Final Hidden State ($h$)
+                  Final Hidden State (h)
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>
                   [1 × <span style={{ color: '#38bdf8' }}>768</span>]
@@ -305,7 +305,7 @@ export default function OutputProjectionVisualizer({
                 }}
               >
                 <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#f472b6', letterSpacing: '0.08em', marginBottom: '0.375rem' }}>
-                  Vocabulary Logits ($z$)
+                  Vocabulary Logits (z)
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-text-primary)', marginBottom: '0.5rem' }}>
                   [1 × <span style={{ color: '#ec4899' }}>50,000</span>]
@@ -471,7 +471,7 @@ export default function OutputProjectionVisualizer({
                   </span>
                 ) : (
                   <span>
-                    ❄️ <strong>Negative Compatibility:</strong> The hidden state features oppose "{selectedToken.token}", resulting in a negative logit score ($z &lt; 0$).
+                    ❄️ <strong>Negative Compatibility:</strong> The hidden state features oppose "{selectedToken.token}", resulting in a negative logit score (z &lt; 0).
                   </span>
                 )}
               </div>

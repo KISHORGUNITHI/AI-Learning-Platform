@@ -322,13 +322,7 @@ Softmax performs two critical operations:
 
 Let us trace the numbers for our example:
 
-| Token | Raw Logit ($z_i$) | Exponent ($e^{z_i}$) | Probability ($P_i$) |
-| :--- | :--- | :--- | :--- |
-| **AI** | **+12.0** | $162,754.8$ | **89.0%** ($0.890$) |
-| **computer** | **+4.0** | $54.6$ | **8.0%** ($0.080$) |
-| **pizza** | **+2.0** | $7.4$ | **2.0%** ($0.020$) |
-| **dog** | **-1.0** | $0.37$ | **1.0%** ($0.010$) |
-| **Total** | — | $\mathbf{162,817.2}$ | $\mathbf{1.000\ (100.0\%)}$ |
+<LogitToProbTable />
 
 Now GPT possesses a valid probability distribution over every word in the dictionary!
 
@@ -358,8 +352,6 @@ Next-Token Decoding Strategies
 └── 4. Top-P (Nucleus) Sampling
 ```
 
-<DecodingStrategiesVisualizer />
-
 ---
 
 # 1. Greedy Decoding
@@ -367,6 +359,8 @@ Next-Token Decoding Strategies
 The simplest possible strategy:
 
 > **Always choose the single token with the highest probability ($t = \operatorname{argmax}_i P_i$).**
+
+<DecodingStrategiesVisualizer />
 
 In our example:
 - `P("AI") = 0.89` $\to$ **Selected!**
@@ -593,34 +587,6 @@ Temperature divides the logits ($z/T$) before Softmax, mathematically changing t
 
 ---
 
-## Questions That Changed My Understanding
-
-**Q: Why isn't the final hidden state itself the answer?**
-
-The hidden state is a mathematical point in $\mathbb{R}^{768}$. It has no text encoding. It must be compared against the vocabulary to find which human token aligns with that geometric location.
-
-**Q: How does a `1 × 768` vector become `1 × 50,000` vocabulary scores?**
-
-Through matrix multiplication with the Output Projection matrix: $[1 \times 768] \times [768 \times 50,000] = [1 \times 50,000]$. The inner dimension 768 cancels out, yielding one dot-product score per dictionary token.
-
-**Q: What exactly is a logit?**
-
-A logit is a raw, unbounded dot-product score measuring how well the current hidden state matches a token's learned representation.
-
-**Q: Why do we need Softmax after logits?**
-
-Logits can be negative and do not sum to 1.0. Softmax exponentiates and normalizes them into a mathematical probability distribution from which we can sample.
-
-**Q: What does weight tying mean?**
-
-Weight tying reuses the input embedding matrix as the transposed output projection matrix ($W_{\text{out}} = E^T$), saving tens of millions of parameters and enforcing semantic symmetry.
-
-**Q: What is the difference between Top-K and Top-P?**
-
-Top-K keeps a static number $K$ of candidates. Top-P keeps a dynamic candidate pool that accumulates up to cumulative probability threshold $P$, automatically adapting to model confidence.
-
----
-
 ## What's Next?
 
 We have now completed the deep study of every individual component inside the Transformer architecture:
@@ -631,6 +597,5 @@ We have now completed the deep study of every individual component inside the Tr
 - Transformer Depth & Stacked Hidden States
 - Output Projections, Logits, Softmax & Decoding
 
-### Day 30 — The Complete GPT Walkthrough
 
 In our next lesson, we will put **everything from Phase 1 and Phase 2 together** and trace a single input sentence from raw text all the way through the complete GPT forward pass to generated output in one master unified walkthrough!

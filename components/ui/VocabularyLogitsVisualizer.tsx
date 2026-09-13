@@ -117,7 +117,7 @@ export default function VocabularyLogitsVisualizer({
               transition: 'all 150ms ease',
             }}
           >
-            1. Raw Logits ($z$)
+            1. Raw Logits (z)
           </button>
           <button
             type="button"
@@ -134,7 +134,7 @@ export default function VocabularyLogitsVisualizer({
               transition: 'all 150ms ease',
             }}
           >
-            2. Exponentials ($e^z$)
+            2. Exponentials (e^z)
           </button>
           <button
             type="button"
@@ -151,7 +151,7 @@ export default function VocabularyLogitsVisualizer({
               transition: 'all 150ms ease',
             }}
           >
-            3. Probabilities ($P$)
+            3. Probabilities (P)
           </button>
         </div>
       </div>
@@ -241,7 +241,7 @@ export default function VocabularyLogitsVisualizer({
                     {/* Logit value badge */}
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', display: 'block' }}>
-                        Logit ($z$)
+                        Logit (z)
                       </span>
                       <span
                         style={{
@@ -258,7 +258,7 @@ export default function VocabularyLogitsVisualizer({
                     {/* Probability value badge */}
                     <div style={{ textAlign: 'right', minWidth: '70px' }}>
                       <span style={{ fontSize: '0.65rem', color: 'var(--color-text-tertiary)', textTransform: 'uppercase', display: 'block' }}>
-                        Prob ($P$)
+                        Prob (P)
                       </span>
                       <span
                         style={{
@@ -344,7 +344,7 @@ export default function VocabularyLogitsVisualizer({
                 {/* Logit Slider Control */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <label htmlFor={`logit-slider-${idx}`} style={{ fontSize: '0.7rem', color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
-                    Adjust logit $z$:
+                    Adjust logit z:
                   </label>
                   <input
                     id={`logit-slider-${idx}`}

@@ -24,3 +24,4 @@ export { default as VocabularyLogitsVisualizer } from './VocabularyLogitsVisuali
 export { default as WeightTyingVisualizer } from './WeightTyingVisualizer';
 export { default as DecodingStrategiesVisualizer } from './DecodingStrategiesVisualizer';
 export { default as LLMSpeakingPipeline } from './LLMSpeakingPipeline';
+export { default as LogitToProbTable } from './LogitToProbTable';
