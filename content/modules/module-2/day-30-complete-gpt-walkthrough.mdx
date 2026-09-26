@@ -1,0 +1,731 @@
+---
+title: "Day 30: The Complete GPT Walkthrough"
+description: "Follow one input through a GPT-style language model from raw text to the generated next token, connecting everything learned across Phase 1 and Phase 2."
+slug: "module-2/day-30-complete-gpt-walkthrough"
+published: true
+difficulty: "Intermediate"
+estimatedReadingTime: "30 min"
+estimatedStudyTime: "60 min"
+tags:
+  - GPT Architecture
+  - End-to-End Walkthrough
+  - Tokenization
+  - Embeddings
+  - Self-Attention
+  - Causal Masking
+  - Feed-Forward Network
+  - Residual Connections
+  - Layer Normalization
+  - Output Projection
+  - Autoregressive Generation
+  - Integration
+learningObjectives:
+  - Trace one input all the way from raw text to a generated token.
+  - Connect every component from Phase 1 and Phase 2 into a single coherent pipeline.
+  - Understand how tokenization, embeddings, attention, normalization, FFN, and decoding fit together.
+  - Visualize how a token representation evolves through the full Transformer stack.
+  - See how autoregressive generation loops the output back into the input.
+prerequisites:
+  - topic: "How an LLM Turns Hidden States into Words"
+    slug: "module-2/day-29-llm-speaking"
+previous:
+  title: "How an LLM Turns Hidden States into Words"
+  slug: "module-2/day-29-llm-speaking"
+---
+
+<GPTWalkthroughNavigator />
+
+> *"You have learned every piece. Now watch the machine run."*
+
+This is not another theory lesson.
+
+Phase 1 gave you the foundations: training, loss, backpropagation, gradient descent.
+Phase 2 gave you the architecture: embeddings, positional encoding, attention, multi-head, FFN, residual connections, layer normalization, causal masking, transformer depth, and decoding.
+
+Today you follow **one input all the way through** — from the words you type to the token the model generates.
+
+Every section below connects directly back to a lesson you have already completed. The components are interactive. Click, toggle, inspect.
+
+---
+
+<div id="phase-input" data-phase="phase-input" />
+
+## Part 1 — The Input
+
+Everything starts with text. For this walkthrough, the input is:
+
+> **"I love"**
+
+This is a tiny sequence on purpose. Every operation stays visible and countable. The principles scale to 100,000 tokens — the math is identical.
+
+<TokenMapping
+  title="The Starting Point"
+  fromLabel="What the user types"
+  toLabel="What the model receives"
+  items={[
+    { from: '"I love"',          to: 'A string of characters — not yet usable by the model' },
+    { from: 'After tokenization', to: 'A sequence of integer token IDs' },
+    { from: 'After embedding',    to: 'A matrix of continuous vectors' },
+  ]}
+/>
+
+The model never sees raw text. It sees numbers — specifically, a sequence of integer IDs, which are then converted into dense floating-point vectors.
+
+---
+
+<div id="phase-tokenization" data-phase="phase-tokenization" />
+
+## Part 2 — Tokenization
+
+The first transformation: text → token IDs.
+
+A tokenizer (trained separately, using byte-pair encoding or similar) splits the input into subword units and maps each to an integer index in the model's vocabulary.
+
+<AttentionMatrix
+  title="Text → Token IDs (Illustrative)"
+  queryLabel="Token"
+  keyLabel="ID"
+  columns={["Token ID"]}
+  rows={[
+    { label: '"I"',    values: ['42']   },
+    { label: '"love"', values: ['381']  },
+  ]}
+  caption="These IDs are illustrative — not actual GPT-4 vocabulary IDs."
+/>
+
+<TokenMapping
+  title="What a Token ID Actually Is"
+  fromLabel="Concept"
+  toLabel="Reality"
+  items={[
+    { from: 'Token ID 42',   to: 'An index into a learned embedding table' },
+    { from: 'Token ID 381',  to: 'A different index into the same table' },
+    { from: 'The ID itself', to: 'Has no mathematical meaning — it is just a lookup key' },
+  ]}
+/>
+
+The sequence length is now **T = 2**. The model knows it has two tokens to process. It does not yet know what they mean — that comes from the embedding lookup.
+
+---
+
+<div id="phase-embeddings" data-phase="phase-embeddings" />
+
+## Part 3 — Token Embeddings
+
+Each integer ID is looked up in the **Embedding Matrix** — a learned table of shape `[vocab_size × d_model]`. The row at index 42 is the embedding vector for "I". The row at index 381 is the embedding vector for "love".
+
+<FlowDiagram title="Token ID → Dense Vector" steps={[
+  'Token ID: 42',
+  'Embedding lookup — row 42 of the embedding matrix',
+  'Dense vector ∈ ℝ⁷⁶⁸',
+  'Token ID: 381',
+  'Embedding lookup — row 381 of the embedding matrix',
+  'Dense vector ∈ ℝ⁷⁶⁸',
+]} />
+
+After this step, both tokens exist as 768-dimensional vectors. These vectors were learned during pre-training — tokens that appear in similar contexts end up with similar vectors.
+
+The embedding matrix has shape `[50,000 × 768]`. Every forward pass through the model is free to look up any row. Only the rows corresponding to the input tokens are used.
+
+<TokenMapping
+  title="After the Embedding Lookup"
+  fromLabel="Token"
+  toLabel="Representation"
+  items={[
+    { from: '"I"    (ID 42)',  to: 'Vector h₀⁽⁰⁾ ∈ ℝ⁷⁶⁸ — 768 learned floats' },
+    { from: '"love" (ID 381)', to: 'Vector h₀⁽¹⁾ ∈ ℝ⁷⁶⁸ — 768 learned floats' },
+  ]}
+/>
+
+The full token sequence is now a matrix of shape `[2 × 768]`. The model will carry this shape through the entire stack — every Transformer block outputs exactly `[2 × 768]`.
+
+---
+
+<div id="phase-positional" data-phase="phase-positional" />
+
+## Part 4 — Positional Information
+
+Self-attention has no built-in sense of order. Without positional information, "I love" and "love I" would produce identical representations — a serious problem for language.
+
+The solution: add a position vector to each token embedding before any computation begins.
+
+<FlowDiagram title="Building the Input Representation" steps={[
+  'Token embedding for "I"    →  e⁽⁰⁾  ∈ ℝ⁷⁶⁸',
+  'Positional vector for pos 0 →  p⁽⁰⁾  ∈ ℝ⁷⁶⁸',
+  'x⁽⁰⁾ = e⁽⁰⁾ + p⁽⁰⁾',
+  'Token embedding for "love" →  e⁽¹⁾  ∈ ℝ⁷⁶⁸',
+  'Positional vector for pos 1 →  p⁽¹⁾  ∈ ℝ⁷⁶⁸',
+  'x⁽¹⁾ = e⁽¹⁾ + p⁽¹⁾',
+]} />
+
+<Comparison
+  title="What Each Vector Encodes"
+  left={{
+    label: 'Token Embedding',
+    accent: 'var(--color-accent)',
+    points: [
+      'What the token means in isolation',
+      'Learned from co-occurrence patterns in training data',
+      'Same vector regardless of position in the sequence',
+      '"love" always starts from the same embedding',
+    ],
+  }}
+  right={{
+    label: 'Positional Vector',
+    accent: 'var(--color-success)',
+    points: [
+      'Where the token sits in the sequence',
+      'Learned (GPT) or fixed sinusoidal (original Transformer)',
+      'Different vector for every position index',
+      'Position 0 ≠ position 1 ≠ position 47',
+    ],
+  }}
+/>
+
+After addition, the input matrix `X ∈ ℝ^{2×768}` encodes both **what** and **where** for every token. This is what enters the first Transformer block.
+
+---
+
+<div id="phase-qkv" data-phase="phase-qkv" />
+
+## Part 5 — Q, K, V Projections
+
+The first thing every Transformer block does is project each token's representation into three separate vectors: **Query**, **Key**, and **Value**.
+
+<FlowDiagram title="One Token → Three Projections" steps={[
+  'Input vector x ∈ ℝ⁷⁶⁸',
+  'Q = x Wᴼ   (What am I looking for?)',
+  'K = x Wᴷ   (What do I contain?)',
+  'V = x Wᵛ   (What should I pass forward?)',
+]} />
+
+<TokenMapping
+  title="The Role of Each Projection"
+  fromLabel="Vector"
+  toLabel="Intuition"
+  items={[
+    { from: 'Query (Q)', to: '"I am looking for tokens that relate to me in this way"' },
+    { from: 'Key   (K)', to: '"Here is what I advertise about myself"' },
+    { from: 'Value (V)', to: '"If you attend to me, here is what you actually receive"' },
+  ]}
+/>
+
+Each weight matrix (`Wᴼ`, `Wᴷ`, `Wᵛ`) has shape `[768 × 64]` in a single head of GPT-2 Small. The projection is a standard matrix multiplication — learned during training.
+
+For the full sequence of 2 tokens:
+
+```
+X      ∈ ℝ^{2 × 768}
+Wᴼ    ∈ ℝ^{768 × 64}
+──────────────────────
+Q = X Wᴼ  ∈ ℝ^{2 × 64}
+K = X Wᴷ  ∈ ℝ^{2 × 64}
+V = X Wᵛ  ∈ ℝ^{2 × 64}
+```
+
+All three are computed in parallel. No sequential dependency between them.
+
+---
+
+<div id="phase-scores" data-phase="phase-scores" />
+
+## Part 6 — Attention Scores
+
+Queries and Keys are used to compute how much each token should attend to every other token.
+
+The operation is a **scaled dot product**: multiply the query matrix by the transposed key matrix, then divide by √dₖ.
+
+<MathBlock title="Attention Score Computation">
+  $$\text{Scores} = \frac{QK^{\top}}{\sqrt{d_k}}$$
+</MathBlock>
+
+For the sequence "I love":
+
+<AttentionMatrix
+  title="Raw Scaled Attention Scores (Illustrative)"
+  queryLabel="Query token"
+  keyLabel="Key token"
+  columns={['"I"', '"love"']}
+  rows={[
+    { label: '"I"',    values: ['2.0', '5.0'] },
+    { label: '"love"', values: ['1.0', '3.0'] },
+  ]}
+  caption="Each cell is the dot product of one query vector with one key vector, divided by √64 = 8."
+/>
+
+Reading this matrix: the query for "I" scores 2.0 against the key for "I" itself, and 5.0 against the key for "love". A higher score means stronger relevance.
+
+The division by √dₖ (√64 = 8) prevents the dot products from becoming very large and saturating the softmax that follows.
+
+---
+
+<div id="phase-mask" data-phase="phase-mask" />
+
+## Part 7 — Causal Masking
+
+GPT is an **autoregressive** model. During training it processes the entire sequence at once, but each position must only be allowed to attend to itself and earlier positions — never future ones.
+
+The causal mask sets all future-position scores to −∞ before softmax. Because e^(−∞) = 0, those positions receive exactly zero attention weight after softmax.
+
+<CausalMaskVisualizer />
+
+Toggle between the three views above:
+
+- **Without mask** — every token can see every other token, including the future. This leaks information that would not exist at generation time.
+- **Causal mask applied** — upper-triangle entries are replaced with −∞.
+- **After softmax** — future positions receive 0% attention weight. Each row still sums to 100%.
+
+This is what makes training and generation consistent: the model never sees information it would not have during autoregressive prediction.
+
+---
+
+<div id="phase-softmax" data-phase="phase-softmax" />
+
+## Part 8 — Softmax → Attention Weights
+
+The masked scores are now converted to probabilities by softmax applied row-by-row. Each row of the resulting matrix is a valid probability distribution over the allowed positions.
+
+<AttentionMatrix
+  title="Attention Weights After Softmax (Illustrative)"
+  queryLabel="Query token"
+  keyLabel="Key token"
+  columns={['"I"', '"love"']}
+  rows={[
+    { label: '"I"',    values: ['1.00 (100%)', '0.00 (0%)']  },
+    { label: '"love"', values: ['0.12 (12%)',  '0.88 (88%)'] },
+  ]}
+  caption="Row sums = 1.0. 'I' attends only to itself (position 0). 'love' attends mostly to itself but also gathers some signal from 'I'."
+/>
+
+<TokenMapping
+  title="What Each Row Means"
+  fromLabel="Token"
+  toLabel="What it attends to"
+  items={[
+    { from: '"I" at position 0',    to: '100% self — causal mask blocks all future tokens' },
+    { from: '"love" at position 1', to: '88% self + 12% from "I" — both positions are available' },
+  ]}
+/>
+
+---
+
+<div id="phase-values" data-phase="phase-values" />
+
+## Part 9 — Weighted Values
+
+The attention weights are used to compute a **weighted sum of the Value vectors**.
+
+<MathBlock title="Attention Output">
+  $$\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right) V$$
+</MathBlock>
+
+For each token, the output is a mixture of all allowed Value vectors, weighted by how much attention was paid to each position.
+
+<WeightedSumVisualizer />
+
+The output of this operation is a new matrix with the same shape as Q, K, V: `[2 × 64]`. Each row is a contextually-informed representation of one token — not just its isolated embedding, but a blend of information gathered from the sequence.
+
+---
+
+<div id="phase-multihead" data-phase="phase-multihead" />
+
+## Part 10 — Multi-Head Attention
+
+One set of Q, K, V captures one kind of relationship. GPT-2 Small uses **12 attention heads** running in parallel.
+
+Each head has its own weight matrices and therefore learns different relationships:
+
+<MultiHeadArchitecture />
+
+After all heads run independently, their outputs are concatenated and projected through an output matrix Wᴼ:
+
+```
+[head₁ output ‖ head₂ output ‖ ... ‖ head₁₂ output]
+     ↓
+  Concatenated: [2 × 768]   (12 heads × 64 dims = 768)
+     ↓
+  × Wᴼ  ∈ ℝ^{768 × 768}
+     ↓
+  Multi-Head Attention output: [2 × 768]
+```
+
+The shape returns to `[2 × 768]` — same as the input. This is critical: every sublayer in the Transformer is **shape-preserving**, which is what allows arbitrary stacking.
+
+---
+
+<div id="phase-residual1" data-phase="phase-residual1" />
+
+## Part 11 — First Residual Connection
+
+The attention output is not used to replace the input. It is **added** to the input.
+
+<MathBlock title="Residual Connection">
+  $$x_2 = x + \text{Attention}(x)$$
+</MathBlock>
+
+<Comparison
+  title="What the Residual Connection Guarantees"
+  left={{
+    label: 'Without Residual',
+    accent: 'var(--color-error)',
+    points: [
+      'The original representation is overwritten',
+      'Gradients must pass through every layer sequentially',
+      'Early layers receive tiny gradients — stop learning',
+      'Deep models become practically untrainable',
+    ],
+  }}
+  right={{
+    label: 'With Residual (x + F(x))',
+    accent: 'var(--color-success)',
+    points: [
+      'Original representation is preserved alongside the update',
+      'Gradient highway: ∂y/∂x = 1 + ∂F(x)/∂x',
+      'The +1 keeps gradients strong all the way to layer 1',
+      'GPT-3 has 96 blocks — residuals make this trainable',
+    ],
+  }}
+/>
+
+Every Transformer block has **two** residual connections — one around attention, one around the FFN. The block learns what to *add*, not what to *replace*.
+
+---
+
+<div id="phase-layernorm1" data-phase="phase-layernorm1" />
+
+## Part 12 — Layer Normalization
+
+After the residual addition, the representation may have grown to an extreme scale through accumulated additions across many layers. Layer Normalization brings it back to a stable, predictable range.
+
+<FlowDiagram title="Pre-LayerNorm (Modern GPT)" steps={[
+  'Input x₂  (may have large or small values)',
+  'Compute mean μ across 768 dimensions',
+  'Compute variance σ² across 768 dimensions',
+  'Normalize: x̂ = (x₂ − μ) / √(σ² + ε)',
+  'Scale: × γ  (learned per-dimension)',
+  'Shift: + β  (learned per-dimension)',
+  'Stable output — ready for the FFN',
+]} />
+
+<TokenMapping
+  title="LayerNorm at a Glance"
+  fromLabel="Step"
+  toLabel="What it does"
+  items={[
+    { from: 'Normalize',   to: 'Mean ≈ 0, variance ≈ 1 — removes runaway scale' },
+    { from: '× γ',         to: '768 learned scale knobs — restores useful spread' },
+    { from: '+ β',         to: '768 learned shift knobs — restores useful center' },
+    { from: 'Final output', to: 'Not necessarily mean=0 — γ and β move it freely' },
+  ]}
+/>
+
+In modern GPT (Pre-LN), LayerNorm is applied **before** the sublayer, so the residual path remains a clean identity: `y = x + F(LayerNorm(x))`.
+
+---
+
+<div id="phase-ffn" data-phase="phase-ffn" />
+
+## Part 13 — Feed-Forward Network
+
+After attention has mixed information *between* tokens, the FFN transforms each token's representation *independently*.
+
+```
+Each token's vector:  [1 × 768]
+      ↓
+Linear expansion:     [1 × 3072]   (× 4 expansion factor)
+      ↓
+GELU activation:      [1 × 3072]   (non-linearity)
+      ↓
+Linear compression:   [1 × 768]    (back to model dimension)
+```
+
+<FFNPipelineVisualizer />
+
+The FFN is applied to each token's row independently — it does not mix information between positions. Its role is to transform the representation that attention assembled: adding non-linearity, learning feature interactions, and expanding the model's representational capacity.
+
+<Comparison
+  title="Attention vs FFN — Their Different Jobs"
+  left={{
+    label: 'Self-Attention',
+    accent: 'var(--color-accent)',
+    points: [
+      'Mixes information between token positions',
+      '"What should I know about the rest of the sequence?"',
+      'Output depends on all other tokens',
+      'Operates globally across the sequence',
+    ],
+  }}
+  right={{
+    label: 'Feed-Forward Network',
+    accent: 'var(--color-warning)',
+    points: [
+      'Transforms each token independently',
+      '"Given what I know, how should I update my representation?"',
+      'Output depends only on that token\'s own vector',
+      'Same computation for every token position',
+    ],
+  }}
+/>
+
+---
+
+<div id="phase-residual2" data-phase="phase-residual2" />
+
+## Part 14 — Second Residual + LayerNorm
+
+The FFN output is added back to the input of the FFN (second residual connection), then normalized again:
+
+<MathBlock title="Second Residual + Norm">
+  $$x_3 = x_2 + \text{FFN}(\text{LayerNorm}(x_2))$$
+</MathBlock>
+
+<FlowDiagram title="Complete Transformer Block — Pre-LN" steps={[
+  'Input x',
+  'LayerNorm₁(x)',
+  'Multi-Head Attention → A',
+  'x₂ = x + A   ← first residual',
+  'LayerNorm₂(x₂)',
+  'FFN → F',
+  'x₃ = x₂ + F  ← second residual',
+  'Output x₃   [same shape: 2 × 768]',
+]} />
+
+The output shape `[2 × 768]` is identical to the input shape. This is what makes it possible to stack N identical-architecture blocks — each block's output is a valid input for the next.
+
+---
+
+<div id="phase-stack" data-phase="phase-stack" />
+
+## Part 15 — Stacked Transformer Blocks
+
+One block is one stage of refinement. GPT-2 Small has 12. GPT-3 has 96.
+
+<TransformerStackVisualizer />
+
+The key insight: **each block has its own independent learned parameters**. They share architecture but not weights. This allows the stack to build progressively richer representations:
+
+<LayerHierarchyVisualizer />
+
+<TokenEvolutionVisualizer />
+
+The tensor shape `[2 × 768]` never changes. The information encoded inside those 768 numbers per token transforms continuously — from raw lexical identity at the bottom to rich contextual synthesis at the top.
+
+<ShapeVsRepresentationVisualizer />
+
+---
+
+<div id="phase-hidden" data-phase="phase-hidden" />
+
+## Part 16 — Final Hidden State
+
+After all N blocks, the final output is called the **final hidden state**: a matrix `[T × 768]` where each row is a contextually-enriched representation of one token.
+
+<HiddenStateTensorVisualizer />
+
+For next-token prediction, only one row matters: the **last token's row**. This is the vector that has attended to everything before it and synthesized the full context into a single 768-dimensional representation.
+
+<TokenMapping
+  title="What the Final Hidden State Is"
+  fromLabel="What it is"
+  toLabel="What it is NOT"
+  items={[
+    { from: 'A 768-dimensional float vector', to: 'Not a word or a token ID' },
+    { from: 'A synthesis of the full context', to: 'Not a simple lookup or average' },
+    { from: 'Input to the output projection', to: 'Not the final prediction yet' },
+  ]}
+/>
+
+---
+
+<div id="phase-projection" data-phase="phase-projection" />
+
+## Part 17 — Output Projection
+
+The final hidden state vector `h ∈ ℝ⁷⁶⁸` is multiplied by the output projection matrix to produce one score for every token in the vocabulary.
+
+<MathBlock title="Output Projection">
+  $$z = h \cdot W_{\text{out}} \quad [1 \times 768] \cdot [768 \times 50{,}000] = [1 \times 50{,}000]$$
+</MathBlock>
+
+<OutputProjectionVisualizer />
+
+The output projection matrix `W_out ∈ ℝ^{768 × 50,000}` is a learned linear classifier. Each column is a 768-dimensional vector representing one vocabulary token. The dot product between the hidden state and a column gives the **raw compatibility score** (logit) for that token.
+
+The inner dimension 768 cancels, producing a vector of 50,000 raw scores — one per word in the vocabulary.
+
+---
+
+<div id="phase-logits" data-phase="phase-logits" />
+
+## Part 18 — Vocabulary Logits
+
+The 50,000 raw scores are called **logits**. They are not probabilities.
+
+<TokenMapping
+  title="Sample Logits After Output Projection (Illustrative)"
+  fromLabel="Token"
+  toLabel="Raw Logit Score"
+  items={[
+    { from: '"AI"',       to: '+12.0  — strong positive alignment' },
+    { from: '"learning"', to: ' +8.7  — moderate positive'         },
+    { from: '"computer"', to: ' +4.1  — weak positive'             },
+    { from: '"pizza"',    to: ' +2.0  — low alignment'             },
+    { from: '"dog"',      to: ' −1.2  — negative alignment'        },
+    { from: '... 49,995 more', to: 'Each receives its own score'   },
+  ]}
+/>
+
+Logits can be negative, larger than 1, and do not sum to anything in particular. They are raw dot product outputs — meaningful only relative to each other.
+
+---
+
+<div id="phase-softmax2" data-phase="phase-softmax2" />
+
+## Part 19 — Softmax → Probabilities
+
+Softmax converts the raw logits into a valid probability distribution.
+
+<MathBlock title="Softmax">
+  $$P(w_i) = \frac{e^{z_i}}{\displaystyle\sum_{j=1}^{V} e^{z_j}}$$
+</MathBlock>
+
+<VocabularyLogitsVisualizer />
+
+Use the sliders above to adjust individual logit values and watch how the probability distribution responds. Key observations:
+
+- All probabilities are in `[0, 1]`
+- All probabilities sum to exactly 1.0
+- A large logit difference (e.g. 12 vs 2) produces a very concentrated distribution
+- A small logit difference (e.g. 4 vs 3) produces a more spread-out distribution
+
+---
+
+<div id="phase-decoding" data-phase="phase-decoding" />
+
+## Part 20 — Decoding Strategy
+
+Having a probability distribution is not the same as having chosen the next token. Something must **select** one token from the distribution.
+
+<DecodingStrategiesVisualizer defaultTab="greedy" />
+
+The four main strategies:
+
+- **Greedy** — always pick the highest-probability token. Deterministic, fast, can be repetitive.
+- **Temperature** — scale the logits by 1/T before softmax. Low T sharpens the distribution; high T flattens it.
+- **Top-K** — discard all but the K highest-probability tokens, then sample from the renormalized remainder.
+- **Top-P (Nucleus)** — keep the smallest set of tokens whose cumulative probability reaches P, then sample from them.
+
+Each strategy makes a different trade-off between predictability, diversity, and quality. In practice, most production systems combine Temperature + Top-P.
+
+---
+
+<div id="phase-token-out" data-phase="phase-token-out" />
+
+## Part 21 — The Model Speaks
+
+The decoding step selects a token. The model has generated its first output.
+
+```
+Input:   "I love"
+         ↓
+All 22 steps above
+         ↓
+Output:  "AI"
+```
+
+The new sequence is now: **"I love AI"**
+
+This single generated token is appended to the input. The model does not remember what it just did — it will re-process the entire sequence from scratch on the next call, with the new token included.
+
+<TokenMapping
+  title="What Just Happened"
+  fromLabel="Step"
+  toLabel="Result"
+  items={[
+    { from: 'Tokenize "I love"',              to: '[42, 381]' },
+    { from: 'Embed + position',               to: 'X ∈ ℝ^{2×768}' },
+    { from: 'Through 12 Transformer blocks',  to: 'H_final ∈ ℝ^{2×768}' },
+    { from: 'Take last row h_last',           to: 'h ∈ ℝ⁷⁶⁸' },
+    { from: 'Multiply by W_out',              to: 'Logits ∈ ℝ^{50000}' },
+    { from: 'Softmax',                        to: 'Probabilities — sum to 1' },
+    { from: 'Greedy decoding',                to: '"AI" — highest probability token' },
+  ]}
+/>
+
+---
+
+<div id="phase-loop" data-phase="phase-loop" />
+
+## Part 22 — The Autoregressive Loop
+
+GPT generates one token per forward pass. To generate a sentence, it runs the entire pipeline repeatedly — each time appending the new token to the context.
+
+<LLMSpeakingPipeline />
+
+Click **Step Forward** to advance one token at a time. Each click represents one complete forward pass through the entire 22-step pipeline above.
+
+<FlowDiagram title="The Autoregressive Generation Loop" steps={[
+  'Context: "I love"',
+  'Full GPT forward pass (all 22 steps)',
+  'Generated token: "AI"',
+  'New context: "I love AI"',
+  'Full GPT forward pass again',
+  'Generated token: "because"',
+  'New context: "I love AI because"',
+  '... repeats until stop condition',
+]} />
+
+The model has no persistent state between calls. Each forward pass is independent. The entire "memory" of what was generated exists in the growing context sequence that is fed back in.
+
+---
+
+<div id="phase-complete" data-phase="phase-complete" />
+
+## Part 23 — The Complete Architecture
+
+One diagram. Every component in its place.
+
+<TransformerStackVisualizer />
+
+<FlowDiagram title="Complete GPT Pipeline — End to End" steps={[
+  'TEXT: "I love"',
+  'TOKENIZER → Token IDs: [42, 381]',
+  'EMBEDDING LOOKUP → X ∈ ℝ^{2×768}',
+  'POSITIONAL ADD → Input representation',
+  '─── TRANSFORMER BLOCK (×N) ───',
+  'Pre-LayerNorm₁',
+  'Multi-Head Self-Attention (Q·Kᵀ / √d → Causal Mask → Softmax → ×V)',
+  'Residual: x + Attention(LN(x))',
+  'Pre-LayerNorm₂',
+  'Feed-Forward Network (expand → GELU → compress)',
+  'Residual: x + FFN(LN(x))',
+  '─── REPEAT N TIMES ───',
+  'Final Hidden State H_N ∈ ℝ^{2×768}',
+  'Output Projection: h_last × W_out → Logits ∈ ℝ^{50000}',
+  'Softmax → Probability distribution',
+  'Decoding strategy → Next token: "AI"',
+  'Append to context → Loop ↺',
+]} />
+
+---
+
+## What You Have Just Seen
+
+This is everything that happens every single time a language model generates one token.
+
+- Phase 1 (Module 1, Days 1–11) gave you: training, loss, backpropagation, gradient descent, and the optimization loop that learned every weight in this pipeline.
+- Phase 2 (Module 2, Days 1–29) gave you: embeddings, positional encoding, query/key/value, dot-product attention, scaling, causal masking, softmax, value aggregation, multi-head attention, concatenation, feed-forward networks, residual connections, layer normalization, transformer depth, output projection, logits, and decoding.
+
+Today you followed them as a single, connected, continuous machine.
+
+---
+
+## What's Next?
+
+Phase 3 moves beyond the base architecture.
+
+Modern LLMs differ from the vanilla GPT described here in important ways: rotary positional embeddings, grouped-query attention, key-value caching, flash attention, and scale-dependent design choices that make 70-billion-parameter models practical to serve.
+
+Those are the topics of Module 3.
+
+The foundation you built in Phase 1 and Phase 2 is the correct one. Phase 3 builds directly on top of it.

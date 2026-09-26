@@ -268,7 +268,7 @@ export default function ShapeVsRepresentationVisualizer({
             </div>
 
             <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-              Because the tensor shape never changes, the output matrix of Block $k$ perfectly matches the expected input matrix format for Block $k+1$.
+              Because the tensor shape never changes, the output matrix of Block k perfectly matches the expected input matrix format for Block k+1.
             </p>
           </div>
 
@@ -330,7 +330,7 @@ export default function ShapeVsRepresentationVisualizer({
             lineHeight: 1.6,
           }}
         >
-          <strong style={{ color: 'var(--color-accent)' }}>The Core Takeaway:</strong> Think of the tensor as a fixed-size container ($4 \times 768$). Each Transformer block does not resize the container — it refines and enriches the knowledge stored inside every coordinate.
+          <strong style={{ color: 'var(--color-accent)' }}>The Core Takeaway:</strong> Think of the tensor as a fixed-size container (4 × 768). Each Transformer block does not resize the container — it refines and enriches the knowledge stored inside every coordinate.
         </div>
       </div>
 

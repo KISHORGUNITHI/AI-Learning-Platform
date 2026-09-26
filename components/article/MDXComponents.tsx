@@ -45,6 +45,13 @@ import TokenEvolutionVisualizer from '@/components/ui/TokenEvolutionVisualizer';
 import HiddenStateTensorVisualizer from '@/components/ui/HiddenStateTensorVisualizer';
 import ShapeVsRepresentationVisualizer from '@/components/ui/ShapeVsRepresentationVisualizer';
 import LayerHierarchyVisualizer from '@/components/ui/LayerHierarchyVisualizer';
+import OutputProjectionVisualizer from '@/components/ui/OutputProjectionVisualizer';
+import VocabularyLogitsVisualizer from '@/components/ui/VocabularyLogitsVisualizer';
+import WeightTyingVisualizer from '@/components/ui/WeightTyingVisualizer';
+import DecodingStrategiesVisualizer from '@/components/ui/DecodingStrategiesVisualizer';
+import LLMSpeakingPipeline from '@/components/ui/LLMSpeakingPipeline';
+import LogitToProbTable from '@/components/ui/LogitToProbTable';
+import GPTWalkthroughNavigator from '@/components/ui/GPTWalkthroughNavigator';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -79,6 +86,13 @@ export {
   HiddenStateTensorVisualizer,
   ShapeVsRepresentationVisualizer,
   LayerHierarchyVisualizer,
+  OutputProjectionVisualizer,
+  VocabularyLogitsVisualizer,
+  WeightTyingVisualizer,
+  DecodingStrategiesVisualizer,
+  LLMSpeakingPipeline,
+  LogitToProbTable,
+  GPTWalkthroughNavigator,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -309,4 +323,11 @@ export const mdxComponents = {
   HiddenStateTensorVisualizer,
   ShapeVsRepresentationVisualizer,
   LayerHierarchyVisualizer,
+  OutputProjectionVisualizer,
+  VocabularyLogitsVisualizer,
+  WeightTyingVisualizer,
+  DecodingStrategiesVisualizer,
+  LLMSpeakingPipeline,
+  LogitToProbTable,
+  GPTWalkthroughNavigator,
 };
