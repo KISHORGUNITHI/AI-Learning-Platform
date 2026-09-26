@@ -469,6 +469,30 @@
           "Autoregressive Generation",
           "LLM Speaking"
         ]
+      },
+      {
+        "number": 30,
+        "title": "The Complete GPT Walkthrough",
+        "slug": "module-2/day-30-complete-gpt-walkthrough",
+        "description": "Follow one input through a GPT-style language model from raw text to the generated next token, connecting everything learned across Phase 1 and Phase 2.",
+        "published": true,
+        "difficulty": "Intermediate",
+        "estimatedReadingTime": "30 min",
+        "estimatedStudyTime": "60 min",
+        "tags": [
+          "GPT Architecture",
+          "End-to-End Walkthrough",
+          "Tokenization",
+          "Embeddings",
+          "Self-Attention",
+          "Causal Masking",
+          "Feed-Forward Network",
+          "Residual Connections",
+          "Layer Normalization",
+          "Output Projection",
+          "Autoregressive Generation",
+          "Integration"
+        ]
       }
     ]
   },

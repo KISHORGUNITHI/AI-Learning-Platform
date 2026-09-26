@@ -25,3 +25,4 @@ export { default as WeightTyingVisualizer } from './WeightTyingVisualizer';
 export { default as DecodingStrategiesVisualizer } from './DecodingStrategiesVisualizer';
 export { default as LLMSpeakingPipeline } from './LLMSpeakingPipeline';
 export { default as LogitToProbTable } from './LogitToProbTable';
+export { default as GPTWalkthroughNavigator } from './GPTWalkthroughNavigator';

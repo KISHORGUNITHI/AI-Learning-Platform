@@ -51,6 +51,7 @@ import WeightTyingVisualizer from '@/components/ui/WeightTyingVisualizer';
 import DecodingStrategiesVisualizer from '@/components/ui/DecodingStrategiesVisualizer';
 import LLMSpeakingPipeline from '@/components/ui/LLMSpeakingPipeline';
 import LogitToProbTable from '@/components/ui/LogitToProbTable';
+import GPTWalkthroughNavigator from '@/components/ui/GPTWalkthroughNavigator';
 
 // ─── Named re-exports ─────────────────────────────────────────────────────────
 export {
@@ -91,6 +92,7 @@ export {
   DecodingStrategiesVisualizer,
   LLMSpeakingPipeline,
   LogitToProbTable,
+  GPTWalkthroughNavigator,
 };
 
 // ─── MDX component map ───────────────────────────────────────────────────────
@@ -327,4 +329,5 @@ export const mdxComponents = {
   DecodingStrategiesVisualizer,
   LLMSpeakingPipeline,
   LogitToProbTable,
+  GPTWalkthroughNavigator,
 };
